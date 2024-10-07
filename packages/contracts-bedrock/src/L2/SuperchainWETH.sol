@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity 0.8.25;
 
 // Contracts
 import { WETH98 } from "src/universal/WETH98.sol";
@@ -23,8 +23,8 @@ import { Unauthorized, NotCustomGasToken } from "src/libraries/errors/CommonErro
 ///         do not use a custom gas token.
 contract SuperchainWETH is WETH98, ICrosschainERC20, ISemver {
     /// @notice Semantic version.
-    /// @custom:semver 1.0.0-beta.9
-    string public constant version = "1.0.0-beta.9";
+    /// @custom:semver 1.0.0-beta.10
+    string public constant version = "1.0.0-beta.10";
 
     /// @inheritdoc WETH98
     function deposit() public payable override {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity 0.8.25;
 
 import { ISemver } from "src/universal/interfaces/ISemver.sol";
 import { IPreimageOracle } from "./interfaces/IPreimageOracle.sol";
@@ -60,8 +60,8 @@ contract MIPS2 is ISemver {
     }
 
     /// @notice The semantic version of the MIPS2 contract.
-    /// @custom:semver 1.0.0-beta.21
-    string public constant version = "1.0.0-beta.21";
+    /// @custom:semver 1.0.0-beta.22
+    string public constant version = "1.0.0-beta.22";
 
     /// @notice The preimage oracle contract.
     IPreimageOracle internal immutable ORACLE;
