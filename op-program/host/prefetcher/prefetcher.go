@@ -137,7 +137,7 @@ func (p *Prefetcher) bulkPrefetch(ctx context.Context, hint string) error {
 
 		blockHash := common.Hash(hintBytes[:32])
 
-		address := common.Address(hintBytes[8:])
+		address := common.Address(hintBytes[32:])
 		result, err := p.l2Fetcher.GetProof(ctx, address, []common.Hash{{}}, blockHash.Hex())
 		if err != nil {
 			return fmt.Errorf("failed to fetch account proof for address %s: %w", address, err)
