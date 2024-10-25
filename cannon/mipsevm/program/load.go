@@ -25,7 +25,7 @@ func LoadELF[T mipsevm.FPVMState](f *elf.File, initState CreateInitialFPVMState[
 	s := initState(Word(f.Entry), HEAP_START)
 
 	for i, prog := range f.Progs {
-		if prog.Type == 0x70000003 { // MIPS_ABIFLAGS
+		if prog.Type == elf.PT_MIPS_ABIFLAGS {
 			continue
 		}
 
