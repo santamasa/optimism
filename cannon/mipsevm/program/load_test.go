@@ -1,6 +1,3 @@
-//go:build !cannon64
-// +build !cannon64
-
 package program
 
 import (
@@ -32,8 +29,8 @@ func TestLoadELF(t *testing.T) {
 		{name: "Loadable segment, fileSize > memSize", progType: elf.PT_LOAD, fileSize: dataSize * 2, memSize: dataSize, vAddr: 0x4000, expectedErr: "file size (16) > mem size (8)"},
 		{name: "Loadable segment, fileSize < memSize", progType: elf.PT_LOAD, fileSize: dataSize, memSize: dataSize * 2, vAddr: 0x4000},
 		{name: "Loadable segment, fileSize == memSize", progType: elf.PT_LOAD, fileSize: dataSize, memSize: dataSize, vAddr: 0x4000},
-		{name: "Loadable segment, segment out-of-range", progType: elf.PT_LOAD, fileSize: dataSize, memSize: dataSize, vAddr: lastAddr - 1, expectedErr: "out of 32-bit mem range"},
-		{name: "Loadable segment, segment just out-of-range", progType: elf.PT_LOAD, fileSize: dataSize, memSize: dataSize, vAddr: lastAddr - dataSize + 2, expectedErr: "out of 32-bit mem range"},
+		{name: "Loadable segment, segment out-of-range", progType: elf.PT_LOAD, fileSize: dataSize, memSize: dataSize, vAddr: lastAddr - 1, expectedErr: "out of memory range"},
+		{name: "Loadable segment, segment just out-of-range", progType: elf.PT_LOAD, fileSize: dataSize, memSize: dataSize, vAddr: lastAddr - dataSize + 2, expectedErr: "out of memory range"},
 		{name: "Loadable segment, segment just in-range", progType: elf.PT_LOAD, fileSize: dataSize, memSize: dataSize, vAddr: lastAddr - dataSize + 1, expectedErr: "overlaps with heap"},
 		{name: "Loadable segment, segment overlaps heap", progType: elf.PT_LOAD, fileSize: dataSize, memSize: dataSize, vAddr: lastValidAddr - 1, expectedErr: "overlaps with heap"},
 		{name: "Loadable segment, segment just overlaps heap", progType: elf.PT_LOAD, fileSize: dataSize, memSize: dataSize, vAddr: lastValidAddr - dataSize + 2, expectedErr: "overlaps with heap"},
@@ -43,7 +40,7 @@ func TestLoadELF(t *testing.T) {
 		{name: "MIPS Flags segment, overlaps heap", progType: elf.PT_MIPS_ABIFLAGS, fileSize: dataSize, memSize: dataSize, vAddr: lastValidAddr, shouldIgnore: true},
 		{name: "Other segment, fileSize > memSize", progType: elf.PT_DYNAMIC, fileSize: dataSize * 2, memSize: dataSize, vAddr: 0x4000, expectedErr: "filling for non PT_LOAD segments is not supported"},
 		{name: "Other segment, memSize > fileSize", progType: elf.PT_DYNAMIC, fileSize: dataSize, memSize: dataSize * 2, vAddr: 0x4000, expectedErr: "filling for non PT_LOAD segments is not supported"},
-		{name: "Other segment, out-of-range", progType: elf.PT_DYNAMIC, fileSize: dataSize, memSize: dataSize, vAddr: lastAddr, expectedErr: "out of 32-bit mem range"},
+		{name: "Other segment, out-of-range", progType: elf.PT_DYNAMIC, fileSize: dataSize, memSize: dataSize, vAddr: lastAddr, expectedErr: "out of memory range"},
 		{name: "Other segment, overlaps heap", progType: elf.PT_DYNAMIC, fileSize: dataSize, memSize: dataSize, vAddr: lastValidAddr, expectedErr: "overlaps with heap"},
 	}
 

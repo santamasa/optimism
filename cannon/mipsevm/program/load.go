@@ -42,13 +42,13 @@ func LoadELF[T mipsevm.FPVMState](f *elf.File, initState CreateInitialFPVMState[
 			}
 		}
 
-		// TODO(#12205)
-		lastByteWritten := prog.Vaddr + prog.Memsz - 1
-		if lastByteWritten >= uint64(1<<32) {
-			return empty, fmt.Errorf("program %d out of 32-bit mem range: %x - %x (size: %x)", i, prog.Vaddr, prog.Vaddr+prog.Memsz, prog.Memsz)
+		lastByteToWrite := prog.Vaddr + prog.Memsz - 1
+		lastMemoryAddr := uint64(^arch.Word(0))
+		if lastByteToWrite > lastMemoryAddr || lastByteToWrite < prog.Vaddr {
+			return empty, fmt.Errorf("program %d out of memory range: %x - %x (size: %x)", i, prog.Vaddr, lastByteToWrite, prog.Memsz)
 		}
-		if lastByteWritten >= HEAP_START {
-			return empty, fmt.Errorf("program %d overlaps with heap: %x - %x (size: %x). The heap start offset must be reconfigured", i, prog.Vaddr, prog.Vaddr+prog.Memsz, prog.Memsz)
+		if lastByteToWrite >= HEAP_START {
+			return empty, fmt.Errorf("program %d overlaps with heap: %x - %x (size: %x). The heap start offset must be reconfigured", i, prog.Vaddr, lastByteToWrite, prog.Memsz)
 		}
 		if err := s.GetMemory().SetMemoryRange(Word(prog.Vaddr), r); err != nil {
 			return empty, fmt.Errorf("failed to read program segment %d: %w", i, err)
