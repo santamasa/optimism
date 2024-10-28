@@ -4,9 +4,11 @@ pragma solidity 0.8.25;
 // Libraries
 import { Predeploys } from "src/libraries/Predeploys.sol";
 import { ZeroAddress, Unauthorized } from "src/libraries/errors/CommonErrors.sol";
+import { SafeSend } from "src/universal/SafeSend.sol";
 
 // Interfaces
 import { ISuperchainERC20 } from "src/L2/interfaces/ISuperchainERC20.sol";
+import { ISuperchainWETH } from "src/L2/interfaces/ISuperchainWETH.sol";
 import { IL2ToL2CrossDomainMessenger } from "src/L2/interfaces/IL2ToL2CrossDomainMessenger.sol";
 
 /// @custom:proxied true
@@ -44,6 +46,9 @@ contract SuperchainTokenBridge {
     /// @notice Semantic version.
     /// @custom:semver 1.0.0-beta.2
     string public constant version = "1.0.0-beta.2";
+
+    // Fallback function to receive ETH
+    receive() external payable { }
 
     /// @notice Sends tokens to a target address on another chain.
     /// @dev Tokens are burned on the source chain.
@@ -87,5 +92,41 @@ contract SuperchainTokenBridge {
         ISuperchainERC20(_token).crosschainMint(_to, _amount);
 
         emit RelayERC20(_token, _from, _to, _amount, source);
+    }
+
+    /// @notice Sends ETH to a target address on another chain.
+    /// @param _to       Address to send ETH to.
+    /// @param _amount   Amount of ETH to send.
+    /// @param _chainId  Chain ID of the destination chain.
+    /// @return msgHash_ Hash of the message sent.
+    function sendETH(address _to, uint256 _amount, uint256 _chainId) external payable returns (bytes32 msgHash_) {
+        if (_to == address(0)) revert ZeroAddress();
+
+        ISuperchainWETH(payable(Predeploys.SUPERCHAIN_WETH)).deposit{ value: msg.value }();
+        ISuperchainWETH(payable(Predeploys.SUPERCHAIN_WETH)).crosschainBurn(msg.sender, msg.value);
+
+        bytes memory message = abi.encodeCall(this.relayETH, (msg.sender, _to, _amount));
+        msgHash_ = IL2ToL2CrossDomainMessenger(MESSENGER).sendMessage(_chainId, address(this), message);
+
+        emit SendERC20(Predeploys.SUPERCHAIN_WETH, msg.sender, _to, _amount, _chainId);
+    }
+
+    /// @notice Relays ETH received from another chain.
+    /// @param _from    Address of the msg.sender of sendETH on the source chain.
+    /// @param _to      Address to relay ETH to.
+    /// @param _amount  Amount of ETH to relay.
+    function relayETH(address _from, address _to, uint256 _amount) external {
+        if (msg.sender != MESSENGER) revert Unauthorized();
+
+        (address crossDomainMessageSender, uint256 source) =
+            IL2ToL2CrossDomainMessenger(MESSENGER).crossDomainMessageContext();
+        if (crossDomainMessageSender != address(this)) revert InvalidCrossDomainSender();
+
+        ISuperchainWETH(payable(Predeploys.SUPERCHAIN_WETH)).crosschainMint(address(this), _amount);
+        ISuperchainWETH(payable(Predeploys.SUPERCHAIN_WETH)).withdraw(_amount);
+
+        new SafeSend{ value: _amount }(payable(_to));
+
+        emit RelayERC20(Predeploys.SUPERCHAIN_WETH, _from, _to, _amount, source);
     }
 }
