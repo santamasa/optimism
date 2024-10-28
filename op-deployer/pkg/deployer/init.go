@@ -118,9 +118,9 @@ func Init(cfg InitConfig) error {
 		l2ChainIDBig := l2ChainID.Big()
 		intent.Chains = append(intent.Chains, &state.ChainIntent{
 			ID:                         l2ChainID,
-			BaseFeeVaultRecipient:      common.Address{},
-			L1FeeVaultRecipient:        common.Address{},
-			SequencerFeeVaultRecipient: common.Address{},
+			BaseFeeVaultRecipient:      addrFor(devkeys.BaseFeeVaultRecipientRole.Key(l1ChainIDBig)),
+			L1FeeVaultRecipient:        addrFor(devkeys.L1FeeVaultRecipientRole.Key(l1ChainIDBig)),
+			SequencerFeeVaultRecipient: addrFor(devkeys.SequencerFeeVaultRecipientRole.Key(l1ChainIDBig)),
 			Eip1559Denominator:         50,
 			Eip1559Elasticity:          6,
 			Roles: state.ChainRoles{
