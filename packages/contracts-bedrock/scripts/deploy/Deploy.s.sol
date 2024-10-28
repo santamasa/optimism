@@ -518,7 +518,7 @@ contract Deploy is Deployer {
                 _args: DeployUtils.encodeConstructor(abi.encodeCall(IAddressManager.__constructor__, ()))
             })
         );
-        require(manager.owner() == msg.sender);
+        require(manager.owner() == msg.sender, "Deploy: AddressManager owner not set to msg.sender");
         addr_ = address(manager);
     }
 
@@ -535,7 +535,7 @@ contract Deploy is Deployer {
         );
 
         // Make sure the owner was set to the deployer.
-        require(admin.owner() == msg.sender);
+        require(admin.owner() == msg.sender, "Deploy: ProxyAdmin owner not set to msg.sender");
 
         // Set the address manager if it is not already set.
         IAddressManager addressManager = IAddressManager(mustGetAddress("AddressManager"));
@@ -544,7 +544,7 @@ contract Deploy is Deployer {
         }
 
         // Make sure the address manager is set properly.
-        require(admin.addressManager() == addressManager);
+        require(admin.addressManager() == addressManager, "Deploy: ProxyAdmin address manager not set properly");
 
         // Return the address of the deployed contract.
         addr_ = address(admin);
@@ -576,7 +576,7 @@ contract Deploy is Deployer {
                 _args: DeployUtils.encodeConstructor(abi.encodeCall(IL1ChugSplashProxy.__constructor__, (proxyAdmin)))
             })
         );
-        require(EIP1967Helper.getAdmin(address(proxy)) == proxyAdmin);
+        require(EIP1967Helper.getAdmin(address(proxy)) == proxyAdmin, "Deploy: L1StandardBridgeProxy admin not set");
         addr_ = address(proxy);
     }
 
@@ -627,7 +627,7 @@ contract Deploy is Deployer {
                 _args: DeployUtils.encodeConstructor(abi.encodeCall(IProxy.__constructor__, (_proxyOwner)))
             })
         );
-        require(EIP1967Helper.getAdmin(address(proxy)) == _proxyOwner);
+        require(EIP1967Helper.getAdmin(address(proxy)) == _proxyOwner, "Deploy: EIP1967Proxy admin not set");
         addr_ = address(proxy);
     }
 
@@ -643,7 +643,9 @@ contract Deploy is Deployer {
                 _args: DeployUtils.encodeConstructor(abi.encodeCall(IProxy.__constructor__, (proxyAdmin)))
             })
         );
-        require(EIP1967Helper.getAdmin(address(proxy)) == proxyAdmin);
+        require(
+            EIP1967Helper.getAdmin(address(proxy)) == proxyAdmin, "Deploy: DataAvailabilityChallengeProxy admin not set"
+        );
         addr_ = address(proxy);
     }
 
@@ -783,7 +785,7 @@ contract Deploy is Deployer {
             console.log("AddressManager ownership transferred to %s", proxyAdmin);
         }
 
-        require(addressManager.owner() == proxyAdmin);
+        require(addressManager.owner() == proxyAdmin, "Deploy: AddressManager ownership not transferred to ProxyAdmin");
     }
 
     /// @notice Deploy the DataAvailabilityChallenge
@@ -1229,11 +1231,16 @@ contract Deploy is Deployer {
         string memory version = dac.version();
         console.log("DataAvailabilityChallenge version: %s", version);
 
-        require(dac.owner() == finalSystemOwner);
-        require(dac.challengeWindow() == daChallengeWindow);
-        require(dac.resolveWindow() == daResolveWindow);
-        require(dac.bondSize() == daBondSize);
-        require(dac.resolverRefundPercentage() == daResolverRefundPercentage);
+        require(dac.owner() == finalSystemOwner, "Deploy: DataAvailabilityChallenge owner not set");
+        require(
+            dac.challengeWindow() == daChallengeWindow, "Deploy: DataAvailabilityChallenge challenge window not set"
+        );
+        require(dac.resolveWindow() == daResolveWindow, "Deploy: DataAvailabilityChallenge resolve window not set");
+        require(dac.bondSize() == daBondSize, "Deploy: DataAvailabilityChallenge bond size not set");
+        require(
+            dac.resolverRefundPercentage() == daResolverRefundPercentage,
+            "Deploy: DataAvailabilityChallenge resolver refund percentage not set"
+        );
     }
 
     /// @notice Get the DeployInput struct to use for testing
