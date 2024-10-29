@@ -89,7 +89,7 @@ func defaultWithdrawalTxOpts() *WithdrawalTxOpts {
 		ToAddr:         nil,
 		Nonce:          0,
 		Value:          common.Big0,
-		Gas:            21_000,
+		Gas:            30_000,
 		Data:           nil,
 		ExpectedStatus: types.ReceiptStatusSuccessful,
 	}
