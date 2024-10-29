@@ -41,7 +41,8 @@ func (c *CheatCodesPrecompile) getArtifact(input string) (*foundry.Artifact, err
 	name := parts[0] + ".sol"
 	contract := parts[0]
 	if len(parts) == 2 {
-		name = parts[0]
+		segments := strings.Split(parts[0], "/")
+		name = segments[len(segments)-1]
 		contract = parts[1]
 	}
 	return c.h.af.ReadArtifact(name, contract)
