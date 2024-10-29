@@ -162,9 +162,6 @@ jobs:
         description: Whether to notify on failure
         type: boolean
         default: false
-      mips64:
-        type: boolean
-        default: false
     steps:
       - checkout
       - check-changed:
@@ -185,27 +182,20 @@ jobs:
           command: |
             make lint
           working_directory: cannon
-      - when:
-          condition:
-            not: <<parameters.mips64>>
-          steps:
-            - run:
-                name: Cannon Go 32-bit tests
-                command: |
-                  export SKIP_SLOW_TESTS=<<parameters.skip_slow_tests>>
-                  gotestsum --format=testname --junitfile=../tmp/test-results/cannon.xml --jsonfile=../tmp/testlogs/log.json \
-                  -- -parallel=$(nproc) -coverpkg=github.com/ethereum-optimism/optimism/cannon/... -coverprofile=coverage.out ./...
-                working_directory: cannon
-      - when:
-          condition: <<parameters.mips64>>
-          steps:
-            - run:
-                name: Cannon Go 64-bit tests
-                command: |
-                  export SKIP_SLOW_TESTS=<<parameters.skip_slow_tests>>
-                  gotestsum --format=testname --junitfile=../tmp/test-results/cannon.xml --jsonfile=../tmp/testlogs/log.json \
-                  -- --tags=cannon64 -parallel=$(nproc) -coverpkg=github.com/ethereum-optimism/optimism/cannon/... -coverprofile=coverage.out ./...
-                working_directory: cannon
+      - run:
+          name: Cannon Go 32-bit tests
+          command: |
+            export SKIP_SLOW_TESTS=<<parameters.skip_slow_tests>>
+            gotestsum --format=testname --junitfile=../tmp/test-results/cannon.xml --jsonfile=../tmp/testlogs/log.json \
+            -- -parallel=$(nproc) -coverpkg=github.com/ethereum-optimism/optimism/cannon/... -coverprofile=coverage.out ./...
+          working_directory: cannon
+      - run:
+          name: Cannon Go 64-bit tests
+          command: |
+            export SKIP_SLOW_TESTS=<<parameters.skip_slow_tests>>
+            gotestsum --format=testname --junitfile=../tmp/test-results/cannon.xml --jsonfile=../tmp/testlogs/log.json \
+            -- --tags=cannon64 -parallel=$(nproc) -coverpkg=github.com/ethereum-optimism/optimism/cannon/... -coverprofile=coverage.out ./...
+          working_directory: cannon
       - run:
           name: upload Cannon coverage
           command: codecov --verbose --clean --flags cannon-go-tests
