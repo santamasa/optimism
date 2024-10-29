@@ -39,7 +39,7 @@ contract ProxyAdmin_Test is Test {
         // Deploy the standard proxy
         proxy = IProxy(
             DeployUtils.create1({
-                _name: "Proxy",
+                _name: "src/universal/Proxy.sol:Proxy",
                 _args: DeployUtils.encodeConstructor(abi.encodeCall(IProxy.__constructor__, (address(admin))))
             })
         );

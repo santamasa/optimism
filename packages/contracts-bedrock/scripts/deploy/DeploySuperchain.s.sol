@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.25;
 
+import { console2 as console } from "forge-std/console2.sol";
 import { Script } from "forge-std/Script.sol";
 import { stdToml } from "forge-std/StdToml.sol";
 
@@ -364,10 +365,11 @@ contract DeploySuperchain is Script {
         IProxyAdmin superchainProxyAdmin = _dso.superchainProxyAdmin();
         ISuperchainConfig superchainConfigImpl = _dso.superchainConfigImpl();
 
+        console.log("Deploying superchain config proxy");
         vm.startBroadcast(msg.sender);
         ISuperchainConfig superchainConfigProxy = ISuperchainConfig(
             DeployUtils.create1({
-                _name: "forge-artifacts/Proxy.sol/Proxy.json",
+                _name: "src/universal/Proxy.sol:Proxy",
                 _args: DeployUtils.encodeConstructor(
                     abi.encodeCall(IProxy.__constructor__, (address(superchainProxyAdmin)))
                 )
