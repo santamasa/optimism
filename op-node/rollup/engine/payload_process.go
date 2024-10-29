@@ -10,7 +10,7 @@ import (
 
 type PayloadProcessEvent struct {
 	// if payload should be promoted to safe (must also be pending safe, see DerivedFrom)
-	IsLastInSpan bool
+	Safe bool
 	// payload is promoted to pending-safe if non-zero
 	DerivedFrom eth.L1BlockRef
 

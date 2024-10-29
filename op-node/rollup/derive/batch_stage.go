@@ -81,7 +81,7 @@ func (bs *BatchStage) NextBatch(ctx context.Context, parent eth.L2BlockRef) (*Si
 	switch validity {
 	case BatchAccept: // continue
 		batch.LogContext(bs.Log()).Debug("Found next singular batch")
-		return batch, len(bs.nextSpan) == 0, nil
+		return batch, true, nil // in Holocene, blocks immediately become safe
 	case BatchPast:
 		batch.LogContext(bs.Log()).Warn("Dropping past singular batch")
 		// NotEnoughData to read in next batch until we're through all past batches

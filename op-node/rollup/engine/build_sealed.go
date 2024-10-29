@@ -8,7 +8,7 @@ import (
 // but is not locally inserted as canonical block yet
 type BuildSealedEvent struct {
 	// if payload should be promoted to safe (must also be pending safe, see DerivedFrom)
-	IsLastInSpan bool
+	Safe bool
 	// payload is promoted to pending-safe if non-zero
 	DerivedFrom eth.L1BlockRef
 
@@ -25,10 +25,10 @@ func (eq *EngDeriver) onBuildSealed(ev BuildSealedEvent) {
 	// If a (pending) safe block, immediately process the block
 	if ev.DerivedFrom != (eth.L1BlockRef{}) {
 		eq.emitter.Emit(PayloadProcessEvent{
-			IsLastInSpan: ev.IsLastInSpan,
-			DerivedFrom:  ev.DerivedFrom,
-			Envelope:     ev.Envelope,
-			Ref:          ev.Ref,
+			Safe:        ev.Safe,
+			DerivedFrom: ev.DerivedFrom,
+			Envelope:    ev.Envelope,
+			Ref:         ev.Ref,
 		})
 	}
 }

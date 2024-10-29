@@ -14,7 +14,7 @@ type BuildStartedEvent struct {
 	Parent eth.L2BlockRef
 
 	// if payload should be promoted to safe (must also be pending safe, see DerivedFrom)
-	IsLastInSpan bool
+	Safe bool
 	// payload is promoted to pending-safe if non-zero
 	DerivedFrom eth.L1BlockRef
 }
@@ -29,7 +29,7 @@ func (eq *EngDeriver) onBuildStarted(ev BuildStartedEvent) {
 		eq.emitter.Emit(BuildSealEvent{
 			Info:         ev.Info,
 			BuildStarted: ev.BuildStarted,
-			IsLastInSpan: ev.IsLastInSpan,
+			Safe:         ev.Safe,
 			DerivedFrom:  ev.DerivedFrom,
 		})
 	}

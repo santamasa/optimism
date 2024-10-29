@@ -6,7 +6,7 @@ import (
 
 type PayloadSuccessEvent struct {
 	// if payload should be promoted to safe (must also be pending safe, see DerivedFrom)
-	IsLastInSpan bool
+	Safe bool
 	// payload is promoted to pending-safe if non-zero
 	DerivedFrom eth.L1BlockRef
 
@@ -25,7 +25,7 @@ func (eq *EngDeriver) onPayloadSuccess(ev PayloadSuccessEvent) {
 	if ev.DerivedFrom != (eth.L1BlockRef{}) {
 		eq.emitter.Emit(PromotePendingSafeEvent{
 			Ref:         ev.Ref,
-			Safe:        ev.IsLastInSpan,
+			Safe:        ev.Safe,
 			DerivedFrom: ev.DerivedFrom,
 		})
 	}
@@ -34,7 +34,7 @@ func (eq *EngDeriver) onPayloadSuccess(ev PayloadSuccessEvent) {
 	eq.log.Info("Inserted block", "hash", payload.BlockHash, "number", uint64(payload.BlockNumber),
 		"state_root", payload.StateRoot, "timestamp", uint64(payload.Timestamp), "parent", payload.ParentHash,
 		"prev_randao", payload.PrevRandao, "fee_recipient", payload.FeeRecipient,
-		"txs", len(payload.Transactions), "last_in_span", ev.IsLastInSpan, "derived_from", ev.DerivedFrom)
+		"txs", len(payload.Transactions), "safe", ev.Safe, "derived_from", ev.DerivedFrom)
 
 	eq.emitter.Emit(TryUpdateEngineEvent{})
 }
