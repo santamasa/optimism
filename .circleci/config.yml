@@ -186,19 +186,21 @@ jobs:
           name: Cannon Go 32-bit tests
           command: |
             export SKIP_SLOW_TESTS=<<parameters.skip_slow_tests>>
-            gotestsum --format=testname --junitfile=../tmp/test-results/cannon.xml --jsonfile=../tmp/testlogs/log.json \
-            -- -parallel=$(nproc) -coverpkg=github.com/ethereum-optimism/optimism/cannon/... -coverprofile=coverage.out ./...
+            gotestsum --format=testname --junitfile=../tmp/test-results/cannon-32.xml --jsonfile=../tmp/testlogs/log-32.json \
+            -- -parallel=$(nproc) -coverpkg=github.com/ethereum-optimism/optimism/cannon/... -coverprofile=coverage-32.out ./...
           working_directory: cannon
       - run:
           name: Cannon Go 64-bit tests
           command: |
             export SKIP_SLOW_TESTS=<<parameters.skip_slow_tests>>
-            gotestsum --format=testname --junitfile=../tmp/test-results/cannon.xml --jsonfile=../tmp/testlogs/log.json \
-            -- --tags=cannon64 -parallel=$(nproc) -coverpkg=github.com/ethereum-optimism/optimism/cannon/... -coverprofile=coverage.out ./...
+            gotestsum --format=testname --junitfile=../tmp/test-results/cannon-64.xml --jsonfile=../tmp/testlogs/log-64.json \
+            -- --tags=cannon64 -parallel=$(nproc) -coverpkg=github.com/ethereum-optimism/optimism/cannon/... -coverprofile=coverage-64.out ./...
           working_directory: cannon
       - run:
           name: upload Cannon coverage
-          command: codecov --verbose --clean --flags cannon-go-tests
+          command: |
+            codecov --verbose --clean --flags cannon-go-tests-32 -f ./tmp/test-results/coverage-32.xml
+            codecov --verbose --clean --flags cannon-go-tests-64 -f ./tmp/test-results/coverage-64.xml
       - store_test_results:
           path: ./tmp/test-results
       - store_artifacts:
