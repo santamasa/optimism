@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity 0.8.25;
 
 // Vm is a minimal interface to the forge cheatcode precompile
 interface Vm {
