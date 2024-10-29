@@ -558,7 +558,7 @@ contract DeployImplementations is Script {
         vm.broadcast(msg.sender);
         IProxy proxy = IProxy(
             DeployUtils.create1({
-                _name: "forge-artifacts/Proxy.sol/Proxy.json",
+                _name: "src/universal/Proxy.sol:Proxy",
                 _args: DeployUtils.encodeConstructor(abi.encodeCall(IProxy.__constructor__, (msg.sender)))
             })
         );
@@ -594,7 +594,7 @@ contract DeployImplementations is Script {
 
         vm.startBroadcast(msg.sender);
         blueprints.addressManager = deployBytecode(Blueprint.blueprintDeployerBytecode(vm.getCode("AddressManager")), salt);
-        blueprints.proxy = deployBytecode(Blueprint.blueprintDeployerBytecode(vm.getCode("forge-artifacts/Proxy.sol/Proxy.json")), salt);
+        blueprints.proxy = deployBytecode(Blueprint.blueprintDeployerBytecode(vm.getCode("src/universal/Proxy.sol:Proxy")), salt);
         blueprints.proxyAdmin = deployBytecode(Blueprint.blueprintDeployerBytecode(vm.getCode("ProxyAdmin")), salt);
         blueprints.l1ChugSplashProxy = deployBytecode(Blueprint.blueprintDeployerBytecode(vm.getCode("L1ChugSplashProxy")), salt);
         blueprints.resolvedDelegateProxy = deployBytecode(Blueprint.blueprintDeployerBytecode(vm.getCode("ResolvedDelegateProxy")), salt);
@@ -1132,7 +1132,7 @@ contract DeployImplementationsInterop is DeployImplementations {
         vm.broadcast(msg.sender);
         IProxy proxy = IProxy(
             DeployUtils.create1({
-                _name: "forge-artifacts/Proxy.sol/Proxy.json",
+                _name: "src/universal/Proxy.sol:Proxy",
                 _args: DeployUtils.encodeConstructor(abi.encodeCall(IProxy.__constructor__, (msg.sender)))
             })
         );

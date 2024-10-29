@@ -397,7 +397,7 @@ contract DeploySuperchain is Script {
         vm.startBroadcast(msg.sender);
         IProtocolVersions protocolVersionsProxy = IProtocolVersions(
             DeployUtils.create1({
-                _name: "forge-artifacts/Proxy.sol/Proxy.json",
+                _name: "src/universal/Proxy.sol:Proxy",
                 _args: DeployUtils.encodeConstructor(
                     abi.encodeCall(IProxy.__constructor__, (address(superchainProxyAdmin)))
                 )

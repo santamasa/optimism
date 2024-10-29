@@ -212,7 +212,7 @@ contract L2Genesis is Deployer {
     ///         migrating genesis generation to Solidity.
     function setPredeployProxies() public {
         console.log("Setting Predeploy proxies");
-        bytes memory code = vm.getDeployedCode("forge-artifacts/Proxy.sol/Proxy.json");
+        bytes memory code = vm.getDeployedCode("src/universal/Proxy.sol:Proxy");
         uint160 prefix = uint160(0x420) << 148;
 
         console.log(

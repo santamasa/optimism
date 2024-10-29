@@ -98,7 +98,7 @@ contract DeployImplementationsOutput_Test is Test {
     function test_set_succeeds() public {
         IProxy proxy = IProxy(
             DeployUtils.create1({
-                _name: "forge-artifacts/Proxy.sol/Proxy.json",
+                _name: "src/universal/Proxy.sol:Proxy",
                 _args: DeployUtils.encodeConstructor(abi.encodeCall(IProxy.__constructor__, (address(0))))
             })
         );
@@ -418,7 +418,7 @@ contract DeployImplementations_Test is Test {
         );
         superchainConfigProxy = ISuperchainConfig(
             DeployUtils.create1({
-                _name: "forge-artifacts/Proxy.sol/Proxy.json",
+                _name: "src/universal/Proxy.sol:Proxy",
                 _args: DeployUtils.encodeConstructor(
                     abi.encodeCall(IProxy.__constructor__, (address(superchainProxyAdmin)))
                 )
