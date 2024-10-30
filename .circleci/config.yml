@@ -197,10 +197,11 @@ jobs:
             -- --tags=cannon64 -parallel=$(nproc) -coverpkg=github.com/ethereum-optimism/optimism/cannon/... -coverprofile=coverage-64.out ./...
           working_directory: cannon
       - run:
-          name: upload Cannon coverage
+          name: Upload Cannon coverage
           command: |
-            codecov --verbose --clean --flags cannon-go-tests-32 -f ./tmp/test-results/coverage-32.xml
-            codecov --verbose --clean --flags cannon-go-tests-64 -f ./tmp/test-results/coverage-64.xml
+            codecov --verbose --clean --flags cannon-go-tests-32 -f ./coverage-32.xml
+            codecov --verbose --clean --flags cannon-go-tests-64 -f ./coverage-64.xml
+          working_directory: cannon
       - store_test_results:
           path: ./tmp/test-results
       - store_artifacts:
