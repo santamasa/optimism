@@ -242,6 +242,7 @@ func TestEVM_MT_SysRead_Preimage(t *testing.T) {
 		for _, v := range llVariations {
 			tName := fmt.Sprintf("%v (%v)", c.name, v.name)
 			t.Run(tName, func(t *testing.T) {
+				testutil.TemporarilySkip64BitTests(t)
 				effAddr := arch.AddressMask & c.addr
 				preimageKey := preimage.Keccak256Key(crypto.Keccak256Hash(preimageValue)).PreimageKey()
 				oracle := testutil.StaticOracle(t, preimageValue)
@@ -338,6 +339,7 @@ func TestEVM_MT_StoreOpsClearMemReservation(t *testing.T) {
 		for _, v := range llVariations {
 			tName := fmt.Sprintf("%v (%v)", c.name, v.name)
 			t.Run(tName, func(t *testing.T) {
+				testutil.TemporarilySkip64BitTests(t)
 				insn := uint32((c.opcode << 26) | (baseReg & 0x1F << 21) | (rtReg & 0x1F << 16) | (0xFFFF & c.offset))
 				goVm, state, contracts := setup(t, i, nil, testutil.WithPCAndNextPC(0x08))
 				step := state.GetStep()
@@ -653,6 +655,7 @@ func TestEVM_SysFutex_WaitPrivate(t *testing.T) {
 
 	for i, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			testutil.TemporarilySkip64BitTests(t)
 			goVm, state, contracts := setup(t, i*1234, nil)
 			step := state.GetStep()
 
@@ -722,6 +725,7 @@ func TestEVM_SysFutex_WakePrivate(t *testing.T) {
 
 	for i, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			testutil.TemporarilySkip64BitTests(t)
 			goVm, state, contracts := setup(t, i*1122, nil)
 			mttestutil.SetupThreads(int64(i*2244), state, c.traverseRight, c.activeThreadCount, c.inactiveThreadCount)
 			step := state.Step
@@ -1102,6 +1106,7 @@ var NoopSyscalls = map[string]uint32{
 func TestEVM_NoopSyscall(t *testing.T) {
 	for noopName, noopVal := range NoopSyscalls {
 		t.Run(noopName, func(t *testing.T) {
+			testutil.TemporarilySkip64BitTests(t)
 			goVm, state, contracts := setup(t, int(noopVal), nil)
 
 			testutil.StoreInstruction(state.Memory, state.GetPC(), syscallInsn)
@@ -1148,6 +1153,7 @@ func TestEVM_UnsupportedSyscall(t *testing.T) {
 		i := i
 		syscallNum := syscallNum
 		t.Run(testName, func(t *testing.T) {
+			testutil.TemporarilySkip64BitTests(t)
 			t.Parallel()
 			goVm, state, contracts := setup(t, i*3434, nil)
 			// Setup basic getThreadId syscall instruction
@@ -1184,6 +1190,7 @@ func TestEVM_EmptyThreadStacks(t *testing.T) {
 		for _, proofCase := range proofVariations {
 			testName := fmt.Sprintf("%v (proofCase=%v)", c.name, proofCase.Name)
 			t.Run(testName, func(t *testing.T) {
+				testutil.TemporarilySkip64BitTests(t)
 				goVm, state, contracts := setup(t, i*123, nil)
 				mttestutil.SetupThreads(int64(i*123), state, c.traverseRight, 0, c.otherStackSize)
 

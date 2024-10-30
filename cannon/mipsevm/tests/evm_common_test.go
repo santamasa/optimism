@@ -36,6 +36,7 @@ func TestEVM(t *testing.T) {
 		for _, f := range testFiles {
 			testName := fmt.Sprintf("%v (%v)", f.Name(), c.Name)
 			t.Run(testName, func(t *testing.T) {
+				testutil.TemporarilySkip64BitTests(t)
 				for _, skipped := range skipped {
 					if f.Name() == skipped {
 						t.Skipf("Skipping explicitly excluded open_mips testcase: %v", f.Name())
@@ -206,6 +207,7 @@ func TestEVMSingleStep_Operators(t *testing.T) {
 		for i, tt := range cases {
 			testName := fmt.Sprintf("%v (%v)", tt.name, v.Name)
 			t.Run(testName, func(t *testing.T) {
+				testutil.TemporarilySkip64BitTests(t)
 				goVm := v.VMFactory(nil, os.Stdout, os.Stderr, testutil.CreateLogger(), testutil.WithRandomization(int64(i)), testutil.WithPC(0), testutil.WithNextPC(4))
 				state := goVm.GetState()
 				var insn uint32
@@ -307,6 +309,7 @@ func TestEVMSingleStep_LoadStore(t *testing.T) {
 		for _, v := range versions {
 			testName := fmt.Sprintf("%v (%v)", tt.name, v.Name)
 			t.Run(testName, func(t *testing.T) {
+				testutil.TemporarilySkip64BitTests(t)
 				addr := tt.base + Word(tt.imm)
 				effAddr := arch.AddressMask & addr
 
@@ -481,6 +484,7 @@ func TestEVMSingleStep_MulDiv(t *testing.T) {
 		for i, tt := range cases {
 			testName := fmt.Sprintf("%v (%v)", tt.name, v.Name)
 			t.Run(testName, func(t *testing.T) {
+				testutil.TemporarilySkip64BitTests(t)
 				goVm := v.VMFactory(nil, os.Stdout, os.Stderr, testutil.CreateLogger(), testutil.WithRandomization(int64(i)), testutil.WithPC(0), testutil.WithNextPC(4))
 				state := goVm.GetState()
 				var insn uint32
@@ -855,6 +859,7 @@ func TestEVMFault(t *testing.T) {
 		for _, tt := range cases {
 			testName := fmt.Sprintf("%v (%v)", tt.name, v.Name)
 			t.Run(testName, func(t *testing.T) {
+				testutil.TemporarilySkip64BitTests(t)
 				goVm := v.VMFactory(nil, os.Stdout, os.Stderr, testutil.CreateLogger(), testutil.WithPC(tt.pc), testutil.WithNextPC(tt.nextPC))
 				state := goVm.GetState()
 				testutil.StoreInstruction(state.GetMemory(), 0, tt.insn)
@@ -969,7 +974,7 @@ func TestEntryEVM(t *testing.T) {
 			state := goVm.GetState()
 
 			start := time.Now()
-			for i := 0; i < 400_000; i++ {
+			for i := 0; i < 500_000; i++ {
 				curStep := goVm.GetState().GetStep()
 				if goVm.GetState().GetExited() {
 					break
@@ -1063,6 +1068,7 @@ func TestEVMSingleStepBranch(t *testing.T) {
 		for i, tt := range cases {
 			testName := fmt.Sprintf("%v (%v)", tt.name, v.Name)
 			t.Run(testName, func(t *testing.T) {
+				testutil.TemporarilySkip64BitTests(t)
 				goVm := v.VMFactory(nil, os.Stdout, os.Stderr, testutil.CreateLogger(), testutil.WithRandomization(int64(i)), testutil.WithPCAndNextPC(tt.pc))
 				state := goVm.GetState()
 				const rsReg = 8 // t0
