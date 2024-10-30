@@ -127,11 +127,14 @@ contract Bytes_slice_TestFail is Test {
     /// @notice Tests that, when given an input bytes array of length `n`, the `slice` function will
     ///         always revert if `_start + _length > n`.
     function testFuzz_slice_outOfBounds_reverts(bytes memory _input, uint256 _start, uint256 _length) public {
-        // We want a valid start index and a length that will not overflow.
-        vm.assume(_start < _input.length && _length < type(uint256).max - 31);
-        // But, we want an invalid slice length.
-        vm.assume(_start + _length > _input.length);
+        // We want a valid start index for the given input
+        uint256 maxStart = _input.length == 0 ? 0 : _input.length - 1;
+        _start = bound(_start, 0, maxStart);
 
+        // The length needs to be large enough that the end point will be out of bounds, but not overflow
+        _length = bound(_length, _input.length - _start, type(uint256).max - _start - 32);
+
+        // Expect a revert
         vm.expectRevert("slice_outOfBounds");
         Bytes.slice(_input, _start, _length);
     }
