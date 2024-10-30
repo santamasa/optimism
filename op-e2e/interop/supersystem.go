@@ -3,6 +3,8 @@ package interop
 import (
 	"context"
 	"crypto/ecdsa"
+	"github.com/ethereum-optimism/optimism/op-e2e/e2eutils/wait"
+	"github.com/ethereum-optimism/optimism/op-e2e/interop/contracts/bindings/systemconfig"
 	"github.com/ethereum-optimism/optimism/op-service/predeploys"
 	"github.com/ethereum/go-ethereum/eth/ethconfig"
 	gn "github.com/ethereum/go-ethereum/node"
@@ -98,9 +100,10 @@ type SuperSystem interface {
 	Address(network string, username string) common.Address
 	// Deploy the Emitter Contract, which emits Event Logs
 	DeployEmitterContract(network string, username string) common.Address
-	BindInboxContract(id string)
 	// Use the Emitter Contract to emit an Event Log
 	EmitData(network string, username string, data string) *types.Receipt
+	// AddDependency adds a dependency (by chain ID) to the given chain
+	AddDependency(network string, dep *big.Int) *types.Receipt
 	// ExecuteMessage calls the CrossL2Inbox executeMessage function
 	ExecuteMessage(
 		ctx context.Context,
@@ -135,6 +138,7 @@ type interopE2ESystem struct {
 	beacon          *fakebeacon.FakeBeacon
 	l1              *geth.GethInstance
 	l2s             map[string]l2Set
+	l1GethClient    *ethclient.Client
 	l2GethClients   map[string]*ethclient.Client
 	supervisor      *supervisor.SupervisorService
 	superClient     *sources.SupervisorClient
@@ -521,6 +525,8 @@ func (s *interopE2ESystem) prepare(t *testing.T, w worldResourcePaths) {
 	s.beacon, s.l1 = s.prepareL1()
 	s.l2s = s.prepareL2s()
 
+	s.prepareContracts()
+
 	// add the L2 RPCs to the supervisor now that the L2s are created
 	ctx := context.Background()
 	for _, l2 := range s.l2s {
@@ -568,6 +574,44 @@ func (s *interopE2ESystem) prepareL2s() map[string]l2Set {
 		l2s[id] = s.newL2(id, l2Out)
 	}
 	return l2s
+}
+
+// prepareContracts prepares contract-bindings for the L2s
+func (s *interopE2ESystem) prepareContracts() {
+	// Add bindings to common contracts for each L2
+	l1GethClient := s.L1GethClient()
+	for id, l2Dep := range s.worldDeployment.L2s {
+		{
+			contract, err := inbox.NewInbox(predeploys.CrossL2InboxAddr, s.L2GethClient(id))
+			require.NoError(s.t, err)
+			s.l2s[id].contracts["inbox"] = contract
+		}
+		{
+			contract, err := systemconfig.NewSystemconfig(l2Dep.SystemConfigProxy, l1GethClient)
+			require.NoError(s.t, err)
+			s.l2s[id].contracts["systemconfig"] = contract
+		}
+	}
+}
+
+func (s *interopE2ESystem) L1GethClient() *ethclient.Client {
+	if s.l1GethClient != nil {
+		return s.l1GethClient
+	}
+	rpcEndpoint := s.l1.UserRPC()
+	rpcCl := endpoint.DialRPC(
+		endpoint.PreferAnyRPC,
+		rpcEndpoint,
+		func(v string) *rpc.Client {
+			logger := testlog.Logger(s.t, log.LevelInfo)
+			cl, err := dial.DialRPCClientWithTimeout(context.Background(), 30*time.Second, logger, v)
+			require.NoError(s.t, err, "failed to dial L1 eth node instance")
+			return cl
+		})
+	nodeClient := ethclient.NewClient(rpcCl)
+	// register the client so it can be reused
+	s.l1GethClient = nodeClient
+	return nodeClient
 }
 
 func (s *interopE2ESystem) L2GethClient(id string) *ethclient.Client {
@@ -657,12 +701,6 @@ func (s *interopE2ESystem) SendL2Tx(
 		newApply)
 }
 
-func (s *interopE2ESystem) BindInboxContract(id string) {
-	contract, err := inbox.NewInbox(predeploys.CrossL2InboxAddr, s.L2GethClient(id))
-	require.NoError(s.t, err)
-	s.l2s[id].contracts["inbox"] = contract
-}
-
 func (s *interopE2ESystem) ExecuteMessage(
 	ctx context.Context,
 	id string,
@@ -691,6 +729,30 @@ func (s *interopE2ESystem) ExecuteMessage(
 	require.NoError(s.t, err)
 	s.logger.Info("Executing message", "tx", tx.Hash(), "to", tx.To(), "target", target, "data", hexutil.Bytes(tx.Data()))
 	return bind.WaitMined(ctx, s.L2GethClient(id), tx)
+}
+
+func (s *interopE2ESystem) AddDependency(id string, dep *big.Int) *types.Receipt {
+	// There is a note in OPContractsManagerInterop that the proxy-admin is used for now,
+	// even though it should be a separate dependency-set-manager address.
+	secret, err := s.hdWallet.Secret(devkeys.ChainOperatorKey{
+		ChainID: s.l2s[id].chainID,
+		Role:    devkeys.L1ProxyAdminOwnerRole,
+	})
+	require.NoError(s.t, err)
+
+	auth, err := bind.NewKeyedTransactorWithChainID(secret, s.worldOutput.L1.Genesis.Config.ChainID)
+	require.NoError(s.t, err)
+
+	auth.GasLimit = uint64(3000000)
+	auth.GasPrice = big.NewInt(20000000000)
+
+	contract := s.Contract(id, "systemconfig").(*systemconfig.Systemconfig)
+	tx, err := contract.SystemconfigTransactor.AddDependency(auth, dep)
+	require.NoError(s.t, err)
+
+	receipt, err := wait.ForReceiptOK(context.Background(), s.L1GethClient(), tx.Hash())
+	require.NoError(s.t, err)
+	return receipt
 }
 
 func (s *interopE2ESystem) DeployEmitterContract(

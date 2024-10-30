@@ -212,17 +212,28 @@ func TestInteropBlockBuilding(t *testing.T) {
 		chainB := ids[1]
 		// We will initiate on chain A, and execute on chain B
 		s2.DeployEmitterContract(chainA, "Alice")
-		s2.BindInboxContract(chainB) // the inbox is a predeploy, just need bindings, no deployment
+
+		// Add chain B as dependency to chain A
+		depRec := s2.AddDependency(chainA, s2.ChainID(chainB))
+		t.Logf("Dependency set in L1 block %d", depRec.BlockNumber)
+
+		rollupClA, err := dial.DialRollupClientWithTimeout(context.Background(), time.Second*15, logger, s2.OpNode(chainA).UserRPC().RPC())
+		require.NoError(t, err)
+
+		// Now wait for the dependency to be visible in the L2 (receipt needs to be picked up)
+		require.Eventually(t, func() bool {
+			status, err := rollupClA.SyncStatus(context.Background())
+			require.NoError(t, err)
+			return status.CrossUnsafeL2.L1Origin.Number >= depRec.BlockNumber.Uint64()
+		}, time.Second*30, time.Second, "wait for L1 origin to match dependency L1 block")
+		t.Log("Dependency information has been processed in L2 block")
 
 		// emit log on chain A
 		emitRec := s2.EmitData(chainA, "Alice", "hello world")
 
-		rollupCl, err := dial.DialRollupClientWithTimeout(context.Background(), time.Second*15, logger, s2.OpNode(chainA).UserRPC().RPC())
-		require.NoError(t, err)
-
 		// Wait for initiating side to become cross-unsafe
 		require.Eventually(t, func() bool {
-			status, err := rollupCl.SyncStatus(context.Background())
+			status, err := rollupClA.SyncStatus(context.Background())
 			require.NoError(t, err)
 			return status.CrossUnsafeL2.Number >= emitRec.BlockNumber.Uint64()
 		}, time.Second*30, time.Second, "wait for emitted data to become cross-unsafe")
