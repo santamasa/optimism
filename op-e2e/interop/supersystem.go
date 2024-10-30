@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"github.com/ethereum-optimism/optimism/op-service/predeploys"
+	"github.com/ethereum/go-ethereum/eth/ethconfig"
+	gn "github.com/ethereum/go-ethereum/node"
 	"math/big"
 	"os"
 	"path"
@@ -251,7 +253,11 @@ func (s *interopE2ESystem) newOperatorKeysForL2(l2Out *interopgen.L2Output) map[
 func (s *interopE2ESystem) newGethForL2(id string, l2Out *interopgen.L2Output) *geth.GethInstance {
 	jwtPath := writeDefaultJWT(s.t)
 	name := "l2-" + id
-	l2Geth, err := geth.InitL2(name, l2Out.Genesis, jwtPath)
+	l2Geth, err := geth.InitL2(name, l2Out.Genesis, jwtPath,
+		func(ethCfg *ethconfig.Config, nodeCfg *gn.Config) error {
+			ethCfg.InteropMessageRPC = s.supervisor.RPC()
+			return nil
+		})
 	require.NoError(s.t, err)
 	require.NoError(s.t, l2Geth.Node.Start())
 	s.t.Cleanup(func() {
@@ -683,6 +689,7 @@ func (s *interopE2ESystem) ExecuteMessage(
 	}
 	tx, err := contract.InboxTransactor.ExecuteMessage(auth, identifier, target, message)
 	require.NoError(s.t, err)
+	s.logger.Info("Executing message", "tx", tx.Hash(), "to", tx.To(), "target", target, "data", hexutil.Bytes(tx.Data()))
 	return bind.WaitMined(ctx, s.L2GethClient(id), tx)
 }
 

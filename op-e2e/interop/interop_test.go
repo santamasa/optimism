@@ -3,7 +3,9 @@ package interop
 import (
 	"bytes"
 	"context"
+	"github.com/ethereum-optimism/optimism/op-e2e/e2eutils/wait"
 	"github.com/ethereum-optimism/optimism/op-service/dial"
+	oplog "github.com/ethereum-optimism/optimism/op-service/log"
 	"github.com/ethereum-optimism/optimism/op-service/solabi"
 	"github.com/ethereum-optimism/optimism/op-service/testlog"
 	"github.com/ethereum/go-ethereum/log"
@@ -201,6 +203,9 @@ func TestInteropTrivial_EmitLogs(t *testing.T) {
 }
 
 func TestInteropBlockBuilding(t *testing.T) {
+	logger := testlog.Logger(t, log.LevelInfo)
+	oplog.SetGlobalLogHandler(logger.Handler())
+
 	test := func(t *testing.T, s2 SuperSystem) {
 		ids := s2.L2IDs()
 		chainA := ids[0]
@@ -212,7 +217,6 @@ func TestInteropBlockBuilding(t *testing.T) {
 		// emit log on chain A
 		emitRec := s2.EmitData(chainA, "Alice", "hello world")
 
-		logger := testlog.Logger(t, log.LevelInfo)
 		rollupCl, err := dial.DialRollupClientWithTimeout(context.Background(), time.Second*15, logger, s2.OpNode(chainA).UserRPC().RPC())
 		require.NoError(t, err)
 
@@ -222,6 +226,7 @@ func TestInteropBlockBuilding(t *testing.T) {
 			require.NoError(t, err)
 			return status.CrossUnsafeL2.Number >= emitRec.BlockNumber.Uint64()
 		}, time.Second*30, time.Second, "wait for emitted data to become cross-unsafe")
+		t.Logf("Reached cross-unsafe block %d", emitRec.BlockNumber.Uint64())
 
 		// Identify the log
 		require.Len(t, emitRec.Logs, 1)
@@ -244,19 +249,25 @@ func TestInteropBlockBuilding(t *testing.T) {
 
 		// submit executing txs on B
 
-		t.Run("invalid executing msg", func(t *testing.T) {
+		t.Log("Testing invalid message")
+		{
 			bobAddr := s2.Address(chainA, "Bob") // direct it to a random account without code
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 			defer cancel()
 			// Send an executing message, but with different payload.
 			// We expect the miner to be unable to include this tx, and confirmation to thus time out.
-			_, err := s2.ExecuteMessage(ctx, chainB, "Alice", identifier, bobAddr, []byte("different message"))
+			rec, err := s2.ExecuteMessage(ctx, chainB, "Alice", identifier, bobAddr, []byte("different message"))
+			if err == nil { // Temporary workaround, to view why the executing message failed onchain, if it was confirmed.
+				_, err = wait.ForReceiptOK(ctx, s2.L2GethClient(chainB), rec.TxHash)
+				require.NoError(t, err)
+			}
 			require.NotNil(t, err)
 			require.ErrorIs(t, err, ctx.Err())
 			require.ErrorIs(t, ctx.Err(), context.DeadlineExceeded)
-		})
+		}
 
-		t.Run("valid executing msg", func(t *testing.T) {
+		t.Log("Testing valid message now")
+		{
 			bobAddr := s2.Address(chainA, "Bob") // direct it to a random account without code
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 			defer cancel()
@@ -264,7 +275,8 @@ func TestInteropBlockBuilding(t *testing.T) {
 			receipt, err := s2.ExecuteMessage(ctx, chainB, "Alice", identifier, bobAddr, msgPayload)
 			require.NoError(t, err, "expecting tx to be confirmed")
 			t.Logf("confirmed executing msg in block %s", receipt.BlockNumber)
-		})
+		}
+		t.Log("Done")
 	}
 	setupAndRun(t, test)
 }
