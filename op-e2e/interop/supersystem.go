@@ -736,12 +736,16 @@ func (s *interopE2ESystem) AddDependency(id string, dep *big.Int) *types.Receipt
 	// even though it should be a separate dependency-set-manager address.
 	secret, err := s.hdWallet.Secret(devkeys.ChainOperatorKey{
 		ChainID: s.l2s[id].chainID,
-		Role:    devkeys.L1ProxyAdminOwnerRole,
+		Role:    devkeys.SystemConfigOwner,
 	})
 	require.NoError(s.t, err)
 
 	auth, err := bind.NewKeyedTransactorWithChainID(secret, s.worldOutput.L1.Genesis.Config.ChainID)
 	require.NoError(s.t, err)
+
+	balance, err := s.l1GethClient.BalanceAt(context.Background(), crypto.PubkeyToAddress(secret.PublicKey), nil)
+	require.NoError(s.t, err)
+	require.False(s.t, balance.Sign() == 0, "system config owner needs a balance")
 
 	auth.GasLimit = uint64(3000000)
 	auth.GasPrice = big.NewInt(20000000000)

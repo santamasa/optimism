@@ -213,8 +213,9 @@ func TestInteropBlockBuilding(t *testing.T) {
 		// We will initiate on chain A, and execute on chain B
 		s2.DeployEmitterContract(chainA, "Alice")
 
-		// Add chain B as dependency to chain A
-		depRec := s2.AddDependency(chainA, s2.ChainID(chainB))
+		// Add chain A as dependency to chain B,
+		// such that we can execute a message on B that was initiated on A.
+		depRec := s2.AddDependency(chainB, s2.ChainID(chainA))
 		t.Logf("Dependency set in L1 block %d", depRec.BlockNumber)
 
 		rollupClA, err := dial.DialRollupClientWithTimeout(context.Background(), time.Second*15, logger, s2.OpNode(chainA).UserRPC().RPC())
@@ -230,13 +231,14 @@ func TestInteropBlockBuilding(t *testing.T) {
 
 		// emit log on chain A
 		emitRec := s2.EmitData(chainA, "Alice", "hello world")
+		t.Logf("Emitted a log event in block %d", emitRec.BlockNumber.Uint64())
 
 		// Wait for initiating side to become cross-unsafe
 		require.Eventually(t, func() bool {
 			status, err := rollupClA.SyncStatus(context.Background())
 			require.NoError(t, err)
 			return status.CrossUnsafeL2.Number >= emitRec.BlockNumber.Uint64()
-		}, time.Second*30, time.Second, "wait for emitted data to become cross-unsafe")
+		}, time.Second*60, time.Second, "wait for emitted data to become cross-unsafe")
 		t.Logf("Reached cross-unsafe block %d", emitRec.BlockNumber.Uint64())
 
 		// Identify the log

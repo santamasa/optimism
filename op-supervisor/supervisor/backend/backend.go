@@ -334,12 +334,17 @@ func (su *SupervisorBackend) CheckMessages(
 	su.mu.RLock()
 	defer su.mu.RUnlock()
 
+	su.logger.Debug("Checking messages", "count", len(messages), "minSafety", minSafety)
+
 	for _, msg := range messages {
+		su.logger.Debug("Checking message", "identifier", msg.Identifier, "payloadHash", msg.PayloadHash)
 		safety, err := su.CheckMessage(msg.Identifier, msg.PayloadHash)
 		if err != nil {
+			su.logger.Error("Check message failed", "err", err)
 			return fmt.Errorf("failed to check message: %w", err)
 		}
 		if !safety.AtLeastAsSafe(minSafety) {
+			su.logger.Error("Message is not sufficiently safe", "safety", safety, "minSafety", minSafety)
 			return fmt.Errorf("message %v (safety level: %v) does not meet the minimum safety %v",
 				msg.Identifier,
 				safety,
