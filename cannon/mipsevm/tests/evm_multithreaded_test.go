@@ -8,7 +8,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
@@ -409,31 +408,25 @@ func TestEVM_SysClone_FlagHandling(t *testing.T) {
 
 			var err error
 			var stepWitness *mipsevm.StepWitness
-			us := multithreaded.NewInstrumentedState(state, nil, os.Stdout, os.Stderr, nil, nil)
+			goVm := multithreaded.NewInstrumentedState(state, nil, os.Stdout, os.Stderr, nil, nil)
 			if !c.valid {
 				// The VM should exit
-				stepWitness, err = us.Step(true)
+				stepWitness, err = goVm.Step(true)
 				require.NoError(t, err)
 				require.Equal(t, curStep+1, state.GetStep())
-				require.Equal(t, true, us.GetState().GetExited())
-				require.Equal(t, uint8(mipsevm.VMStatusPanic), us.GetState().GetExitCode())
+				require.Equal(t, true, goVm.GetState().GetExited())
+				require.Equal(t, uint8(mipsevm.VMStatusPanic), goVm.GetState().GetExitCode())
 				require.Equal(t, 1, state.ThreadCount())
 			} else {
-				stepWitness, err = us.Step(true)
+				stepWitness, err = goVm.Step(true)
 				require.NoError(t, err)
 				require.Equal(t, curStep+1, state.GetStep())
-				require.Equal(t, false, us.GetState().GetExited())
-				require.Equal(t, uint8(0), us.GetState().GetExitCode())
+				require.Equal(t, false, goVm.GetState().GetExited())
+				require.Equal(t, uint8(0), goVm.GetState().GetExitCode())
 				require.Equal(t, 2, state.ThreadCount())
 			}
 
-			evm := testutil.NewMIPSEVM(contracts)
-			testutil.LogStepFailureAtCleanup(t, evm)
-
-			evmPost := evm.Step(t, stepWitness, curStep, multithreaded.GetStateHashFn())
-			goPost, _ := us.GetState().EncodeWitness()
-			require.Equal(t, hexutil.Bytes(goPost).String(), hexutil.Bytes(evmPost).String(),
-				"mipsevm produced different state than EVM")
+			testutil.ValidateEVM(t, stepWitness, curStep, goVm, multithreaded.GetStateHashFn(), contracts)
 		})
 	}
 }
