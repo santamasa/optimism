@@ -1190,13 +1190,12 @@ func TestEVM_EmptyThreadStacks(t *testing.T) {
 		for _, proofCase := range proofVariations {
 			testName := fmt.Sprintf("%v (proofCase=%v)", c.name, proofCase.Name)
 			t.Run(testName, func(t *testing.T) {
-				testutil.TemporarilySkip64BitTests(t)
 				goVm, state, contracts := setup(t, i*123, nil)
 				mttestutil.SetupThreads(int64(i*123), state, c.traverseRight, 0, c.otherStackSize)
 
 				require.PanicsWithValue(t, "Active thread stack is empty", func() { _, _ = goVm.Step(false) })
 
-				errorMessage := "MIPS2: active thread stack is empty"
+				errorMessage := "active thread stack is empty"
 				testutil.AssertEVMReverts(t, state, contracts, tracer, proofCase.Proof, testutil.CreateErrorStringMatcher(errorMessage))
 			})
 		}
