@@ -131,8 +131,11 @@ contract Bytes_slice_TestFail is Test {
         uint256 maxStart = _input.length == 0 ? 0 : _input.length - 1;
         _start = bound(_start, 0, maxStart);
 
-        // The length needs to be large enough that the end point will be out of bounds, but not overflow
-        _length = bound(_length, _input.length - _start, type(uint256).max - _start - 32);
+        // The length needs to be large enough that the end point will be out of bounds...
+        uint256 minLength = _input.length - _start + 1;
+        // ...but not so large that it will overflow.
+        uint256 maxLength = type(uint256).max - _start - 31;
+        _length = bound(_length, minLength, maxLength);
 
         // Expect a revert
         vm.expectRevert("slice_outOfBounds");
