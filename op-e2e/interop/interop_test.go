@@ -1,7 +1,12 @@
 package interop
 
 import (
+	"bytes"
 	"context"
+	"github.com/ethereum-optimism/optimism/op-service/dial"
+	"github.com/ethereum-optimism/optimism/op-service/solabi"
+	"github.com/ethereum-optimism/optimism/op-service/testlog"
+	"github.com/ethereum/go-ethereum/log"
 	"math/big"
 	"sync"
 	"testing"
@@ -175,11 +180,11 @@ func TestInteropTrivial_EmitLogs(t *testing.T) {
 				ChainID:     types.ChainIDFromBig(s2.ChainID(chainID)),
 			}
 
-			safety, error := supervisor.CheckMessage(context.Background(),
+			safety, err := supervisor.CheckMessage(context.Background(),
 				identifier,
 				logHash,
 			)
-			require.ErrorIs(t, error, expectedError)
+			require.ErrorIs(t, err, expectedError)
 			// the supervisor could progress the safety level more quickly than we expect,
 			// which is why we check for a minimum safety level
 			require.True(t, safety.AtLeastAsSafe(expectedSafety), "log: %v should be at least %s, but is %s", log, expectedSafety.String(), safety.String())
@@ -191,6 +196,75 @@ func TestInteropTrivial_EmitLogs(t *testing.T) {
 		for _, log := range logsB {
 			requireMessage(chainB, log, types.CrossSafe, nil)
 		}
+	}
+	setupAndRun(t, test)
+}
+
+func TestInteropBlockBuilding(t *testing.T) {
+	test := func(t *testing.T, s2 SuperSystem) {
+		ids := s2.L2IDs()
+		chainA := ids[0]
+		chainB := ids[1]
+		// We will initiate on chain A, and execute on chain B
+		s2.DeployEmitterContract(chainA, "Alice")
+		s2.BindInboxContract(chainB) // the inbox is a predeploy, just need bindings, no deployment
+
+		// emit log on chain A
+		emitRec := s2.EmitData(chainA, "Alice", "hello world")
+
+		logger := testlog.Logger(t, log.LevelInfo)
+		rollupCl, err := dial.DialRollupClientWithTimeout(context.Background(), time.Second*15, logger, s2.OpNode(chainA).UserRPC().RPC())
+		require.NoError(t, err)
+
+		// Wait for initiating side to become cross-unsafe
+		require.Eventually(t, func() bool {
+			status, err := rollupCl.SyncStatus(context.Background())
+			require.NoError(t, err)
+			return status.CrossUnsafeL2.Number >= emitRec.BlockNumber.Uint64()
+		}, time.Second*30, time.Second, "wait for emitted data to become cross-unsafe")
+
+		// Identify the log
+		require.Len(t, emitRec.Logs, 1)
+		ev := emitRec.Logs[0]
+		ethCl := s2.L2GethClient(chainA)
+		header, err := ethCl.HeaderByHash(context.Background(), emitRec.BlockHash)
+		require.NoError(t, err)
+		identifier := types.Identifier{
+			Origin:      ev.Address,
+			BlockNumber: ev.BlockNumber,
+			LogIndex:    uint64(ev.Index),
+			Timestamp:   header.Time,
+			ChainID:     types.ChainIDFromBig(s2.ChainID(chainA)),
+		}
+		var msgPayloadBuf bytes.Buffer
+		require.NoError(t, solabi.WriteUint256(&msgPayloadBuf, big.NewInt(0x20)))
+		require.NoError(t, solabi.WriteUint256(&msgPayloadBuf, big.NewInt(int64(len("hello world")))))
+		_, _ = msgPayloadBuf.WriteString("hello world")
+		msgPayload := msgPayloadBuf.Bytes()
+
+		// submit executing txs on B
+
+		t.Run("invalid executing msg", func(t *testing.T) {
+			bobAddr := s2.Address(chainA, "Bob") // direct it to a random account without code
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+			defer cancel()
+			// Send an executing message, but with different payload.
+			// We expect the miner to be unable to include this tx, and confirmation to thus time out.
+			_, err := s2.ExecuteMessage(ctx, chainB, "Alice", identifier, bobAddr, []byte("different message"))
+			require.NotNil(t, err)
+			require.ErrorIs(t, err, ctx.Err())
+			require.ErrorIs(t, ctx.Err(), context.DeadlineExceeded)
+		})
+
+		t.Run("valid executing msg", func(t *testing.T) {
+			bobAddr := s2.Address(chainA, "Bob") // direct it to a random account without code
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+			defer cancel()
+			// Send an executing message with the correct identifier / payload
+			receipt, err := s2.ExecuteMessage(ctx, chainB, "Alice", identifier, bobAddr, msgPayload)
+			require.NoError(t, err, "expecting tx to be confirmed")
+			t.Logf("confirmed executing msg in block %s", receipt.BlockNumber)
+		})
 	}
 	setupAndRun(t, test)
 }

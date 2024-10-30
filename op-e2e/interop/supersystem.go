@@ -3,6 +3,7 @@ package interop
 import (
 	"context"
 	"crypto/ecdsa"
+	"github.com/ethereum-optimism/optimism/op-service/predeploys"
 	"math/big"
 	"os"
 	"path"
@@ -33,7 +34,8 @@ import (
 	"github.com/ethereum-optimism/optimism/op-e2e/e2eutils/opnode"
 	"github.com/ethereum-optimism/optimism/op-e2e/e2eutils/services"
 	"github.com/ethereum-optimism/optimism/op-e2e/e2eutils/setuputils"
-	emit "github.com/ethereum-optimism/optimism/op-e2e/interop/contracts"
+	"github.com/ethereum-optimism/optimism/op-e2e/interop/contracts/bindings/emit"
+	"github.com/ethereum-optimism/optimism/op-e2e/interop/contracts/bindings/inbox"
 	"github.com/ethereum-optimism/optimism/op-e2e/system/helpers"
 	"github.com/ethereum-optimism/optimism/op-node/node"
 	"github.com/ethereum-optimism/optimism/op-node/p2p"
@@ -94,8 +96,18 @@ type SuperSystem interface {
 	Address(network string, username string) common.Address
 	// Deploy the Emitter Contract, which emits Event Logs
 	DeployEmitterContract(network string, username string) common.Address
+	BindInboxContract(id string)
 	// Use the Emitter Contract to emit an Event Log
 	EmitData(network string, username string, data string) *types.Receipt
+	// ExecuteMessage calls the CrossL2Inbox executeMessage function
+	ExecuteMessage(
+		ctx context.Context,
+		id string,
+		sender string,
+		msgIdentifier supervisortypes.Identifier,
+		target common.Address,
+		message []byte,
+	) (*types.Receipt, error)
 	// Access a contract on a network by name
 	Contract(network string, contractName string) interface{}
 }
@@ -637,6 +649,41 @@ func (s *interopE2ESystem) SendL2Tx(
 		s.L2GethClient(id),
 		&senderSecret,
 		newApply)
+}
+
+func (s *interopE2ESystem) BindInboxContract(id string) {
+	contract, err := inbox.NewInbox(predeploys.CrossL2InboxAddr, s.L2GethClient(id))
+	require.NoError(s.t, err)
+	s.l2s[id].contracts["inbox"] = contract
+}
+
+func (s *interopE2ESystem) ExecuteMessage(
+	ctx context.Context,
+	id string,
+	sender string,
+	msgIdentifier supervisortypes.Identifier,
+	target common.Address,
+	message []byte,
+) (*types.Receipt, error) {
+	secret := s.UserKey(id, sender)
+	auth, err := bind.NewKeyedTransactorWithChainID(&secret, s.l2s[id].chainID)
+
+	require.NoError(s.t, err)
+
+	auth.GasLimit = uint64(3000_000)
+	auth.GasPrice = big.NewInt(20_000_000_000)
+
+	contract := s.Contract(id, "inbox").(*inbox.Inbox)
+	identifier := inbox.Identifier{
+		Origin:      msgIdentifier.Origin,
+		BlockNumber: new(big.Int).SetUint64(msgIdentifier.BlockNumber),
+		LogIndex:    new(big.Int).SetUint64(msgIdentifier.LogIndex),
+		Timestamp:   new(big.Int).SetUint64(msgIdentifier.Timestamp),
+		ChainId:     msgIdentifier.ChainID.ToBig(),
+	}
+	tx, err := contract.InboxTransactor.ExecuteMessage(auth, identifier, target, message)
+	require.NoError(s.t, err)
+	return bind.WaitMined(ctx, s.L2GethClient(id), tx)
 }
 
 func (s *interopE2ESystem) DeployEmitterContract(

@@ -190,6 +190,10 @@ func (id ChainID) ToUInt32() (uint32, error) {
 	return uint32(v64), nil
 }
 
+func (id *ChainID) ToBig() *big.Int {
+	return (*uint256.Int)(id).ToBig()
+}
+
 func (id ChainID) MarshalText() ([]byte, error) {
 	return []byte(id.String()), nil
 }
