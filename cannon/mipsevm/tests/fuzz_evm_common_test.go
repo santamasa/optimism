@@ -32,7 +32,7 @@ func doFuzzStateSyscallBrk(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		for _, v := range versions {
 			t.Run(v.Name, func(t *testing.T) {
-				TemporarilySkip64BitTests(t)
+				testutil.TemporarilySkip64BitTests(t)
 				goVm := v.VMFactory(nil, os.Stdout, os.Stderr, testutil.CreateLogger(), testutil.WithRandomization(seed))
 				state := goVm.GetState()
 				state.GetRegistersRef()[2] = arch.SysBrk
@@ -76,7 +76,7 @@ func doFuzzStateSyscallMmap(f *testing.F) {
 	f.Fuzz(func(t *testing.T, addr Word, siz Word, heap Word, seed int64) {
 		for _, v := range versions {
 			t.Run(v.Name, func(t *testing.T) {
-				TemporarilySkip64BitTests(t)
+				testutil.TemporarilySkip64BitTests(t)
 				goVm := v.VMFactory(nil, os.Stdout, os.Stderr, testutil.CreateLogger(),
 					testutil.WithRandomization(seed), testutil.WithHeap(heap))
 				state := goVm.GetState()
@@ -134,7 +134,7 @@ func doFuzzStateSyscallExitGroup(f *testing.F) {
 	f.Fuzz(func(t *testing.T, exitCode uint8, seed int64) {
 		for _, v := range versions {
 			t.Run(v.Name, func(t *testing.T) {
-				TemporarilySkip64BitTests(t)
+				testutil.TemporarilySkip64BitTests(t)
 				goVm := v.VMFactory(nil, os.Stdout, os.Stderr, testutil.CreateLogger(),
 					testutil.WithRandomization(seed))
 				state := goVm.GetState()
@@ -172,7 +172,7 @@ func doFuzzStateSyscallFcntl(f *testing.F) {
 	f.Fuzz(func(t *testing.T, fd Word, cmd Word, seed int64) {
 		for _, v := range versions {
 			t.Run(v.Name, func(t *testing.T) {
-				TemporarilySkip64BitTests(t)
+				testutil.TemporarilySkip64BitTests(t)
 				goVm := v.VMFactory(nil, os.Stdout, os.Stderr, testutil.CreateLogger(),
 					testutil.WithRandomization(seed))
 				state := goVm.GetState()
@@ -237,7 +237,7 @@ func doFuzzStateHintRead(f *testing.F) {
 	f.Fuzz(func(t *testing.T, addr Word, count Word, seed int64) {
 		for _, v := range versions {
 			t.Run(v.Name, func(t *testing.T) {
-				TemporarilySkip64BitTests(t)
+				testutil.TemporarilySkip64BitTests(t)
 				preimageData := []byte("hello world")
 				preimageKey := preimage.Keccak256Key(crypto.Keccak256Hash(preimageData)).PreimageKey()
 				oracle := testutil.StaticOracle(t, preimageData) // only used for hinting
@@ -355,7 +355,7 @@ func doFuzzStateHintWrite(f *testing.F) {
 	f.Fuzz(func(t *testing.T, addr Word, count Word, hint1, hint2, hint3 []byte, randSeed int64) {
 		for _, v := range versions {
 			t.Run(v.Name, func(t *testing.T) {
-				TemporarilySkip64BitTests(t)
+				testutil.TemporarilySkip64BitTests(t)
 				// Make sure pc does not overlap with hint data in memory
 				pc := Word(0)
 				if addr <= 8 {
@@ -446,7 +446,7 @@ func doFuzzStatePreimageWrite(f *testing.F) {
 	f.Fuzz(func(t *testing.T, addr arch.Word, count arch.Word, seed int64) {
 		for _, v := range versions {
 			t.Run(v.Name, func(t *testing.T) {
-				TemporarilySkip64BitTests(t)
+				testutil.TemporarilySkip64BitTests(t)
 				// Make sure pc does not overlap with preimage data in memory
 				pc := Word(0)
 				if addr <= 8 {
@@ -500,11 +500,4 @@ func doFuzzStatePreimageWrite(f *testing.F) {
 			})
 		}
 	})
-}
-
-func TemporarilySkip64BitTests(t *testing.T) {
-	if !arch.IsMips32 {
-		// TODO(#12598) Update and enable these tests
-		t.Skip("Skipping 64-bit test")
-	}
 }

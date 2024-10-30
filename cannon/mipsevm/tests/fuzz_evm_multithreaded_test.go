@@ -24,7 +24,7 @@ func FuzzStateSyscallCloneMT64(f *testing.F) {
 func doFuzzStateSyscallCloneMT(f *testing.F) {
 	v := GetMultiThreadedTestCase(f)
 	f.Fuzz(func(t *testing.T, nextThreadId, stackPtr Word, seed int64) {
-		TemporarilySkip64BitTests(t)
+		testutil.TemporarilySkip64BitTests(t)
 		goVm := v.VMFactory(nil, os.Stdout, os.Stderr, testutil.CreateLogger(), testutil.WithRandomization(seed))
 		state := mttestutil.GetMtState(t, goVm)
 		// Update existing threads to avoid collision with nextThreadId
