@@ -218,6 +218,7 @@ func (s *interopE2ESystem) prepareL1() (*fakebeacon.FakeBeacon, *geth.GethInstan
 	require.NoError(s.t, err)
 	require.NoError(s.t, l1Geth.Node.Start())
 	s.t.Cleanup(func() {
+		s.t.Logf("Closing L1 geth")
 		_ = l1Geth.Close()
 	})
 	return bcn, l1Geth
@@ -265,7 +266,9 @@ func (s *interopE2ESystem) newGethForL2(id string, l2Out *interopgen.L2Output) *
 	require.NoError(s.t, err)
 	require.NoError(s.t, l2Geth.Node.Start())
 	s.t.Cleanup(func() {
-		_ = l2Geth.Close()
+		s.t.Logf("Closing L2 geth of chain %s", id)
+		closeErr := l2Geth.Close()
+		s.t.Logf("Closed L2 geth of chain %s: %v", id, closeErr)
 	})
 	return l2Geth
 }
@@ -328,7 +331,9 @@ func (s *interopE2ESystem) newNodeForL2(
 	s.t.Cleanup(func() {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel() // force-quit
+		s.t.Logf("Closing op-node of chain %s", id)
 		_ = opNode.Stop(ctx)
+		s.t.Logf("Closed op-node of chain %s", id)
 	})
 	return opNode
 }
@@ -412,7 +417,9 @@ func (s *interopE2ESystem) newBatcherForL2(
 	s.t.Cleanup(func() {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel() // force-quit
+		s.t.Logf("Closing batcher of chain %s", id)
 		_ = batcher.Stop(ctx)
+		s.t.Logf("Closed batcher of chain %s", id)
 	})
 	return batcher
 }
@@ -493,7 +500,9 @@ func (s *interopE2ESystem) prepareSupervisor() *supervisor.SupervisorService {
 	s.t.Cleanup(func() {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel() // force-quit
-		_ = super.Stop(ctx)
+		s.t.Logf("Closing supervisor")
+		closeErr := super.Stop(ctx)
+		s.t.Logf("Closed supervisor: %v", closeErr)
 	})
 	return super
 }
@@ -533,6 +542,15 @@ func (s *interopE2ESystem) prepare(t *testing.T, w worldResourcePaths) {
 		err := s.SupervisorClient().AddL2RPC(ctx, l2.l2Geth.UserRPC().RPC())
 		require.NoError(s.t, err, "failed to add L2 RPC to supervisor")
 	}
+
+	// Try to close the op-supervisor first
+	s.t.Cleanup(func() {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel() // force-quit
+		s.t.Logf("Closing supervisor")
+		closeErr := s.supervisor.Stop(ctx)
+		s.t.Logf("Closed supervisor: %v", closeErr)
+	})
 }
 
 // AddUser adds a user to the system by creating a user key for each L2.

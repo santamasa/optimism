@@ -1,12 +1,9 @@
 package interop
 
 import (
-	"bytes"
 	"context"
-	"github.com/ethereum-optimism/optimism/op-e2e/e2eutils/wait"
 	"github.com/ethereum-optimism/optimism/op-service/dial"
 	oplog "github.com/ethereum-optimism/optimism/op-service/log"
-	"github.com/ethereum-optimism/optimism/op-service/solabi"
 	"github.com/ethereum-optimism/optimism/op-service/testlog"
 	"github.com/ethereum/go-ethereum/log"
 	"math/big"
@@ -254,11 +251,18 @@ func TestInteropBlockBuilding(t *testing.T) {
 			Timestamp:   header.Time,
 			ChainID:     types.ChainIDFromBig(s2.ChainID(chainA)),
 		}
-		var msgPayloadBuf bytes.Buffer
-		require.NoError(t, solabi.WriteUint256(&msgPayloadBuf, big.NewInt(0x20)))
-		require.NoError(t, solabi.WriteUint256(&msgPayloadBuf, big.NewInt(int64(len("hello world")))))
-		_, _ = msgPayloadBuf.WriteString("hello world")
-		msgPayload := msgPayloadBuf.Bytes()
+
+		msgPayload := types.LogToMessagePayload(ev)
+		payloadHash := crypto.Keccak256Hash(msgPayload)
+		logHash := types.PayloadHashToLogHash(payloadHash, identifier.Origin)
+		t.Logf("expected payload hash: %s", payloadHash)
+		t.Logf("expected log hash: %s", logHash)
+
+		invalidPayload := []byte("test invalid message")
+		invalidPayloadHash := crypto.Keccak256Hash(invalidPayload)
+		invalidLogHash := types.PayloadHashToLogHash(invalidPayloadHash, identifier.Origin)
+		t.Logf("invalid payload hash: %s", invalidPayloadHash)
+		t.Logf("invalid log hash: %s", invalidLogHash)
 
 		// submit executing txs on B
 
@@ -269,11 +273,7 @@ func TestInteropBlockBuilding(t *testing.T) {
 			defer cancel()
 			// Send an executing message, but with different payload.
 			// We expect the miner to be unable to include this tx, and confirmation to thus time out.
-			rec, err := s2.ExecuteMessage(ctx, chainB, "Alice", identifier, bobAddr, []byte("different message"))
-			if err == nil { // Temporary workaround, to view why the executing message failed onchain, if it was confirmed.
-				_, err = wait.ForReceiptOK(ctx, s2.L2GethClient(chainB), rec.TxHash)
-				require.NoError(t, err)
-			}
+			_, err := s2.ExecuteMessage(ctx, chainB, "Alice", identifier, bobAddr, invalidPayload)
 			require.NotNil(t, err)
 			require.ErrorIs(t, err, ctx.Err())
 			require.ErrorIs(t, ctx.Err(), context.DeadlineExceeded)
@@ -285,9 +285,9 @@ func TestInteropBlockBuilding(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 			defer cancel()
 			// Send an executing message with the correct identifier / payload
-			receipt, err := s2.ExecuteMessage(ctx, chainB, "Alice", identifier, bobAddr, msgPayload)
+			rec, err := s2.ExecuteMessage(ctx, chainB, "Alice", identifier, bobAddr, msgPayload)
 			require.NoError(t, err, "expecting tx to be confirmed")
-			t.Logf("confirmed executing msg in block %s", receipt.BlockNumber)
+			t.Logf("confirmed executing msg in block %s", rec.BlockNumber)
 		}
 		t.Log("Done")
 	}
