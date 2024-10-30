@@ -199,8 +199,8 @@ jobs:
       - run:
           name: Upload Cannon coverage
           command: |
-            codecov --verbose --clean --flags cannon-go-tests-32 -f ./coverage-32.xml
-            codecov --verbose --clean --flags cannon-go-tests-64 -f ./coverage-64.xml
+            codecov --verbose --clean --flags cannon-go-tests-32 -f ./coverage-32.out
+            codecov --verbose --clean --flags cannon-go-tests-64 -f ./coverage-64.out
           working_directory: cannon
       - store_test_results:
           path: ./tmp/test-results
