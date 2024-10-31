@@ -539,6 +539,8 @@ func createEnv(
 	artifactsDir := path.Join(monorepoDir, "packages", "contracts-bedrock", "forge-artifacts")
 	artifactsURL, err := url.Parse(fmt.Sprintf("file://%s", artifactsDir))
 	require.NoError(t, err)
+	// moose: update this to point to the new forge artifacts... do we cache them for other tags
+	// somewhere?
 	artifactsLocator := &opcm.ArtifactsLocator{
 		URL: artifactsURL,
 	}
