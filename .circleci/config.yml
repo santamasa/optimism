@@ -1386,7 +1386,8 @@ workflows:
             - go-mod-download
             - go-lint
             - cannon-build-test-vectors
-            - cannon-go-lint-and-test
+            - cannon-go-lint-and-test-32-bit
+            - cannon-go-lint-and-test-64-bit
             - check-generated-mocks-op-node
             - check-generated-mocks-op-service
             - go-mod-download
