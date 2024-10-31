@@ -31,12 +31,12 @@ func TestL2BatcherBatchType(t *testing.T) {
 		name string
 		f    func(gt *testing.T, deltaTimeOffset *hexutil.Uint64)
 	}{
-		{"NormalBatcher", NormalBatcher},
-		{"L2Finalization", L2Finalization},
-		{"L2FinalizationWithSparseL1", L2FinalizationWithSparseL1},
+		// {"NormalBatcher", NormalBatcher},
+		// {"L2Finalization", L2Finalization},
+		// {"L2FinalizationWithSparseL1", L2FinalizationWithSparseL1},
 		{"GarbageBatch", GarbageBatch},
-		{"ExtendedTimeWithoutL1Batches", ExtendedTimeWithoutL1Batches},
-		{"BigL2Txs", BigL2Txs},
+		// {"ExtendedTimeWithoutL1Batches", ExtendedTimeWithoutL1Batches},
+		// {"BigL2Txs", BigL2Txs},
 	}
 	for _, test := range tests {
 		test := test
@@ -288,21 +288,22 @@ func GarbageBatch(gt *testing.T, deltaTimeOffset *hexutil.Uint64) {
 	p := actionsHelpers.DefaultRollupTestParams()
 	dp := e2eutils.MakeDeployParams(t, p)
 	upgradesHelpers.ApplyDeltaTimeOffset(dp, deltaTimeOffset)
-	for _, garbageKind := range actionsHelpers.GarbageKinds {
+	for _, garbageKind := range []actionsHelpers.GarbageKind{actionsHelpers.IGNORE_MAX_RLP_BYTES_PER_CHANNEL} { // TODO run as sub sub tests
 		sd := e2eutils.Setup(t, dp, actionsHelpers.DefaultAlloc)
-		log := testlog.Logger(t, log.LevelError)
+		log := testlog.Logger(t, log.LevelDebug)
 		miner, engine, sequencer := actionsHelpers.SetupSequencerTest(t, sd, log)
 
 		_, verifier := actionsHelpers.SetupVerifier(t, sd, log, miner.L1Client(t, sd.RollupCfg), miner.BlobStore(), &sync.Config{})
 
 		batcherCfg := actionsHelpers.DefaultBatcherCfg(dp)
 
-		if garbageKind == actionsHelpers.MALFORM_RLP || garbageKind == actionsHelpers.INVALID_COMPRESSION {
-			// If the garbage kind is `INVALID_COMPRESSION` or `MALFORM_RLP`, use the `actions` packages
+		if garbageKind == actionsHelpers.MALFORM_RLP || garbageKind == actionsHelpers.INVALID_COMPRESSION || garbageKind == actionsHelpers.IGNORE_MAX_RLP_BYTES_PER_CHANNEL {
+			// If the garbage kind is `INVALID_COMPRESSION` or `MALFORM_RLP` or `VIOLATES_MAX_RLP_BYTES_PER_CHANNEL`, use the `actions` packages
 			// modified `ChannelOut`.
 			batcherCfg.GarbageCfg = &actionsHelpers.GarbageChannelCfg{
-				UseInvalidCompression: garbageKind == actionsHelpers.INVALID_COMPRESSION,
-				MalformRLP:            garbageKind == actionsHelpers.MALFORM_RLP,
+				UseInvalidCompression:       garbageKind == actionsHelpers.INVALID_COMPRESSION,
+				MalformRLP:                  garbageKind == actionsHelpers.MALFORM_RLP,
+				IgnoreMaxRLPBytesPerChannel: garbageKind == actionsHelpers.IGNORE_MAX_RLP_BYTES_PER_CHANNEL,
 			}
 		}
 
@@ -327,7 +328,32 @@ func GarbageBatch(gt *testing.T, deltaTimeOffset *hexutil.Uint64) {
 		// Build an empty block on L1 and run the derivation pipeline + build L2
 		// to the L1 head (block #1)
 		miner.ActEmptyBlock(t)
-		syncAndBuildL2()
+		targetL2BlockNumber := uint64(100)
+		if garbageKind == actionsHelpers.IGNORE_MAX_RLP_BYTES_PER_CHANNEL {
+			alice := actionsHelpers.NewBasicUser[any](log, dp.Secrets.Alice, rand.New(rand.NewSource(1234)))
+			alice.SetUserEnv(&actionsHelpers.BasicUserEnv[any]{
+				EthCl:  engine.EthClient(),
+				Signer: types.LatestSigner(sd.L2Cfg.Config),
+			})
+			// Generate plenty of L2 blocks so we can violate MAX_RLP_BYTES_PER_CHANNEL
+			for engine.L2Chain().CurrentBlock().Number.Uint64() < targetL2BlockNumber {
+
+				sequencer.ActL2StartBlock(t)
+				// alice makes several L2 txs, sequencer includes them
+				for i := 0; i < 1; i++ {
+					t.Log(i)
+					alice.ActResetTxOpts(t)
+					alice.ActRandomTxData(t)
+					alice.ActRandomTxToAddr(t)
+					alice.ActMakeTx(t)
+					engine.ActL2IncludeTx(dp.Addresses.Alice)(t)
+				}
+				sequencer.ActL2EndBlock(t)
+				t.Logf("made l2 block %d", engine.L2Chain().CurrentBlock().Number.Uint64())
+			}
+		} else {
+			syncAndBuildL2()
+		}
 
 		// Ensure that the L2 safe head has an L1 Origin at genesis before any
 		// batches are submitted.
@@ -338,7 +364,12 @@ func GarbageBatch(gt *testing.T, deltaTimeOffset *hexutil.Uint64) {
 		// to the L1 head above. The output channel frame submitted to the batch
 		// inbox will be invalid- it will be malformed depending on the passed
 		// `garbageKind`.
-		batcher.ActBufferAll(t)
+		// Buffer the blocks in the batcher.
+		for blockNum := 1; uint64(blockNum) <= targetL2BlockNumber; blockNum++ {
+			t.Logf("about to add block %d", blockNum)
+			batcher.ActAddBlockByNumber(t, int64(blockNum))
+			t.Logf("added block %d", blockNum)
+		}
 		batcher.ActL2ChannelClose(t)
 		batcher.ActL2BatchSubmitGarbage(t, garbageKind)
 

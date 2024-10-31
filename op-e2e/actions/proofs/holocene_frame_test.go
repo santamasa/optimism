@@ -3,13 +3,16 @@ package proofs
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	actionsHelpers "github.com/ethereum-optimism/optimism/op-e2e/actions/helpers"
 	"github.com/ethereum-optimism/optimism/op-e2e/actions/proofs/helpers"
+	dtest "github.com/ethereum-optimism/optimism/op-node/rollup/derive/test"
 	"github.com/ethereum-optimism/optimism/op-program/client/claim"
 	"github.com/ethereum-optimism/optimism/op-service/eth"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/rand"
 )
 
 type holoceneExpectations struct {
@@ -68,15 +71,48 @@ func Test_ProgramAction_HoloceneFrames(gt *testing.T) {
 		},
 	}
 
+	co, _ := actionsHelpers.NewGarbageChannelOut(&actionsHelpers.GarbageChannelCfg{IgnoreMaxRLPBytesPerChannel: true})
+
+	rng := rand.New(rand.NewSource(1234))
+
+	for i := 0; i < 100; i++ {
+		block := dtest.RandomL2BlockWithChainIdAndTime(rng, 1000, cfg.L2ChainID, time.Now().Add(time.Duration(i)*time.Second))
+		_, err := co.AddBlock(block)
+		if err != nil {
+			return i + 1, err
+		}
+	}
+
+	t.Log(co.ReadyBytes())
+
+	veryCompressibleCalldata := make([]byte, 49_000)
+	for i := 0; i < len(veryCompressibleCalldata); i++ {
+		veryCompressibleCalldata[i] = 1
+	}
 	runHoloceneDerivationTest := func(gt *testing.T, testCfg *helpers.TestCfg[testCase]) {
 		t := actionsHelpers.NewDefaultTesting(gt)
-		env := helpers.NewL2FaultProofEnv(t, testCfg, helpers.NewTestParams(), helpers.NewBatcherCfg())
+		batcherConfig := helpers.NewBatcherCfg()
+		batcherConfig.GarbageCfg = &actionsHelpers.GarbageChannelCfg{IgnoreMaxRLPBytesPerChannel: true}
+		env := helpers.NewL2FaultProofEnv(t, testCfg, helpers.NewTestParams(), batcherConfig)
 
-		blocks := []uint{1, 2, 3}
-		targetHeadNumber := 3
+		k := 1000
+		blocks := make([]uint, k)
+		for i := 0; i < k; i++ {
+			blocks[i] = uint(i) + 1
+		}
+
+		aliceAddress := env.Alice.Address()
+		targetHeadNumber := k
 		for env.Engine.L2Chain().CurrentBlock().Number.Uint64() < uint64(targetHeadNumber) {
 			env.Sequencer.ActL2StartBlock(t)
-			// Send an L2 tx
+
+			// alice makes several L2 txs, sequencer includes them
+			for i := 0; i < 100; i++ {
+				env.Alice.L2.ActResetTxOpts(t)
+				env.Alice.L2.ActSetTxCalldata(veryCompressibleCalldata)(t)
+				env.Alice.L2.ActMakeTx(t)
+				env.Engine.ActL2IncludeTx(aliceAddress)(t)
+			}
 			env.Alice.L2.ActResetTxOpts(t)
 			env.Alice.L2.ActSetTxToAddr(&env.Dp.Addresses.Bob)
 			env.Alice.L2.ActMakeTx(t)
@@ -86,7 +122,7 @@ func Test_ProgramAction_HoloceneFrames(gt *testing.T) {
 
 		// Build up a local list of frames
 		orderedFrames := make([][]byte, 0, len(testCfg.Custom.frames))
-		// Buffer the blocks in the batcher and populat orderedFrames list
+		// Buffer the blocks in the batcher and populate orderedFrames list
 		env.Batcher.ActCreateChannel(t, false)
 		for i, blockNum := range blocks {
 			env.Batcher.ActAddBlockByNumber(t, int64(blockNum), actionsHelpers.BlockLogger(t))

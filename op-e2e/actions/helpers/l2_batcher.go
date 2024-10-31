@@ -285,6 +285,7 @@ func (s *L2Batcher) ActL2ChannelClose(t Testing) {
 		return
 	}
 	require.NoError(t, s.L2ChannelOut.Close(), "must close channel before submitting it")
+	s.log.Info("closed channel", "readyBytes", s.L2ChannelOut.ReadyBytes())
 }
 
 func (s *L2Batcher) ReadNextOutputFrame(t Testing) []byte {
@@ -499,6 +500,10 @@ func (s *L2Batcher) ActL2BatchSubmitGarbageRaw(t Testing, outputFrame []byte, ki
 	case MALFORM_RLP:
 		// Do nothing post frame encoding- the `GarbageChannelOut` used for this case is modified to
 		// write malformed RLP each time a block is added to the channel.
+		break
+	case IGNORE_MAX_RLP_BYTES_PER_CHANNEL:
+		// Do nothing post frame encoding- the `GarbageChannelOut` used for this case is modified to
+		// allow oversized channels to be encoded.
 		break
 	default:
 		t.Fatalf("Unexpected garbage kind: %v", kind)
