@@ -162,9 +162,9 @@ jobs:
         description: Whether to notify on failure
         type: boolean
         default: false
-      mips64:
-        type: boolean
-        default: false
+      mips_word_size:
+        type: integer
+        default: 32
     steps:
       - checkout
       - check-changed:
@@ -187,7 +187,7 @@ jobs:
           working_directory: cannon
       - when:
           condition:
-            not: <<parameters.mips64>>
+            equal: [32, <<parameters.mips_word_size>>]
           steps:
             - run:
                 name: Cannon Go 32-bit tests
@@ -201,7 +201,8 @@ jobs:
                 command: codecov --verbose --clean --flags cannon-go-tests-32 -f ./coverage-32.out
                 working_directory: cannon
       - when:
-          condition: <<parameters.mips64>>
+          condition:
+            equal: [64, <<parameters.mips_word_size>>]
           steps:
             - run:
                 name: Cannon Go 64-bit tests
@@ -1423,13 +1424,14 @@ workflows:
       - check-generated-mocks-op-node
       - check-generated-mocks-op-service
       - cannon-go-lint-and-test:
+          name: cannon-go-lint-and-test-<<matrix.mips_word_size>>-bit
           requires:
             - contracts-bedrock-build
           skip_slow_tests: true
           notify: true
           matrix:
             parameters:
-              mips64: [ false, true ]
+              mips_word_size: [ 32, 64 ]
       - cannon-build-test-vectors
       - todo-issues:
           name: todo-issues-check
@@ -1628,13 +1630,14 @@ workflows:
       - contracts-bedrock-build:
           skip_pattern: test
       - cannon-go-lint-and-test:
+          name: cannon-go-lint-and-test-<<matrix.mips_word_size>>-bit
           requires:
             - contracts-bedrock-build
           context:
             - slack
           matrix:
             parameters:
-              mips64: [ false, true ]
+              mips_word_size: [ 32, 64 ]
 
   scheduled-docker-publish:
     when:
