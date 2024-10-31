@@ -203,6 +203,7 @@ type EvmValidator struct {
 	hashFn mipsevm.HashFn
 }
 
+// NewEvmValidator creates a validator that can be run repeatedly across multiple steps
 func NewEvmValidator(t *testing.T, hashFn mipsevm.HashFn, contracts *ContractMetadata, opts ...evmOption) *EvmValidator {
 	evm := newMIPSEVM(contracts, opts...)
 	LogStepFailureAtCleanup(t, evm)
