@@ -51,11 +51,18 @@ contract SystemConfig is OwnableUpgradeable, ISemver, IGasToken {
         address gasPayingToken;
     }
 
+    /// @notice Struct representing the roles of the SystemConfig contract.
     struct Roles {
         address owner;
         address feeAdmin;
         address unsafeBlockSigner;
         bytes32 batcherHash;
+    }
+
+    struct FeeVaultConfigs {
+        Types.FeeVaultConfig baseFeeVaultConfig;
+        Types.FeeVaultConfig sequencerFeeVaultConfig;
+        Types.FeeVaultConfig l1FeeVaultConfig;
     }
 
     /// @notice Version identifier, used for upgrades.
@@ -184,7 +191,8 @@ contract SystemConfig is OwnableUpgradeable, ISemver, IGasToken {
         uint64 _gasLimit,
         IResourceMetering.ResourceConfig memory _config,
         address _batchInbox,
-        SystemConfig.Addresses memory _addresses
+        SystemConfig.Addresses memory _addresses,
+        FeeVaultConfigs memory _feeVaultConfigs
     )
         public
         initializer
@@ -217,7 +225,9 @@ contract SystemConfig is OwnableUpgradeable, ISemver, IGasToken {
         _setStartBlock();
         _setGasPayingToken(_addresses.gasPayingToken);
 
-        // TODO: set fee vault config calls
+        _setFeeVaultConfig(Types.ConfigType.BASE_FEE_VAULT_CONFIG, _feeVaultConfigs.baseFeeVaultConfig);
+        _setFeeVaultConfig(Types.ConfigType.SEQUENCER_FEE_VAULT_CONFIG, _feeVaultConfigs.sequencerFeeVaultConfig);
+        _setFeeVaultConfig(Types.ConfigType.L1_FEE_VAULT_CONFIG, _feeVaultConfigs.l1FeeVaultConfig);
 
         _setResourceConfig(_config);
         require(_gasLimit >= minimumGasLimit(), "SystemConfig: gas limit too low");
@@ -442,34 +452,16 @@ contract SystemConfig is OwnableUpgradeable, ISemver, IGasToken {
 
     /// @notice Setter for the FeeVault predeploy configuration.
     /// @param _type The FeeVault type.
-    /// @param _recipient Address that should receive the funds.
-    /// @param _min Minimum withdrawal amount allowed to be processed.
-    /// @param _network The network in which the fees should be withdrawn to.
-    function setFeeVaultConfig(
-        Types.ConfigType _type,
-        address _recipient,
-        uint256 _min,
-        Types.WithdrawalNetwork _network
-    )
-        external
-    {
+    /// @param _config The FeeVault config
+    function setFeeVaultConfig(Types.ConfigType _type, Types.FeeVaultConfig memory _config) external {
         require(msg.sender == feeAdmin(), "SystemConfig: caller is not the fee admin");
-        _setFeeVaultConfig(_type, _recipient, _min, _network);
+        _setFeeVaultConfig(_type, _config);
     }
 
     /// @notice Internal function for setting the FeeVault config by type.
     /// @param _type The FeeVault type
-    /// @param _recipient Address that should receive the funds.
-    /// @param _min Minimum withdrawal amount allowed to be processed.
-    /// @param _network The network in which the fees should be withdrawn to.
-    function _setFeeVaultConfig(
-        Types.ConfigType _type,
-        address _recipient,
-        uint256 _min,
-        Types.WithdrawalNetwork _network
-    )
-        internal
-    {
+    /// @param _config The FeeVault config
+    function _setFeeVaultConfig(Types.ConfigType _type, Types.FeeVaultConfig memory _config) internal {
         require(
             _type == Types.ConfigType.BASE_FEE_VAULT_CONFIG || _type == Types.ConfigType.L1_FEE_VAULT_CONFIG
                 || _type == Types.ConfigType.SEQUENCER_FEE_VAULT_CONFIG,
@@ -477,7 +469,7 @@ contract SystemConfig is OwnableUpgradeable, ISemver, IGasToken {
         );
         IOptimismPortal(payable(optimismPortal())).setConfig({
             _type: _type,
-            _value: abi.encode(Encoding.encodeFeeVaultConfig(_recipient, _min, _network))
+            _value: abi.encode(Encoding.encodeFeeVaultConfig(_config.recipient, _config.min, _config.withdrawalNetwork))
         });
     }
 
