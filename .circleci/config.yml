@@ -751,8 +751,8 @@ jobs:
         description: should load in foundry artifacts
         type: boolean
         default: false
-    docker:
-      - image: <<pipeline.parameters.ci_builder_image>>
+    machine: true
+    resource_class: ethereum-optimism/latitude-1
     steps:
       - checkout
       - check-changed:
@@ -760,23 +760,10 @@ jobs:
       - attach_workspace:
           at: "."
           if: ${{ uses_artifacts }}
-      - restore_cache:
-          name: Restore Go modules cache
-          key: gomod-{{ checksum "go.sum" }}
-      - restore_cache:
-          name: Restore Go build cache
-          keys:
-            - golang-build-cache-fuzz-golang-{{ checksum "go.sum" }}
-            - golang-build-cache-fuzz-golang-
       - run:
           name: Fuzz
           command: make fuzz
           working_directory: "<<parameters.package_name>>"
-      - save_cache:
-          name: Save Go build cache
-          key: golang-build-cache-fuzz-golang-{{ checksum "go.sum" }}
-          paths:
-            - "/root/.cache/go-build"
 
   go-lint:
     machine: true
@@ -816,7 +803,7 @@ jobs:
           command: |
             echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
             sudo apt update
-            sudo apt install kurtosis-cli=1.3.0
+            sudo apt install kurtosis-cli=1.4.0
             kurtosis engine start
       - checkout
       - when:
@@ -1329,8 +1316,6 @@ workflows:
       - go-lint
       - fuzz-golang:
           name: fuzz-golang-<<matrix.package_name>>
-          requires:
-            - go-mod-download
           on_changes: <<matrix.package_name>>
           matrix:
             parameters:
@@ -1344,13 +1329,13 @@ workflows:
           package_name: cannon
           on_changes: cannon,packages/contracts-bedrock/src/cannon
           uses_artifacts: true
-          requires: ["go-mod-download", "contracts-bedrock-build"]
+          requires: ["contracts-bedrock-build"]
       - fuzz-golang:
           name: op-e2e-fuzz
           package_name: op-e2e
           on_changes: op-e2e,packages/contracts-bedrock/src
           uses_artifacts: true
-          requires: ["go-mod-download", "contracts-bedrock-build"]
+          requires: ["contracts-bedrock-build"]
       - go-test:
           name: go-test-all
           requires:
