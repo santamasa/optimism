@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"github.com/ethereum-optimism/optimism/op-chain-ops/foundry"
 	"log/slog"
 	"math/big"
 	"os"
@@ -125,7 +126,7 @@ func TestEndToEndApply(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	env, bundle, _ := createEnv(t, lgr, l1Client, bcaster, deployerAddr)
+	env, bundle, _ := createEnv(t, lgr, l1Client, bcaster, deployerAddr, localArtifactsFactory)
 	intent, st := newIntent(t, l1ChainID, dk, l2ChainID1, loc, loc)
 	cg := ethClientCodeGetter(ctx, l1Client)
 
@@ -145,7 +146,7 @@ func TestEndToEndApply(t *testing.T) {
 	t.Run("subsequent chain", func(t *testing.T) {
 		// create a new environment with wiped state to ensure we can continue using the
 		// state from the previous deployment
-		env, bundle, _ = createEnv(t, lgr, l1Client, bcaster, deployerAddr)
+		env, bundle, _ = createEnv(t, lgr, l1Client, bcaster, deployerAddr, localArtifactsFactory)
 		intent.Chains = append(intent.Chains, newChainIntent(t, dk, l1ChainID, l2ChainID2))
 
 		require.NoError(t, deployer.ApplyPipeline(
@@ -207,7 +208,9 @@ func TestApplyExistingOPCM(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	env, bundle, _ := createEnv(t, lgr, l1Client, bcaster, deployerAddr)
+	// use the l2 contracts here because the v1.7.0 contracts are compatible with the v1.6.0
+	// contracts and createEnv uses the same artifacts for both L1/L2 in the bundle.
+	env, bundle, _ := createEnv(t, lgr, l1Client, bcaster, deployerAddr, taggedArtifactsFactory(standard.DefaultL2ContractsTag))
 
 	intent, st := newIntent(
 		t,
@@ -512,7 +515,7 @@ func TestInvalidL2Genesis(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			env, bundle, _ := createEnv(t, lgr, nil, broadcaster.NoopBroadcaster(), deployerAddr)
+			env, bundle, _ := createEnv(t, lgr, nil, broadcaster.NoopBroadcaster(), deployerAddr, localArtifactsFactory)
 			intent, st := newIntent(t, l1ChainID, dk, l2ChainID1, loc, loc)
 			intent.Chains = append(intent.Chains, newChainIntent(t, dk, l1ChainID, l2ChainID1))
 			intent.DeploymentStrategy = state.DeploymentStrategyGenesis
@@ -546,11 +549,23 @@ func setupGenesisChain(t *testing.T) (*pipeline.Env, pipeline.ArtifactsBundle, *
 
 	loc, _ := testutil.LocalArtifacts(t)
 
-	env, bundle, _ := createEnv(t, lgr, nil, broadcaster.NoopBroadcaster(), deployerAddr)
+	env, bundle, _ := createEnv(t, lgr, nil, broadcaster.NoopBroadcaster(), deployerAddr, localArtifactsFactory)
 	intent, st := newIntent(t, l1ChainID, dk, l2ChainID1, loc, loc)
 	intent.Chains = append(intent.Chains, newChainIntent(t, dk, l1ChainID, l2ChainID1))
 	intent.DeploymentStrategy = state.DeploymentStrategyGenesis
 	return env, bundle, intent, st
+}
+
+type artifactsFactory func(t *testing.T) (*artifacts.Locator, foundry.StatDirFs)
+
+func localArtifactsFactory(t *testing.T) (*artifacts.Locator, foundry.StatDirFs) {
+	return testutil.LocalArtifacts(t)
+}
+
+func taggedArtifactsFactory(tag string) artifactsFactory {
+	return func(t *testing.T) (*artifacts.Locator, foundry.StatDirFs) {
+		return testutil.ArtifactsFromURL(t, fmt.Sprintf("tag://%s", tag))
+	}
 }
 
 func createEnv(
@@ -559,8 +574,9 @@ func createEnv(
 	l1Client *ethclient.Client,
 	bcaster broadcaster.Broadcaster,
 	deployerAddr common.Address,
+	factory artifactsFactory,
 ) (*pipeline.Env, pipeline.ArtifactsBundle, *script.Host) {
-	_, artifactsFS := testutil.LocalArtifacts(t)
+	_, artifactsFS := factory(t)
 
 	host, err := env.DefaultScriptHost(
 		bcaster,
