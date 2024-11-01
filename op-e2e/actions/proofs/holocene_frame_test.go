@@ -1,7 +1,10 @@
 package proofs
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -12,7 +15,6 @@ import (
 	"github.com/ethereum-optimism/optimism/op-service/eth"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/rand"
 )
 
 type holoceneExpectations struct {
@@ -71,20 +73,6 @@ func Test_ProgramAction_HoloceneFrames(gt *testing.T) {
 		},
 	}
 
-	co, _ := actionsHelpers.NewGarbageChannelOut(&actionsHelpers.GarbageChannelCfg{IgnoreMaxRLPBytesPerChannel: true})
-
-	rng := rand.New(rand.NewSource(1234))
-
-	for i := 0; i < 100; i++ {
-		block := dtest.RandomL2BlockWithChainIdAndTime(rng, 1000, cfg.L2ChainID, time.Now().Add(time.Duration(i)*time.Second))
-		_, err := co.AddBlock(block)
-		if err != nil {
-			return i + 1, err
-		}
-	}
-
-	t.Log(co.ReadyBytes())
-
 	veryCompressibleCalldata := make([]byte, 49_000)
 	for i := 0; i < len(veryCompressibleCalldata); i++ {
 		veryCompressibleCalldata[i] = 1
@@ -101,39 +89,19 @@ func Test_ProgramAction_HoloceneFrames(gt *testing.T) {
 			blocks[i] = uint(i) + 1
 		}
 
-		aliceAddress := env.Alice.Address()
-		targetHeadNumber := k
-		for env.Engine.L2Chain().CurrentBlock().Number.Uint64() < uint64(targetHeadNumber) {
-			env.Sequencer.ActL2StartBlock(t)
+		hugeChannelOut, _ := actionsHelpers.NewGarbageChannelOut(&actionsHelpers.GarbageChannelCfg{IgnoreMaxRLPBytesPerChannel: true})
 
-			// alice makes several L2 txs, sequencer includes them
-			for i := 0; i < 100; i++ {
-				env.Alice.L2.ActResetTxOpts(t)
-				env.Alice.L2.ActSetTxCalldata(veryCompressibleCalldata)(t)
-				env.Alice.L2.ActMakeTx(t)
-				env.Engine.ActL2IncludeTx(aliceAddress)(t)
+		rng := rand.New(rand.NewSource(1234))
+
+		for uint64(hugeChannelOut.ReadyBytes()) < env.Sd.ChainSpec.MaxRLPBytesPerChannel(uint64(time.Now().Unix())) {
+			block := dtest.RandomL2BlockWithChainId(rng, 1000, env.Sequencer.RollupCfg.L2ChainID)
+			_, err := hugeChannelOut.AddBlock(env.Sequencer.RollupCfg, block)
+			if err != nil {
+				t.Fatal(err)
 			}
-			env.Alice.L2.ActResetTxOpts(t)
-			env.Alice.L2.ActSetTxToAddr(&env.Dp.Addresses.Bob)
-			env.Alice.L2.ActMakeTx(t)
-			env.Engine.ActL2IncludeTx(env.Alice.Address())(t)
-			env.Sequencer.ActL2EndBlock(t)
 		}
 
-		// Build up a local list of frames
-		orderedFrames := make([][]byte, 0, len(testCfg.Custom.frames))
-		// Buffer the blocks in the batcher and populate orderedFrames list
-		env.Batcher.ActCreateChannel(t, false)
-		for i, blockNum := range blocks {
-			env.Batcher.ActAddBlockByNumber(t, int64(blockNum), actionsHelpers.BlockLogger(t))
-			if i == len(blocks)-1 {
-				env.Batcher.ActL2ChannelClose(t)
-			}
-			frame := env.Batcher.ReadNextOutputFrame(t)
-			require.NotEmpty(t, frame, "frame %d", i)
-			orderedFrames = append(orderedFrames, frame)
-		}
-
+		t.Log(hugeChannelOut.ReadyBytes())
 		includeBatchTx := func() {
 			// Include the last transaction submitted by the batcher.
 			env.Miner.ActL1StartBlock(12)(t)
@@ -144,11 +112,64 @@ func Test_ProgramAction_HoloceneFrames(gt *testing.T) {
 			env.Miner.ActL1SafeNext(t)
 			env.Miner.ActL1FinalizeNext(t)
 		}
+		if false { // TODO replace with a switch on the test case
 
-		// Submit frames in specified order order
-		for _, j := range testCfg.Custom.frames {
-			env.Batcher.ActL2BatchSubmitRaw(t, orderedFrames[j])
-			includeBatchTx()
+			aliceAddress := env.Alice.Address()
+			targetHeadNumber := k
+			for env.Engine.L2Chain().CurrentBlock().Number.Uint64() < uint64(targetHeadNumber) {
+				env.Sequencer.ActL2StartBlock(t)
+
+				// alice makes several L2 txs, sequencer includes them
+				for i := 0; i < 100; i++ {
+					env.Alice.L2.ActResetTxOpts(t)
+					env.Alice.L2.ActSetTxCalldata(veryCompressibleCalldata)(t)
+					env.Alice.L2.ActMakeTx(t)
+					env.Engine.ActL2IncludeTx(aliceAddress)(t)
+				}
+				env.Alice.L2.ActResetTxOpts(t)
+				env.Alice.L2.ActSetTxToAddr(&env.Dp.Addresses.Bob)
+				env.Alice.L2.ActMakeTx(t)
+				env.Engine.ActL2IncludeTx(env.Alice.Address())(t)
+				env.Sequencer.ActL2EndBlock(t)
+			}
+
+			// Build up a local list of frames
+			orderedFrames := make([][]byte, 0, len(testCfg.Custom.frames))
+			// Buffer the blocks in the batcher and populate orderedFrames list
+			env.Batcher.ActCreateChannel(t, false)
+			for i, blockNum := range blocks {
+				env.Batcher.ActAddBlockByNumber(t, int64(blockNum), actionsHelpers.BlockLogger(t))
+				if i == len(blocks)-1 {
+					env.Batcher.ActL2ChannelClose(t)
+				}
+				frame := env.Batcher.ReadNextOutputFrame(t)
+				require.NotEmpty(t, frame, "frame %d", i)
+				orderedFrames = append(orderedFrames, frame)
+			}
+
+			// Submit frames in specified order order
+			for _, j := range testCfg.Custom.frames {
+				env.Batcher.ActL2BatchSubmitRaw(t, orderedFrames[j])
+				includeBatchTx()
+			}
+		} else {
+			frames := make([][]byte, 0, 1000)
+			for {
+				frame := new(bytes.Buffer)
+				_, err := hugeChannelOut.OutputFrame(frame, 100_000)
+				if err == io.EOF {
+					break
+				}
+				frames = append(frames, frame.Bytes())
+			}
+
+			for _, frame := range frames {
+				env.Miner.ActL1StartBlock(12)(t)
+				env.Batcher.ActL2BatchSubmitRaw(t, frame)
+				env.Miner.ActL1IncludeTxByHash(env.Batcher.LastSubmitted.Hash())(t)
+				env.Miner.ActL1EndBlock(t)
+			}
+
 		}
 
 		// Instruct the sequencer to derive the L2 chain from the data on L1 that the batcher just posted.

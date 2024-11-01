@@ -19,10 +19,9 @@ func RandomL2Block(rng *rand.Rand, txCount int, t time.Time) (*types.Block, []*t
 	body := types.Body{}
 	l1Block := types.NewBlock(testutils.RandomHeader(rng), &body, nil, trie.NewStackTrie(nil))
 	rollupCfg := rollup.Config{}
-	if testutils.RandomBool(rng) {
-		t := uint64(0)
-		rollupCfg.RegolithTime = &t
-	}
+	zero := uint64(0)
+	rollupCfg.EcotoneTime = &zero
+
 	l1InfoTx, err := derive.L1InfoDeposit(&rollupCfg, eth.SystemConfig{}, 0, eth.BlockToInfo(l1Block), 0)
 	if err != nil {
 		panic("L1InfoDeposit: " + err.Error())
