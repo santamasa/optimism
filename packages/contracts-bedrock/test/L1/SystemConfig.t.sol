@@ -201,6 +201,23 @@ contract SystemConfig_Initialize_TestFail is SystemConfig_Initialize_Test {
                 optimismPortal: address(optimismPortal),
                 optimismMintableERC20Factory: address(0),
                 gasPayingToken: Constants.ETHER
+            }),
+            _feeVaultConfigs: ISystemConfig.FeeVaultConfigs({
+                baseFeeVaultConfig: Types.FeeVaultConfig({
+                    recipient: address(0),
+                    min: 0,
+                    withdrawalNetwork: Types.WithdrawalNetwork.L1
+                }),
+                sequencerFeeVaultConfig: Types.FeeVaultConfig({
+                    recipient: address(0),
+                    min: 0,
+                    withdrawalNetwork: Types.WithdrawalNetwork.L1
+                }),
+                l1FeeVaultConfig: Types.FeeVaultConfig({
+                    recipient: address(0),
+                    min: 0,
+                    withdrawalNetwork: Types.WithdrawalNetwork.L1
+                })
             })
         });
     }
@@ -234,6 +251,23 @@ contract SystemConfig_Initialize_TestFail is SystemConfig_Initialize_Test {
                 optimismPortal: address(optimismPortal),
                 optimismMintableERC20Factory: address(0),
                 gasPayingToken: Constants.ETHER
+            }),
+            _feeVaultConfigs: ISystemConfig.FeeVaultConfigs({
+                baseFeeVaultConfig: Types.FeeVaultConfig({
+                    recipient: address(0),
+                    min: 0,
+                    withdrawalNetwork: Types.WithdrawalNetwork.L1
+                }),
+                sequencerFeeVaultConfig: Types.FeeVaultConfig({
+                    recipient: address(0),
+                    min: 0,
+                    withdrawalNetwork: Types.WithdrawalNetwork.L1
+                }),
+                l1FeeVaultConfig: Types.FeeVaultConfig({
+                    recipient: address(0),
+                    min: 0,
+                    withdrawalNetwork: Types.WithdrawalNetwork.L1
+                })
             })
         });
         assertEq(systemConfig.startBlock(), block.number);
@@ -268,6 +302,23 @@ contract SystemConfig_Initialize_TestFail is SystemConfig_Initialize_Test {
                 optimismPortal: address(optimismPortal),
                 optimismMintableERC20Factory: address(0),
                 gasPayingToken: Constants.ETHER
+            }),
+            _feeVaultConfigs: ISystemConfig.FeeVaultConfigs({
+                baseFeeVaultConfig: Types.FeeVaultConfig({
+                    recipient: address(0),
+                    min: 0,
+                    withdrawalNetwork: Types.WithdrawalNetwork.L1
+                }),
+                sequencerFeeVaultConfig: Types.FeeVaultConfig({
+                    recipient: address(0),
+                    min: 0,
+                    withdrawalNetwork: Types.WithdrawalNetwork.L1
+                }),
+                l1FeeVaultConfig: Types.FeeVaultConfig({
+                    recipient: address(0),
+                    min: 0,
+                    withdrawalNetwork: Types.WithdrawalNetwork.L1
+                })
             })
         });
         assertEq(systemConfig.startBlock(), 1);
@@ -366,6 +417,23 @@ contract SystemConfig_Init_ResourceConfig is SystemConfig_Init {
                 optimismPortal: address(optimismPortal),
                 optimismMintableERC20Factory: address(0),
                 gasPayingToken: address(0)
+            }),
+            _feeVaultConfigs: ISystemConfig.FeeVaultConfigs({
+                baseFeeVaultConfig: Types.FeeVaultConfig({
+                    recipient: address(0),
+                    min: 0,
+                    withdrawalNetwork: Types.WithdrawalNetwork.L1
+                }),
+                sequencerFeeVaultConfig: Types.FeeVaultConfig({
+                    recipient: address(0),
+                    min: 0,
+                    withdrawalNetwork: Types.WithdrawalNetwork.L1
+                }),
+                l1FeeVaultConfig: Types.FeeVaultConfig({
+                    recipient: address(0),
+                    min: 0,
+                    withdrawalNetwork: Types.WithdrawalNetwork.L1
+                })
             })
         });
     }
@@ -408,6 +476,23 @@ contract SystemConfig_Init_CustomGasToken is SystemConfig_Init {
                 optimismPortal: address(optimismPortal),
                 optimismMintableERC20Factory: address(0),
                 gasPayingToken: _gasPayingToken
+            }),
+            _feeVaultConfigs: ISystemConfig.FeeVaultConfigs({
+                baseFeeVaultConfig: Types.FeeVaultConfig({
+                    recipient: address(0),
+                    min: 0,
+                    withdrawalNetwork: Types.WithdrawalNetwork.L1
+                }),
+                sequencerFeeVaultConfig: Types.FeeVaultConfig({
+                    recipient: address(0),
+                    min: 0,
+                    withdrawalNetwork: Types.WithdrawalNetwork.L1
+                }),
+                l1FeeVaultConfig: Types.FeeVaultConfig({
+                    recipient: address(0),
+                    min: 0,
+                    withdrawalNetwork: Types.WithdrawalNetwork.L1
+                })
             })
         });
 
