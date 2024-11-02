@@ -36,8 +36,6 @@ There are a few reasons for this context system:
 - Allows for auditing of commands and their outputs over time for debugging.
 - Allows for manual interaction with automatically created values, either by using the exported values manually, or by modifying the context values between executions.
 
-When Xelper finishes execution, the new Context Variables are appended to the Context file. This means that historical values are preserved even when they would be overwritten by updates. Whenever context is passed into Xelper, it is imported by calling `source <context_file>`.
-
 `--print_context` can be passed to Xelper to print the context values once sourced. This can be useful for seeing the current environment, or for cleaning up context files potentially.
 
 ## Example
@@ -53,3 +51,5 @@ The context which is created can be used for further calls to Xelper, or you can
 
 ## The Future
 I hit the edges of clean and manageable bash scripting almost immediately while building this. We should probably rewrite it in python or something.
+
+I actually started rewriting this in Python already because I wanted a smoother interface. That's included here too.
