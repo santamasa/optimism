@@ -135,8 +135,6 @@ func NewGarbageChannelOut(cfg *GarbageChannelCfg) (*GarbageChannelOut, error) {
 	var compress Writer
 	if cfg.UseInvalidCompression {
 		compress, err = gzip.NewWriterLevel(&c.buf, gzip.BestCompression)
-	} else if cfg.IgnoreMaxRLPBytesPerChannel {
-		compress, err = zlib.NewWriterLevel(&c.buf, zlib.NoCompression)
 	} else {
 		compress, err = zlib.NewWriterLevel(&c.buf, zlib.BestCompression)
 	}
@@ -196,6 +194,11 @@ func (co *GarbageChannelOut) AddBlock(rollupCfg *rollup.Config, block *types.Blo
 
 	_, err = io.Copy(co.compress, &buf)
 	return l1Info, err
+}
+
+// RLPLength returns the uncompressed size of the channel.
+func (co *GarbageChannelOut) RLPLength() int {
+	return co.rlpLength
 }
 
 // ReadyBytes returns the number of bytes that the channel out can immediately output into a frame.

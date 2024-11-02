@@ -47,3 +47,15 @@ func RandomL2BlockWithChainIdAndTime(rng *rand.Rand, txCount int, chainId *big.I
 	}
 	return block.WithBody(types.Body{Transactions: txs})
 }
+
+func HighlyCompressible2BlockWithChainIdAndTime(rng *rand.Rand, txCount int, chainId *big.Int, t time.Time) *types.Block {
+	signer := types.NewLondonSigner(chainId)
+	block, _ := RandomL2Block(rng, 0, t)
+	txs := []*types.Transaction{block.Transactions()[0]} // L1 info deposit TX
+	// Use the same tx over and over
+	tx := testutils.RandomTx(rng, big.NewInt(int64(rng.Uint32())), signer)
+	for i := 0; i < txCount; i++ {
+		txs = append(txs, tx)
+	}
+	return block.WithBody(types.Body{Transactions: txs})
+}
