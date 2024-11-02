@@ -106,7 +106,6 @@ func Test_ProgramAction_HoloceneBatches(gt *testing.T) {
 		require.NotEmpty(t, frame)
 		env.Batcher.ActL2BatchSubmitRaw(t, frame)
 		includeBatchTx()
-
 		// Instruct the sequencer to derive the L2 chain from the data on L1 that the batcher just posted.
 		env.Sequencer.ActL1HeadSignal(t)
 		env.Sequencer.ActL2PipelineFull(t)

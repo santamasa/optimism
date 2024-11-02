@@ -13,7 +13,6 @@ import (
 	"github.com/ethereum-optimism/optimism/op-e2e/actions/proofs/helpers"
 	"github.com/ethereum-optimism/optimism/op-node/rollup/derive"
 	dtest "github.com/ethereum-optimism/optimism/op-node/rollup/derive/test"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_ProgramAction_BigChannel(gt *testing.T) {
@@ -59,14 +58,13 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 		parentHash := env.Sequencer.RollupCfg.Genesis.L2.Hash
 		parentNumber := big.NewInt(0)
 		for uint64(hugeChannelOut.RLPLength()) < env.Sd.ChainSpec.MaxRLPBytesPerChannel(uint64(time.Now().Unix())) {
-			block := dtest.HighlyCompressible2BlockWithChainIdAndTime(rng, 1000, env.Sequencer.RollupCfg.L2ChainID, time.Time{})
+			block := dtest.HighlyCompressible2BlockWithChainIdAndTime(rng, 1000, env.Sequencer.RollupCfg.L2ChainID, time.Now())
 			bHeader := block.Header()
 			bHeader.Number = new(big.Int).Add(parentNumber, big.NewInt(1))
 			bHeader.ParentHash = parentHash
 			block = block.WithSeal(bHeader)
 			parentNumber = bHeader.Number
 			parentHash = bHeader.Root
-			t.Log(block.Number())
 			_, err := hugeChannelOut.AddBlock(env.Sequencer.RollupCfg, block)
 			if err != nil {
 				t.Fatal(err)
@@ -86,60 +84,21 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 			env.Miner.ActL1SafeNext(t)
 			env.Miner.ActL1FinalizeNext(t)
 		}
-		if false { // TODO replace with a switch on the test case
 
-			aliceAddress := env.Alice.Address()
-			targetHeadNumber := k
-			for env.Engine.L2Chain().CurrentBlock().Number.Uint64() < uint64(targetHeadNumber) {
-				env.Sequencer.ActL2StartBlock(t)
-
-				// alice makes several L2 txs, sequencer includes them
-				for i := 0; i < 100; i++ {
-					env.Alice.L2.ActResetTxOpts(t)
-					env.Alice.L2.ActSetTxCalldata(veryCompressibleCalldata)(t)
-					env.Alice.L2.ActMakeTx(t)
-					env.Engine.ActL2IncludeTx(aliceAddress)(t)
-				}
-				env.Alice.L2.ActResetTxOpts(t)
-				env.Alice.L2.ActSetTxToAddr(&env.Dp.Addresses.Bob)
-				env.Alice.L2.ActMakeTx(t)
-				env.Engine.ActL2IncludeTx(env.Alice.Address())(t)
-				env.Sequencer.ActL2EndBlock(t)
-			}
-
-			// Build up a local list of frames
-			orderedFrames := make([][]byte, 0, len(testCfg.Custom.frames))
-			// Buffer the blocks in the batcher and populate orderedFrames list
-			env.Batcher.ActCreateChannel(t, false)
-			for i, blockNum := range blocks {
-				env.Batcher.ActAddBlockByNumber(t, int64(blockNum), actionsHelpers.BlockLogger(t))
-				if i == len(blocks)-1 {
-					env.Batcher.ActL2ChannelClose(t)
-				}
-				frame := env.Batcher.ReadNextOutputFrame(t)
-				require.NotEmpty(t, frame, "frame %d", i)
-				orderedFrames = append(orderedFrames, frame)
-			}
-
-			// Submit frames in specified order order
-			for _, j := range testCfg.Custom.frames {
-				env.Batcher.ActL2BatchSubmitRaw(t, orderedFrames[j])
-				includeBatchTx()
-			}
-		} else {
-			for {
-				// Collect the output frame
-				data := new(bytes.Buffer)
-				data.WriteByte(derive.DerivationVersion0)
-				_, err := hugeChannelOut.OutputFrame(data, 100_000)
-				if err == io.EOF {
-					break
-				} else if err != nil {
-					t.Fatal(err)
-				}
+		for {
+			// Collect the output frames, submit and include them.
+			data := new(bytes.Buffer)
+			data.WriteByte(derive.DerivationVersion0)
+			_, err := hugeChannelOut.OutputFrame(data, 100_000)
+			if err == io.EOF {
 				env.Batcher.ActL2BatchSubmitRaw(t, data.Bytes())
 				includeBatchTx()
+				break
+			} else if err != nil {
+				t.Fatal(err)
 			}
+			env.Batcher.ActL2BatchSubmitRaw(t, data.Bytes())
+			includeBatchTx()
 		}
 
 		// Instruct the sequencer to derive the L2 chain from the data on L1 that the batcher just posted.
