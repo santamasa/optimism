@@ -1,15 +1,19 @@
 #!/bin/bash
 
-context="$(uuidgen).context"
+context="$(uuidgen).context.json"
+#verbose="--verbose"
 
-./xelper.sh --context "$context" add_cross_dependency 900200 900201
+python3 ./xelper.py --context "$context" $verbose add_dependency 900200 900201
 
-./xelper.sh --context "$context" check_chain 900200
+python3 ./xelper.py --context "$context" $verbose chain_id 900200
 
-./xelper.sh --context "$context" check_chain 900201
+python3 ./xelper.py --context "$context" $verbose chain_id 900201
 
-./xelper.sh --context "$context" deploy_emitter 900200
+python3 ./xelper.py --context "$context" $verbose deploy_emitter 900200
 
-./xelper.sh --context "$context" emit 900200 SAMPLE_LOG "Hello, World!"
+python3 ./xelper.py --context "$context" $verbose emit 900200 --data "Hello, World!" --key EXAMPLE
 
-./xelper.sh --context "$context" executing_message 900201 900200 SAMPLE_LOG
+python3 ./xelper.py --context "$context" $verbose executing_message 900201 900200 --key EXAMPLE
+
+echo "Orchestration complete. Context file: $context"
+cat "$context" | jq .
