@@ -57,14 +57,17 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 
 		parentHash := env.Sequencer.RollupCfg.Genesis.L2.Hash
 		parentNumber := big.NewInt(0)
-		for uint64(hugeChannelOut.RLPLength()) < env.Sd.ChainSpec.MaxRLPBytesPerChannel(uint64(time.Now().Unix())) {
-			block := dtest.HighlyCompressible2BlockWithChainIdAndTime(rng, 1000, env.Sequencer.RollupCfg.L2ChainID, time.Now())
+		parentTime := env.Sequencer.RollupCfg.Genesis.L2Time
+		blockTime := env.Sequencer.RollupCfg.BlockTime
+		for uint64(hugeChannelOut.RLPLength()) < env.Sd.ChainSpec.MaxRLPBytesPerChannel(parentTime+blockTime) {
+			block := dtest.HighlyCompressible2BlockWithChainIdAndTime(rng, 1000, env.Sequencer.RollupCfg.L2ChainID, time.Unix(int64(parentTime)+int64(blockTime), 0))
 			bHeader := block.Header()
 			bHeader.Number = new(big.Int).Add(parentNumber, big.NewInt(1))
 			bHeader.ParentHash = parentHash
 			block = block.WithSeal(bHeader)
 			parentNumber = bHeader.Number
 			parentHash = bHeader.Root
+			parentTime = bHeader.Time
 			_, err := hugeChannelOut.AddBlock(env.Sequencer.RollupCfg, block)
 			if err != nil {
 				t.Fatal(err)
