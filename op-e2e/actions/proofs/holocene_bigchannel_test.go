@@ -20,27 +20,25 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 		disableCompression bool
 	}
 
-	// An ordered list of frames to read from the channel and submit
-	// on L1. We expect a different progression of the safe head under Holocene
-	// derivation rules, compared with pre Holocene.
 	var testCases = []testCase{
-		// Standard frame submission,
 		{name: "case-0"},
 		{name: "case-1", disableCompression: true}}
 
 	runHoloceneDerivationTest := func(gt *testing.T, testCfg *helpers.TestCfg[testCase]) {
 		t := actionsHelpers.NewDefaultTesting(gt)
-		env := helpers.NewL2FaultProofEnv(t, testCfg, helpers.NewTestParams(), helpers.NewBatcherCfg())
+		batcherConfig := helpers.NewBatcherCfg()
+		batcherConfig.GarbageCfg = &actionsHelpers.GarbageChannelCfg{
+			IgnoreMaxRLPBytesPerChannel: true,
+			DisableCompression:          testCfg.Custom.disableCompression,
+		}
+		env := helpers.NewL2FaultProofEnv(t, testCfg, helpers.NewTestParams(), batcherConfig)
 
 		// build some l1 blocks so that we don't hit sequencer drift problems
 		for i := 0; i < 200; i++ {
 			env.Miner.ActEmptyBlock(t)
 		}
 
-		hugeChannelOut, _ := actionsHelpers.NewGarbageChannelOut(&actionsHelpers.GarbageChannelCfg{
-			IgnoreMaxRLPBytesPerChannel: true,
-			DisableCompression:          testCfg.Custom.disableCompression,
-		})
+		hugeChannelOut, _ := actionsHelpers.NewGarbageChannelOut(batcherConfig.GarbageCfg)
 
 		parentTime := env.Sequencer.RollupCfg.Genesis.L2Time
 		blockTime := env.Sequencer.RollupCfg.BlockTime
