@@ -64,6 +64,7 @@ type GarbageChannelCfg struct {
 	UseInvalidCompression       bool
 	MalformRLP                  bool
 	IgnoreMaxRLPBytesPerChannel bool
+	DisableCompression          bool
 }
 
 // Writer is the interface shared between `zlib.Writer` and `gzip.Writer`
@@ -135,6 +136,8 @@ func NewGarbageChannelOut(cfg *GarbageChannelCfg) (*GarbageChannelOut, error) {
 	var compress Writer
 	if cfg.UseInvalidCompression {
 		compress, err = gzip.NewWriterLevel(&c.buf, gzip.BestCompression)
+	} else if cfg.DisableCompression {
+		compress, err = zlib.NewWriterLevel(&c.buf, zlib.NoCompression)
 	} else {
 		compress, err = zlib.NewWriterLevel(&c.buf, zlib.BestCompression)
 	}

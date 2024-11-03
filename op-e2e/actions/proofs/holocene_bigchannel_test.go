@@ -16,9 +16,8 @@ import (
 func Test_ProgramAction_BigChannel(gt *testing.T) {
 
 	type testCase struct {
-		name   string
-		frames []uint
-		holoceneExpectations
+		name               string
+		disableCompression bool
 	}
 
 	// An ordered list of frames to read from the channel and submit
@@ -26,22 +25,22 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 	// derivation rules, compared with pre Holocene.
 	var testCases = []testCase{
 		// Standard frame submission,
-		{name: "case-0", frames: []uint{0, 1, 2},
-			holoceneExpectations: holoceneExpectations{}, // expectations set in test itself
-		}}
+		{name: "case-0"},
+		{name: "case-1", disableCompression: true}}
 
 	runHoloceneDerivationTest := func(gt *testing.T, testCfg *helpers.TestCfg[testCase]) {
 		t := actionsHelpers.NewDefaultTesting(gt)
-		batcherConfig := helpers.NewBatcherCfg()
-		batcherConfig.GarbageCfg = &actionsHelpers.GarbageChannelCfg{IgnoreMaxRLPBytesPerChannel: true}
-		env := helpers.NewL2FaultProofEnv(t, testCfg, helpers.NewTestParams(), batcherConfig)
+		env := helpers.NewL2FaultProofEnv(t, testCfg, helpers.NewTestParams(), helpers.NewBatcherCfg())
 
 		// build some l1 blocks so that we don't hit sequencer drift problems
-		for i := 0; i < 100; i++ {
+		for i := 0; i < 1000; i++ {
 			env.Miner.ActEmptyBlock(t)
 		}
 
-		hugeChannelOut, _ := actionsHelpers.NewGarbageChannelOut(&actionsHelpers.GarbageChannelCfg{IgnoreMaxRLPBytesPerChannel: true})
+		hugeChannelOut, _ := actionsHelpers.NewGarbageChannelOut(&actionsHelpers.GarbageChannelCfg{
+			IgnoreMaxRLPBytesPerChannel: true,
+			DisableCompression:          testCfg.Custom.disableCompression,
+		})
 
 		parentTime := env.Sequencer.RollupCfg.Genesis.L2Time
 		blockTime := env.Sequencer.RollupCfg.BlockTime
@@ -62,6 +61,7 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 				t.Fatal(err)
 			}
 			t.Log(uint64(hugeChannelOut.RLPLength()))
+			t.Log(env.Sequencer.L2Unsafe())
 		}
 		hugeChannelOut.Close()
 
@@ -100,12 +100,19 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 
 		l2SafeHead := env.Sequencer.L2Safe()
 
-		// Because the channel will be _clipped_ to max_rlp_bytes_per_channel, the safe
-		// head is expected to move up to but not including the last block in the channel.
-		testCfg.Custom.holoceneExpectations.safeHeadHolocene = env.Sequencer.L2Unsafe().Number - 1
-		testCfg.Custom.holoceneExpectations.safeHeadPreHolocene = env.Sequencer.L2Unsafe().Number - 1
+		holoceneExpectations := holoceneExpectations{}
+		if testCfg.Custom.disableCompression {
+			holoceneExpectations.safeHeadHolocene = 0                                      // entire channel dropped because the compressed size > MAX_RLP_BYTES_PER_CHANNEL
+			holoceneExpectations.safeHeadPreHolocene = env.Sequencer.L2Unsafe().Number - 1 // Well within MAX_CHANNEL_BANK_BYTES limits, so hits the MAX_RLP_BYTES_PER_CHANNEL limit when decompressed
+		} else {
+			// Because the channel will be _clipped_ to max_rlp_bytes_per_channel, the safe
+			// head is expected to move up to but not including the last block in the channel.
+			// Unchanged during pre/post Holocene.
+			holoceneExpectations.safeHeadHolocene = env.Sequencer.L2Unsafe().Number - 1
+			holoceneExpectations.safeHeadPreHolocene = env.Sequencer.L2Unsafe().Number - 1
+		}
 
-		testCfg.Custom.RequireExpectedProgress(t, l2SafeHead, testCfg.Hardfork.Precedence < helpers.Holocene.Precedence, env.Engine)
+		holoceneExpectations.RequireExpectedProgress(t, l2SafeHead, testCfg.Hardfork.Precedence < helpers.Holocene.Precedence, env.Engine)
 
 		t.Log("Safe head progressed as expected", "l2SafeHeadNumber", l2SafeHead.Number)
 
