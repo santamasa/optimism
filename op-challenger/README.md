@@ -187,7 +187,7 @@ Prints the list of current claims in a dispute game.
 
 ```shell
 ./bin/op-challenger run-trace \
-  --network <NETWORK_NAME> \
+  --network=<NETWORK_NAME> \
   --l1-eth-rpc=<L1_ETH_RPC> \
   --l1-beacon=<L1_BEACON> \
   --l2-eth-rpc=<L2_ETH_RPC> \
