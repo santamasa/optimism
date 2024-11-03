@@ -25,6 +25,7 @@ const (
 	DIRTY_APPEND
 	INVALID_COMPRESSION
 	MALFORM_RLP
+	IGNORE_MAX_RLP_BYTES_PER_CHANNEL
 )
 
 var GarbageKinds = []GarbageKind{
@@ -34,6 +35,7 @@ var GarbageKinds = []GarbageKind{
 	DIRTY_APPEND,
 	INVALID_COMPRESSION,
 	MALFORM_RLP,
+	IGNORE_MAX_RLP_BYTES_PER_CHANNEL,
 }
 
 func (gk GarbageKind) String() string {
@@ -50,6 +52,8 @@ func (gk GarbageKind) String() string {
 		return "INVALID_COMPRESSION"
 	case MALFORM_RLP:
 		return "MALFORM_RLP"
+	case IGNORE_MAX_RLP_BYTES_PER_CHANNEL:
+		return "IGNORE_MAX_RLP_BYTES_PER_CHANNEL"
 	default:
 		return "UNKNOWN"
 	}
@@ -57,8 +61,10 @@ func (gk GarbageKind) String() string {
 
 // GarbageChannelCfg is the configuration for a `GarbageChannelOut`
 type GarbageChannelCfg struct {
-	UseInvalidCompression bool
-	MalformRLP            bool
+	UseInvalidCompression       bool
+	MalformRLP                  bool
+	IgnoreMaxRLPBytesPerChannel bool
+	DisableCompression          bool
 }
 
 // Writer is the interface shared between `zlib.Writer` and `gzip.Writer`
@@ -130,6 +136,8 @@ func NewGarbageChannelOut(cfg *GarbageChannelCfg) (*GarbageChannelOut, error) {
 	var compress Writer
 	if cfg.UseInvalidCompression {
 		compress, err = gzip.NewWriterLevel(&c.buf, gzip.BestCompression)
+	} else if cfg.DisableCompression {
+		compress, err = zlib.NewWriterLevel(&c.buf, zlib.NoCompression)
 	} else {
 		compress, err = zlib.NewWriterLevel(&c.buf, zlib.BestCompression)
 	}
@@ -181,7 +189,7 @@ func (co *GarbageChannelOut) AddBlock(rollupCfg *rollup.Config, block *types.Blo
 
 	chainSpec := rollup.NewChainSpec(rollupCfg)
 	maxRLPBytesPerChannel := chainSpec.MaxRLPBytesPerChannel(block.Time())
-	if co.rlpLength+buf.Len() > int(maxRLPBytesPerChannel) {
+	if !co.cfg.IgnoreMaxRLPBytesPerChannel && co.rlpLength+buf.Len() > int(maxRLPBytesPerChannel) {
 		return nil, fmt.Errorf("could not add %d bytes to channel of %d bytes, max is %d. err: %w",
 			buf.Len(), co.rlpLength, maxRLPBytesPerChannel, derive.ErrTooManyRLPBytes)
 	}
@@ -189,6 +197,11 @@ func (co *GarbageChannelOut) AddBlock(rollupCfg *rollup.Config, block *types.Blo
 
 	_, err = io.Copy(co.compress, &buf)
 	return l1Info, err
+}
+
+// RLPLength returns the uncompressed size of the channel.
+func (co *GarbageChannelOut) RLPLength() int {
+	return co.rlpLength
 }
 
 // ReadyBytes returns the number of bytes that the channel out can immediately output into a frame.
