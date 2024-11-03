@@ -4,15 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"math/big"
-	"math/rand"
 	"testing"
-	"time"
 
 	actionsHelpers "github.com/ethereum-optimism/optimism/op-e2e/actions/helpers"
 	"github.com/ethereum-optimism/optimism/op-e2e/actions/proofs/helpers"
 	"github.com/ethereum-optimism/optimism/op-node/rollup/derive"
-	dtest "github.com/ethereum-optimism/optimism/op-node/rollup/derive/test"
+	"github.com/ethereum-optimism/optimism/op-program/client/claim"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func Test_ProgramAction_BigChannel(gt *testing.T) {
@@ -29,49 +27,41 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 	var testCases = []testCase{
 		// Standard frame submission,
 		{name: "case-0", frames: []uint{0, 1, 2},
-			holoceneExpectations: holoceneExpectations{
-				safeHeadPreHolocene: 3,
-				safeHeadHolocene:    3},
-		},
-	}
+			holoceneExpectations: holoceneExpectations{}, // expectations set in test itself
+		}}
 
-	veryCompressibleCalldata := make([]byte, 49_000)
-	for i := 0; i < len(veryCompressibleCalldata); i++ {
-		veryCompressibleCalldata[i] = 1
-	}
 	runHoloceneDerivationTest := func(gt *testing.T, testCfg *helpers.TestCfg[testCase]) {
 		t := actionsHelpers.NewDefaultTesting(gt)
 		batcherConfig := helpers.NewBatcherCfg()
 		batcherConfig.GarbageCfg = &actionsHelpers.GarbageChannelCfg{IgnoreMaxRLPBytesPerChannel: true}
 		env := helpers.NewL2FaultProofEnv(t, testCfg, helpers.NewTestParams(), batcherConfig)
 
-		k := 1000
-		blocks := make([]uint, k)
-		for i := 0; i < k; i++ {
-			blocks[i] = uint(i) + 1
+		// build some l1 blocks so that we don't hit sequencer drift problems
+		for i := 0; i < 100; i++ {
+			env.Miner.ActEmptyBlock(t)
 		}
 
 		hugeChannelOut, _ := actionsHelpers.NewGarbageChannelOut(&actionsHelpers.GarbageChannelCfg{IgnoreMaxRLPBytesPerChannel: true})
 
-		rng := rand.New(rand.NewSource(1234))
-
-		parentHash := env.Sequencer.RollupCfg.Genesis.L2.Hash
-		parentNumber := big.NewInt(0)
 		parentTime := env.Sequencer.RollupCfg.Genesis.L2Time
 		blockTime := env.Sequencer.RollupCfg.BlockTime
 		for uint64(hugeChannelOut.RLPLength()) < env.Sd.ChainSpec.MaxRLPBytesPerChannel(parentTime+blockTime) {
-			block := dtest.HighlyCompressible2BlockWithChainIdAndTime(rng, 1000, env.Sequencer.RollupCfg.L2ChainID, time.Unix(int64(parentTime)+int64(blockTime), 0))
-			bHeader := block.Header()
-			bHeader.Number = new(big.Int).Add(parentNumber, big.NewInt(1))
-			bHeader.ParentHash = parentHash
-			block = block.WithSeal(bHeader)
-			parentNumber = bHeader.Number
-			parentHash = bHeader.Root
-			parentTime = bHeader.Time
+			env.Sequencer.ActL2StartBlock(t)
+			for i := 0; i < 2; i++ {
+				env.Alice.L2.ActResetTxOpts(t)
+				env.Alice.L2.ActSetTxToAddr(&env.Dp.Addresses.Bob)(t)
+				env.Alice.L2.ActSetTxCalldata(bytes.Repeat([]byte{1}, 130_000))(t)
+				env.Alice.L2.ActMakeTx(t)
+				env.Engine.ActL2IncludeTx(env.Alice.Address())(t)
+			}
+
+			env.Sequencer.ActL2EndBlock(t)
+			block := env.Engine.Eth.BlockChain().GetBlockByNumber(env.Sequencer.L2Unsafe().Number)
 			_, err := hugeChannelOut.AddBlock(env.Sequencer.RollupCfg, block)
 			if err != nil {
 				t.Fatal(err)
 			}
+			t.Log(uint64(hugeChannelOut.RLPLength()))
 		}
 		hugeChannelOut.Close()
 
@@ -110,6 +100,11 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 
 		l2SafeHead := env.Sequencer.L2Safe()
 
+		// Because the channel will be _clipped_ to max_rlp_bytes_per_channel, the safe
+		// head is expected to move up to but not including the last block in the channel.
+		testCfg.Custom.holoceneExpectations.safeHeadHolocene = env.Sequencer.L2Unsafe().Number - 1
+		testCfg.Custom.holoceneExpectations.safeHeadPreHolocene = env.Sequencer.L2Unsafe().Number - 1
+
 		testCfg.Custom.RequireExpectedProgress(t, l2SafeHead, testCfg.Hardfork.Precedence < helpers.Holocene.Precedence, env.Engine)
 
 		t.Log("Safe head progressed as expected", "l2SafeHeadNumber", l2SafeHead.Number)
@@ -129,6 +124,14 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 			helpers.NewForkMatrix(helpers.Granite, helpers.LatestFork),
 			runHoloceneDerivationTest,
 			helpers.ExpectNoError(),
+		)
+		matrix.AddTestCase(
+			fmt.Sprintf("JunkClaim-%s", ordering.name),
+			ordering,
+			helpers.NewForkMatrix(helpers.Granite, helpers.LatestFork),
+			runHoloceneDerivationTest,
+			helpers.ExpectError(claim.ErrClaimNotValid),
+			helpers.WithL2Claim(common.HexToHash("0xdeadbeef")),
 		)
 	}
 }
