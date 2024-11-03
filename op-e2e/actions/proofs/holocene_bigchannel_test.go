@@ -33,7 +33,7 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 		env := helpers.NewL2FaultProofEnv(t, testCfg, helpers.NewTestParams(), helpers.NewBatcherCfg())
 
 		// build some l1 blocks so that we don't hit sequencer drift problems
-		for i := 0; i < 1000; i++ {
+		for i := 0; i < 200; i++ {
 			env.Miner.ActEmptyBlock(t)
 		}
 
@@ -61,7 +61,6 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 				t.Fatal(err)
 			}
 			t.Log(uint64(hugeChannelOut.RLPLength()))
-			t.Log(env.Sequencer.L2Unsafe())
 		}
 		hugeChannelOut.Close()
 
@@ -102,12 +101,11 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 
 		holoceneExpectations := holoceneExpectations{}
 		if testCfg.Custom.disableCompression {
-			holoceneExpectations.safeHeadHolocene = 0                                      // entire channel dropped because the compressed size > MAX_RLP_BYTES_PER_CHANNEL
-			holoceneExpectations.safeHeadPreHolocene = env.Sequencer.L2Unsafe().Number - 1 // Well within MAX_CHANNEL_BANK_BYTES limits, so hits the MAX_RLP_BYTES_PER_CHANNEL limit when decompressed
+			holoceneExpectations.safeHeadHolocene = 0 // entire channel dropped because the compressed
+			holoceneExpectations.safeHeadPreHolocene = env.Sequencer.L2Unsafe().Number - 1
 		} else {
 			// Because the channel will be _clipped_ to max_rlp_bytes_per_channel, the safe
 			// head is expected to move up to but not including the last block in the channel.
-			// Unchanged during pre/post Holocene.
 			holoceneExpectations.safeHeadHolocene = env.Sequencer.L2Unsafe().Number - 1
 			holoceneExpectations.safeHeadPreHolocene = env.Sequencer.L2Unsafe().Number - 1
 		}
