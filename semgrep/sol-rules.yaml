@@ -183,3 +183,6 @@ rules:
     patterns:
       - pattern: require($ERR);
       - pattern-not: require($ERR, $MSG);
+    paths:
+      exclude:
+        - packages/contracts-bedrock/
