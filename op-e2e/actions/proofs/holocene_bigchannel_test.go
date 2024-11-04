@@ -34,12 +34,8 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 		}
 		env := helpers.NewL2FaultProofEnv(t, testCfg, helpers.NewTestParams(), batcherConfig)
 
-		// build some l1 blocks so that we don't hit sequencer drift problems
-		for i := 0; i < 200; i++ {
-			env.Miner.ActEmptyBlock(t)
-		}
-
-		hugeChannelOut, _ := actionsHelpers.NewGarbageChannelOut(batcherConfig.GarbageCfg)
+		hugeChannelOut, err := actionsHelpers.NewGarbageChannelOut(batcherConfig.GarbageCfg)
+		require.NoError(t, err)
 
 		parentTime := env.Sequencer.RollupCfg.Genesis.L2Time
 		blockTime := env.Sequencer.RollupCfg.BlockTime
@@ -64,7 +60,7 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		err := hugeChannelOut.Close()
+		err = hugeChannelOut.Close()
 		require.NoError(t, err)
 
 		t.Log("closed channel", "rlp_length", hugeChannelOut.RLPLength(), "ready_bytes", hugeChannelOut.ReadyBytes())
