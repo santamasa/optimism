@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum-optimism/optimism/op-node/rollup/derive"
 	"github.com/ethereum-optimism/optimism/op-program/client/claim"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_ProgramAction_BigChannel(gt *testing.T) {
@@ -53,16 +54,20 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 			}
 
 			env.Sequencer.ActL2EndBlock(t)
-			block := env.Engine.Eth.BlockChain().GetBlockByNumber(env.Sequencer.L2Unsafe().Number)
+
+			unsafeHeadNumber := env.Sequencer.L2Unsafe().Number
+			t.Log("unsafe l2 head number", unsafeHeadNumber)
+
+			block := env.Engine.Eth.BlockChain().GetBlockByNumber(unsafeHeadNumber)
 			_, err := hugeChannelOut.AddBlock(env.Sequencer.RollupCfg, block)
 			if err != nil {
 				t.Fatal(err)
 			}
-			t.Log(uint64(hugeChannelOut.RLPLength()))
 		}
-		hugeChannelOut.Close()
+		err := hugeChannelOut.Close()
+		require.NoError(t, err)
 
-		t.Log(hugeChannelOut.RLPLength(), hugeChannelOut.ReadyBytes())
+		t.Log("closed channel", "rlp_length", hugeChannelOut.RLPLength(), "ready_bytes", hugeChannelOut.ReadyBytes())
 
 		includeBatchTx := func() {
 			// Include the last transaction submitted by the batcher.
