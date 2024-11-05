@@ -162,7 +162,7 @@ contract L2Genesis is Deployer {
     ///                                configuration. Otherwise, the standard genesis will be built.
     function runWithOptions(OutputMode _mode, Fork _fork, bool _populateNetworkConfig) public {
         console.log("L2Genesis: outputMode: %s, fork: %s", _mode.toString(), _fork.toString());
-        artifactDependencies();
+        L1Dependencies memory l1Dependencies = artifactDependencies();
         vm.startPrank(deployer);
         vm.chainId(cfg.l2ChainID());
 
@@ -202,24 +202,28 @@ contract L2Genesis is Deployer {
             console.log("L2Genesis: Modify the standard L2 genesis with network specific configuration");
             vm.startPrank(Constants.DEPOSITOR_ACCOUNT);
             IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
-                Types.ConfigType.L1_ERC_721_BRIDGE_ADDRESS, abi.encode(artifactDependencies().l1ERC721BridgeProxy)
+                Types.ConfigType.L1_ERC_721_BRIDGE_ADDRESS, abi.encode(l1Dependencies.l1ERC721BridgeProxy)
             );
+            IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
+                Types.ConfigType.L1_CROSS_DOMAIN_MESSENGER_ADDRESS,
+                abi.encode(l1Dependencies.l1CrossDomainMessengerProxy)
+            );
+            IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
+                Types.ConfigType.L1_STANDARD_BRIDGE_ADDRESS, abi.encode(l1Dependencies.l1StandardBridgeProxy)
+            );
+
+            console.log("in we go");
             // IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
             //     Types.ConfigType.REMOTE_CHAIN_ID, abi.encode(cfg.l1ChainID())
             // );
-            IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
-                Types.ConfigType.L1_CROSS_DOMAIN_MESSENGER_ADDRESS,
-                abi.encode(artifactDependencies().l1CrossDomainMessengerProxy)
-            );
-            IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
-                Types.ConfigType.L1_STANDARD_BRIDGE_ADDRESS, abi.encode(artifactDependencies().l1StandardBridgeProxy)
-            );
+            // uint256 amount = cfg.sequencerFeeVaultMinimumWithdrawalAmount(); // reverts
+            // address recipient = cfg.sequencerFeeVaultRecipient(); // reverts
+            // uint256 amount = 20;
+            // Types.WithdrawalNetwork network = Types.WithdrawalNetwork(cfg.sequencerFeeVaultWithdrawalNetwork()); //
+            // reverts
 
-            // bytes32 sequencerFeeVaultConfig = Encoding.encodeFeeVaultConfig({
-            //     _recipient: cfg.sequencerFeeVaultRecipient(),
-            //     _amount: cfg.sequencerFeeVaultMinimumWithdrawalAmount(),
-            //     _network: Types.WithdrawalNetwork(cfg.sequencerFeeVaultWithdrawalNetwork())
-            // });
+            // bytes32 sequencerFeeVaultConfig =
+            //     Encoding.encodeFeeVaultConfig({ _recipient: recipient, _amount: amount, _network: network });
             // IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
             //     Types.ConfigType.SEQUENCER_FEE_VAULT_CONFIG, abi.encode(sequencerFeeVaultConfig)
             // );
