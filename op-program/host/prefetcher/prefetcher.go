@@ -3,6 +3,7 @@ package prefetcher
 import (
 	"context"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"slices"
@@ -59,6 +60,8 @@ type L2Source interface {
 	GetProof(ctx context.Context, address common.Address, storage []common.Hash, blockTag string) (*eth.AccountResult, error)
 	// ExecutionWitness returns the execution witness for the given block hash.
 	ExecutionWitness(ctx context.Context, blockNum uint64) (*eth.ExecutionWitness, error)
+	// ExecutionWitness returns the execution witness for the given block hash.
+	PayloadExecutionWitness(ctx context.Context, blockHash common.Hash, payloadAttributes eth.PayloadAttributes, transactions []hexutil.Bytes) (*eth.ExecutionWitness, error)
 	// If enabled, GetProof and ExecutionWitness can be called to fetch data from the experimental source.
 	ExperimentalEnabled() bool
 }
@@ -168,6 +171,28 @@ func (p *Prefetcher) bulkPrefetch(ctx context.Context, hint string) error {
 		result, err := p.l2Fetcher.ExecutionWitness(ctx, blockNum)
 		if err != nil {
 			return fmt.Errorf("failed to fetch L2 execution witness for block %d: %w", blockNum, err)
+		}
+
+		// ignore keys because we want to rehash all of the values for safety
+		values := make([]hexutil.Bytes, 0, len(result.State)+len(result.Codes))
+		for _, value := range result.State {
+			values = append(values, value)
+		}
+
+		for _, value := range result.Codes {
+			values = append(values, value)
+		}
+
+		return p.storeNodes(values)
+	case l2.HintL2PayloadWitness:
+		var hint l2.PayloadWitnessHint
+		if err := json.Unmarshal(hintBytes, &hint); err != nil {
+			return fmt.Errorf("failed to unmarshal payload witness hint: %w", err)
+		}
+
+		result, err := p.l2Fetcher.PayloadExecutionWitness(ctx, hint.ParentBlockHash, hint.PayloadAttributes, hint.Transactions)
+		if err != nil {
+			return fmt.Errorf("failed to fetch L2 execution witness for block with parent %v: %w", hint.ParentBlockHash, err)
 		}
 
 		// ignore keys because we want to rehash all of the values for safety

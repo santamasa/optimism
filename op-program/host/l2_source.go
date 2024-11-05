@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum-optimism/optimism/op-service/eth"
 	"github.com/ethereum-optimism/optimism/op-service/sources"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
 )
@@ -132,6 +133,22 @@ func (l *L2Source) ExecutionWitness(ctx context.Context, blockNum uint64) (*eth.
 	witness, err := l.experimentalClient.ExecutionWitness(ctx, blockNum)
 	if err != nil {
 		l.logger.Error("Failed to fetch execution witness from experimental source", "blockNum", blockNum, "err", err)
+		return nil, prefetcher.ErrExperimentalPrefetchFailed
+	}
+	return witness, nil
+}
+
+// ExecutionWitness implements prefetcher.L2Source.
+func (l *L2Source) PayloadExecutionWitness(ctx context.Context, blockHash common.Hash, payloadAttributes eth.PayloadAttributes, transactions []hexutil.Bytes) (*eth.ExecutionWitness, error) {
+	if !l.ExperimentalEnabled() {
+		l.logger.Error("Experimental source is not enabled, cannot fetch execution witness", "blockHash", blockHash)
+		return nil, prefetcher.ErrExperimentalPrefetchDisabled
+	}
+
+	// log errors, but return standard error so we know to retry with legacy source
+	witness, err := l.experimentalClient.PayloadExecutionWitness(ctx, blockHash, payloadAttributes, transactions)
+	if err != nil {
+		l.logger.Error("Failed to fetch execution witness from experimental source", "blockHash", blockHash, "err", err)
 		return nil, prefetcher.ErrExperimentalPrefetchFailed
 	}
 	return witness, nil

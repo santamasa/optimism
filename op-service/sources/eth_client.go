@@ -331,6 +331,22 @@ func (s *EthClient) ExecutionWitness(ctx context.Context, blockNum uint64) (*eth
 	return witness, nil
 }
 
+// PayloadExecutionWitness generates a block from a payload and returns execution witness data.
+func (s *EthClient) PayloadExecutionWitness(ctx context.Context, blockHash common.Hash, payloadAttributes eth.PayloadAttributes, transactions []hexutil.Bytes) (*eth.ExecutionWitness, error) {
+	var witness *eth.ExecutionWitness
+
+	err := s.client.CallContext(ctx, &witness, "debug_executePayload", blockHash, payloadAttributes, transactions)
+	if err != nil {
+		return nil, err
+	}
+
+	if witness == nil {
+		return nil, ethereum.NotFound
+	}
+
+	return witness, nil
+}
+
 // GetProof returns an account proof result, with any optional requested storage proofs.
 // The retrieval does sanity-check that storage proofs for the expected keys are present in the response,
 // but does not verify the result. Call accountResult.Verify(stateRoot) to verify the result.

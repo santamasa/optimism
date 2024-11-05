@@ -2,11 +2,13 @@ package l2
 
 import (
 	"encoding/binary"
+	"encoding/json"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	preimage "github.com/ethereum-optimism/optimism/op-preimage"
+	"github.com/ethereum-optimism/optimism/op-service/eth"
 )
 
 const (
@@ -17,6 +19,7 @@ const (
 	HintL2Output           = "l2-output"
 	HintL2AccountProof     = "l2-account-proof"
 	HintL2ExecutionWitness = "l2-execution-witness"
+	HintL2PayloadWitness   = "l2-payload-witness"
 )
 
 type BlockHeaderHint common.Hash
@@ -81,4 +84,21 @@ func (l ExecutionWitnessHint) Hint() string {
 	binary.BigEndian.PutUint64(blockNumBytes[:], uint64(l))
 
 	return HintL2ExecutionWitness + " " + hexutil.Encode(blockNumBytes[:])
+}
+
+type PayloadWitnessHint struct {
+	ParentBlockHash   common.Hash           `json:"parentBlockHash"`
+	Transactions      []hexutil.Bytes       `json:"transactions"`
+	PayloadAttributes eth.PayloadAttributes `json:"payloadAttributes"`
+}
+
+var _ preimage.Hint = PayloadWitnessHint{}
+
+func (l PayloadWitnessHint) Hint() string {
+	marshaled, err := json.Marshal(l)
+	if err != nil {
+		return "" // TODO: what to do?
+	}
+
+	return HintL2PayloadWitness + " " + hexutil.Encode(marshaled)
 }
