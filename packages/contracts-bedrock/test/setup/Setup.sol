@@ -204,7 +204,7 @@ contract Setup {
     /// @dev Sets up the L2 contracts. Depends on `L1()` being called first.
     function L2() public {
         console.log("Setup: creating L2 genesis with fork %s", l2Fork.toString());
-        l2Genesis.runWithOptions(OutputMode.NONE, l2Fork);
+        l2Genesis.runWithOptions({ _mode: Config.outputMode(), _fork: l2Fork, _populateNetworkConfig: false });
 
         // Set the governance token's owner to be the final system owner
         address finalSystemOwner = deploy.cfg().finalSystemOwner();
