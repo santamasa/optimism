@@ -166,8 +166,11 @@ contract L2Genesis is Deployer {
 
     /// @notice This is used by foundry tests to enable the latest fork with the
     ///         given L1 dependencies.
-    function runWithLatestLocal() public {
-        runWithOptions({ _mode: OutputMode.NONE, _fork: LATEST_FORK, _populateNetworkConfig: false });
+    function runWithLatestLocal(L1Dependencies memory l1Dependencies) public {
+        save("L1CrossDomainMessengerProxy", l1Dependencies.l1CrossDomainMessengerProxy);
+        save("L1StandardBridgeProxy", l1Dependencies.l1StandardBridgeProxy);
+        save("L1ERC721BridgeProxy", l1Dependencies.l1ERC721BridgeProxy);
+        runWithOptions({ _mode: OutputMode.NONE, _fork: LATEST_FORK, _populateNetworkConfig: true });
     }
 
     /// @notice Build the L2 genesis.
