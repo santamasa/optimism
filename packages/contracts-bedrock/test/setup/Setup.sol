@@ -8,7 +8,7 @@ import { Vm } from "forge-std/Vm.sol";
 // Scripts
 import { Deploy } from "scripts/deploy/Deploy.s.sol";
 import { Fork, LATEST_FORK } from "scripts/libraries/Config.sol";
-import { L2Genesis } from "scripts/L2Genesis.s.sol";
+import { L2Genesis, L1Dependencies } from "scripts/L2Genesis.s.sol";
 import { OutputMode, Fork, ForkUtils } from "scripts/libraries/Config.sol";
 
 // Libraries
@@ -204,7 +204,16 @@ contract Setup {
     /// @dev Sets up the L2 contracts. Depends on `L1()` being called first.
     function L2() public {
         console.log("Setup: creating L2 genesis with fork %s", l2Fork.toString());
-        l2Genesis.runWithOptions({ _mode: OutputMode.NONE, _fork: l2Fork, _populateNetworkConfig: false });
+        l2Genesis.runWithOptions({
+            _mode: OutputMode.NONE,
+            _fork: l2Fork,
+            _populateNetworkConfig: false,
+            _l1Dependencies: L1Dependencies({
+                l1CrossDomainMessengerProxy: payable(address(l1CrossDomainMessenger)),
+                l1StandardBridgeProxy: payable(address(l1StandardBridge)),
+                l1ERC721BridgeProxy: payable(address(l1ERC721Bridge))
+            })
+        });
 
         // Set the governance token's owner to be the final system owner
         address finalSystemOwner = deploy.cfg().finalSystemOwner();

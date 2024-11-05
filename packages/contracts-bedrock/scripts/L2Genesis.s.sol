@@ -143,7 +143,12 @@ contract L2Genesis is Deployer {
     ///         Sets the precompiles, proxies, and the implementation accounts to be `vm.dumpState`
     ///         to generate a L2 genesis alloc.
     function runWithStateDump() public {
-        runWithOptions({ _mode: Config.outputMode(), _fork: Config.fork(), _populateNetworkConfig: true });
+        runWithOptions({
+            _mode: Config.outputMode(),
+            _fork: Config.fork(),
+            _populateNetworkConfig: true,
+            _l1Dependencies: artifactDependencies()
+        });
     }
 
     /// @notice Alias for `runWithStateDump` so that no `--sig` needs to be specified.
@@ -154,23 +159,39 @@ contract L2Genesis is Deployer {
     /// @notice This is used by op-e2e to have a version of the L2 allocs for each upgrade.
     function runWithAllUpgrades() public {
         console.log("L2Genesis: runWithAllUpgrades");
-        runWithOptions({ _mode: OutputMode.ALL, _fork: LATEST_FORK, _populateNetworkConfig: true });
+        runWithOptions({
+            _mode: OutputMode.ALL,
+            _fork: LATEST_FORK,
+            _populateNetworkConfig: true,
+            _l1Dependencies: artifactDependencies()
+        });
     }
 
     /// @notice This is used by new experimental interop deploy tooling.
     function runWithEnv() public {
         //  The setUp() is skipped (since we insert a custom DeployConfig, and do not use Artifacts)
         deployer = makeAddr("deployer");
-        runWithOptions({ _mode: OutputMode.NONE, _fork: Config.fork(), _populateNetworkConfig: false });
+        runWithOptions({
+            _mode: OutputMode.NONE,
+            _fork: Config.fork(),
+            _populateNetworkConfig: false,
+            _l1Dependencies: L1Dependencies({
+                l1CrossDomainMessengerProxy: payable(vm.envAddress("L2GENESIS_L1CrossDomainMessengerProxy")),
+                l1StandardBridgeProxy: payable(vm.envAddress("L2GENESIS_L1StandardBridgeProxy")),
+                l1ERC721BridgeProxy: payable(vm.envAddress("L2GENESIS_L1ERC721BridgeProxy"))
+            })
+        });
     }
 
     /// @notice This is used by foundry tests to enable the latest fork with the
     ///         given L1 dependencies.
     function runWithLatestLocal(L1Dependencies memory l1Dependencies) public {
-        save("L1CrossDomainMessengerProxy", l1Dependencies.l1CrossDomainMessengerProxy);
-        save("L1StandardBridgeProxy", l1Dependencies.l1StandardBridgeProxy);
-        save("L1ERC721BridgeProxy", l1Dependencies.l1ERC721BridgeProxy);
-        runWithOptions({ _mode: OutputMode.NONE, _fork: LATEST_FORK, _populateNetworkConfig: true });
+        runWithOptions({
+            _mode: OutputMode.NONE,
+            _fork: LATEST_FORK,
+            _populateNetworkConfig: true,
+            _l1Dependencies: l1Dependencies
+        });
     }
 
     /// @notice Build the L2 genesis.
@@ -178,9 +199,15 @@ contract L2Genesis is Deployer {
     /// @param _fork The fork to build the genesis for.
     /// @param _populateNetworkConfig If true, the L1 Block contract will be populated with network specific
     ///                                configuration. Otherwise, the standard genesis will be built.
-    function runWithOptions(OutputMode _mode, Fork _fork, bool _populateNetworkConfig) public {
+    function runWithOptions(
+        OutputMode _mode,
+        Fork _fork,
+        bool _populateNetworkConfig,
+        L1Dependencies memory _l1Dependencies
+    )
+        public
+    {
         console.log("L2Genesis: outputMode: %s, fork: %s", _mode.toString(), _fork.toString());
-        L1Dependencies memory l1Dependencies = artifactDependencies();
         vm.startPrank(deployer);
         vm.chainId(cfg.l2ChainID());
 
@@ -233,14 +260,14 @@ contract L2Genesis is Deployer {
             console.log("L2Genesis: Modify the standard L2 genesis with network specific configuration");
             vm.startPrank(Constants.DEPOSITOR_ACCOUNT);
             IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
-                Types.ConfigType.L1_ERC_721_BRIDGE_ADDRESS, abi.encode(l1Dependencies.l1ERC721BridgeProxy)
+                Types.ConfigType.L1_ERC_721_BRIDGE_ADDRESS, abi.encode(_l1Dependencies.l1ERC721BridgeProxy)
             );
             IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
                 Types.ConfigType.L1_CROSS_DOMAIN_MESSENGER_ADDRESS,
-                abi.encode(l1Dependencies.l1CrossDomainMessengerProxy)
+                abi.encode(_l1Dependencies.l1CrossDomainMessengerProxy)
             );
             IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
-                Types.ConfigType.L1_STANDARD_BRIDGE_ADDRESS, abi.encode(l1Dependencies.l1StandardBridgeProxy)
+                Types.ConfigType.L1_STANDARD_BRIDGE_ADDRESS, abi.encode(_l1Dependencies.l1StandardBridgeProxy)
             );
 
             IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
