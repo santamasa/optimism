@@ -65,31 +65,33 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 
 		t.Log("closed channel", "rlp_length", hugeChannelOut.RLPLength(), "ready_bytes", hugeChannelOut.ReadyBytes())
 
-		includeBatchTx := func() {
-			// Include the last transaction submitted by the batcher.
-			env.Miner.ActL1StartBlock(12)(t)
-			env.Miner.ActL1IncludeTxByHash(env.Batcher.LastSubmitted.Hash())(t)
-			env.Miner.ActL1EndBlock(t)
-
-			// Finalize the block with the first channel frame on L1.
-			env.Miner.ActL1SafeNext(t)
-			env.Miner.ActL1FinalizeNext(t)
-		}
-
+		frames := make([][]byte, 0)
 		for {
-			// Collect the output frames, submit and include them.
+			// Collect the output frames and submit them.
 			data := new(bytes.Buffer)
 			data.WriteByte(derive.DerivationVersion0)
-			_, err := hugeChannelOut.OutputFrame(data, 100_000)
+			_, err := hugeChannelOut.OutputFrame(data, 130_000) // close to max blob size
+			// TODO probably need to send as multi blob tx, otherwise it may be mathematically impossible
+			// to get this huge channel on chain given gas limits
 			if err == io.EOF {
-				env.Batcher.ActL2BatchSubmitRaw(t, data.Bytes())
-				includeBatchTx()
+				frames = append(frames, data.Bytes())
 				break
 			} else if err != nil {
 				t.Fatal(err)
 			}
-			env.Batcher.ActL2BatchSubmitRaw(t, data.Bytes())
-			includeBatchTx()
+			frames = append(frames, data.Bytes())
+		}
+
+		// incluce all txs in as few blocks as possible
+		// To avoid the channel timing out, we need to get it on chain within
+		// CHANNEL_TIMEOUT which is 50 L1 blocks when Granite is activated.
+		for _, frame := range frames {
+			env.Miner.ActL1StartBlock(12)(t)
+			for i := 0; i < 10; i++ {
+				env.Batcher.ActL2BatchSubmitRaw(t, frame)
+				env.Miner.ActL1IncludeTxByHash(env.Batcher.LastSubmitted.Hash())(t)
+			}
+			env.Miner.ActL1EndBlock(t)
 		}
 
 		// Instruct the sequencer to derive the L2 chain from the data on L1 that the batcher just posted.
