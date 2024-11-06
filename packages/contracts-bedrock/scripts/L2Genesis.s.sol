@@ -8,6 +8,7 @@ import { EIP1967Helper } from "test/mocks/EIP1967Helper.sol";
 // Scripts
 import { Deployer } from "scripts/deploy/Deployer.sol";
 import { Config, OutputMode, OutputModeUtils, Fork, ForkUtils, LATEST_FORK } from "scripts/libraries/Config.sol";
+import { DeployConfig } from "scripts/deploy/DeployConfig.s.sol";
 import { Process } from "scripts/libraries/Process.sol";
 import { SetPreinstalls } from "scripts/SetPreinstalls.s.sol";
 
@@ -52,21 +53,6 @@ contract L2Genesis is Deployer {
     uint256 public constant PRECOMPILE_COUNT = 256;
 
     uint80 internal constant DEV_ACCOUNT_FUND_AMT = 10_000 ether;
-
-    struct NetworkConfig {
-        uint256 l1ChainID;
-        uint256 sequencerFeeVaultMinimumWithdrawalAmount;
-        address sequencerFeeVaultRecipient;
-        uint256 sequencerFeeVaultWithdrawalNetwork;
-        address baseFeeVaultRecipient;
-        uint256 baseFeeVaultMinimumWithdrawalAmount;
-        uint256 baseFeeVaultWithdrawalNetwork;
-        address l1FeeVaultRecipient;
-        uint256 l1FeeVaultMinimumWithdrawalAmount;
-        uint256 l1FeeVaultWithdrawalNetwork;
-    }
-
-    NetworkConfig internal networkConfig;
 
     /// @notice Default Anvil dev accounts. Only funded if `cfg.fundDevAccounts == true`.
     /// Also known as "test test test test test test test test test test test junk" mnemonic accounts,
@@ -203,61 +189,7 @@ contract L2Genesis is Deployer {
         vm.stopPrank();
 
         if (_populateNetworkConfig) {
-            networkConfig.l1ChainID = cfg.l1ChainID();
-            networkConfig.sequencerFeeVaultMinimumWithdrawalAmount = cfg.sequencerFeeVaultMinimumWithdrawalAmount();
-            networkConfig.sequencerFeeVaultRecipient = cfg.sequencerFeeVaultRecipient();
-            networkConfig.sequencerFeeVaultWithdrawalNetwork = cfg.sequencerFeeVaultWithdrawalNetwork();
-            networkConfig.baseFeeVaultRecipient = cfg.baseFeeVaultRecipient();
-            networkConfig.baseFeeVaultMinimumWithdrawalAmount = cfg.baseFeeVaultMinimumWithdrawalAmount();
-            networkConfig.baseFeeVaultWithdrawalNetwork = cfg.baseFeeVaultWithdrawalNetwork();
-            networkConfig.l1FeeVaultRecipient = cfg.l1FeeVaultRecipient();
-            networkConfig.l1FeeVaultMinimumWithdrawalAmount = cfg.l1FeeVaultMinimumWithdrawalAmount();
-            networkConfig.l1FeeVaultWithdrawalNetwork = cfg.l1FeeVaultWithdrawalNetwork();
-
-            console.log("L2Genesis: Modify the standard L2 genesis with network specific configuration");
-            vm.startPrank(Constants.DEPOSITOR_ACCOUNT);
-            IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
-                Types.ConfigType.L1_ERC_721_BRIDGE_ADDRESS, abi.encode(_l1Dependencies.l1ERC721BridgeProxy)
-            );
-            IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
-                Types.ConfigType.L1_CROSS_DOMAIN_MESSENGER_ADDRESS,
-                abi.encode(_l1Dependencies.l1CrossDomainMessengerProxy)
-            );
-            IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
-                Types.ConfigType.L1_STANDARD_BRIDGE_ADDRESS, abi.encode(_l1Dependencies.l1StandardBridgeProxy)
-            );
-
-            IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
-                Types.ConfigType.REMOTE_CHAIN_ID, abi.encode(networkConfig.l1ChainID)
-            );
-
-            bytes32 sequencerFeeVaultConfig = Encoding.encodeFeeVaultConfig({
-                _recipient: networkConfig.sequencerFeeVaultRecipient,
-                _amount: networkConfig.sequencerFeeVaultMinimumWithdrawalAmount,
-                _network: Types.WithdrawalNetwork(networkConfig.sequencerFeeVaultWithdrawalNetwork)
-            });
-            IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
-                Types.ConfigType.SEQUENCER_FEE_VAULT_CONFIG, abi.encode(sequencerFeeVaultConfig)
-            );
-
-            bytes32 baseFeeVaultConfig = Encoding.encodeFeeVaultConfig({
-                _recipient: networkConfig.baseFeeVaultRecipient,
-                _amount: networkConfig.baseFeeVaultMinimumWithdrawalAmount,
-                _network: Types.WithdrawalNetwork(networkConfig.baseFeeVaultWithdrawalNetwork)
-            });
-            IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
-                Types.ConfigType.BASE_FEE_VAULT_CONFIG, abi.encode(baseFeeVaultConfig)
-            );
-
-            bytes32 l1FeeVaultConfig = Encoding.encodeFeeVaultConfig({
-                _recipient: networkConfig.l1FeeVaultRecipient,
-                _amount: networkConfig.l1FeeVaultMinimumWithdrawalAmount,
-                _network: Types.WithdrawalNetwork(networkConfig.l1FeeVaultWithdrawalNetwork)
-            });
-            IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
-                Types.ConfigType.L1_FEE_VAULT_CONFIG, abi.encode(l1FeeVaultConfig)
-            );
-            vm.stopPrank();
+            _setNetworkConfig(_l1Dependencies, cfg);
         }
 
         if (writeForkGenesisAllocs(_fork, Fork.DELTA, _mode)) {
@@ -287,6 +219,55 @@ contract L2Genesis is Deployer {
         if (writeForkGenesisAllocs(_fork, Fork.ISTHMUS, _mode)) {
             return;
         }
+    }
+
+    /// @notice Sets network-specific configuration in the L1Block contract
+    /// @param _l1Dependencies The L1 contract dependencies needed for configuration
+    function _setNetworkConfig(L1Dependencies memory _l1Dependencies, DeployConfig _config) internal {
+        console.log("L2Genesis: Modify the standard L2 genesis with network specific configuration");
+        vm.startPrank(Constants.DEPOSITOR_ACCOUNT);
+
+        IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
+            Types.ConfigType.L1_ERC_721_BRIDGE_ADDRESS, abi.encode(_l1Dependencies.l1ERC721BridgeProxy)
+        );
+        IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
+            Types.ConfigType.L1_CROSS_DOMAIN_MESSENGER_ADDRESS, abi.encode(_l1Dependencies.l1CrossDomainMessengerProxy)
+        );
+        IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
+            Types.ConfigType.L1_STANDARD_BRIDGE_ADDRESS, abi.encode(_l1Dependencies.l1StandardBridgeProxy)
+        );
+
+        IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
+            Types.ConfigType.REMOTE_CHAIN_ID, abi.encode(_config.l1ChainID())
+        );
+
+        bytes32 sequencerFeeVaultConfig = Encoding.encodeFeeVaultConfig({
+            _recipient: _config.sequencerFeeVaultRecipient(),
+            _amount: _config.sequencerFeeVaultMinimumWithdrawalAmount(),
+            _network: Types.WithdrawalNetwork(_config.sequencerFeeVaultWithdrawalNetwork())
+        });
+        IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
+            Types.ConfigType.SEQUENCER_FEE_VAULT_CONFIG, abi.encode(sequencerFeeVaultConfig)
+        );
+
+        bytes32 baseFeeVaultConfig = Encoding.encodeFeeVaultConfig({
+            _recipient: _config.baseFeeVaultRecipient(),
+            _amount: _config.baseFeeVaultMinimumWithdrawalAmount(),
+            _network: Types.WithdrawalNetwork(_config.baseFeeVaultWithdrawalNetwork())
+        });
+        IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
+            Types.ConfigType.BASE_FEE_VAULT_CONFIG, abi.encode(baseFeeVaultConfig)
+        );
+
+        bytes32 l1FeeVaultConfig = Encoding.encodeFeeVaultConfig({
+            _recipient: _config.l1FeeVaultRecipient(),
+            _amount: _config.l1FeeVaultMinimumWithdrawalAmount(),
+            _network: Types.WithdrawalNetwork(_config.l1FeeVaultWithdrawalNetwork())
+        });
+        IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
+            Types.ConfigType.L1_FEE_VAULT_CONFIG, abi.encode(l1FeeVaultConfig)
+        );
+        vm.stopPrank();
     }
 
     function writeForkGenesisAllocs(Fork _latest, Fork _current, OutputMode _mode) internal returns (bool isLatest_) {
