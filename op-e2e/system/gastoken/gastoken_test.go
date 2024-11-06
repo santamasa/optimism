@@ -159,13 +159,15 @@ func setCustomGasToken(t *testing.T, cfg e2esys.SystemConfig, sys *e2esys.System
 	require.NoError(t, err)
 
 	// Get existing parameters from SystemConfigProxy contract
-	require.NoError(t, err)
 	roles := bindings.SystemConfigRoles{}
 	roles.Owner, err = systemConfig.Owner(&bind.CallOpts{})
+	require.NoError(t, err)
 	roles.FeeAdmin, err = systemConfig.FeeAdmin(&bind.CallOpts{})
+	require.NoError(t, err)
 	roles.UnsafeBlockSigner, err = systemConfig.UnsafeBlockSigner(&bind.CallOpts{})
+	require.NoError(t, err)
 	roles.BatcherHash, err = systemConfig.BatcherHash(&bind.CallOpts{})
-
+	require.NoError(t, err)
 	basefeeScalar, err := systemConfig.BasefeeScalar(&bind.CallOpts{})
 	require.NoError(t, err)
 	blobbasefeeScalar, err := systemConfig.BlobbasefeeScalar(&bind.CallOpts{})
