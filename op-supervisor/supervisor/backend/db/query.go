@@ -239,7 +239,7 @@ func (db *ChainsDB) CandidateCrossSafe(chain types.ChainID) (derivedFromScope, c
 		if errors.Is(err, types.ErrFuture) {
 			// If we do not have any cross-safe block yet, then abort: InitializeCrossSafe should be called.
 			return eth.BlockRef{}, eth.BlockRef{},
-				fmt.Errorf("no initial cross-safe value, awaiting InitializeCrossSafe: %v", err)
+				fmt.Errorf("no initial cross-safe value, awaiting InitializeCrossSafe: %w", err)
 		}
 		return eth.BlockRef{}, eth.BlockRef{}, err
 	}

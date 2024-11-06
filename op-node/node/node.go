@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ethereum-optimism/optimism/op-node/rollup/interop"
 	"io"
 	"sync/atomic"
 	"time"
+
+	"github.com/ethereum-optimism/optimism/op-node/rollup/interop"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/libp2p/go-libp2p/core/peer"

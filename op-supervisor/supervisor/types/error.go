@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
