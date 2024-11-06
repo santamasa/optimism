@@ -30,6 +30,7 @@ const (
 	ChallengerFlagName                      = "challenger"
 	PreimageOracleFlagName                  = "preimage-oracle"
 	VMFlagName                              = "vm"
+	SystemConfigFlagName                    = "system-config"
 )
 
 var (
@@ -154,6 +155,12 @@ var (
 		EnvVars: deployer.PrefixEnvVar("VM"),
 		Value:   common.Address{}.Hex(),
 	}
+	SystemConfigFlag = &cli.StringFlag{
+		Name:    SystemConfigFlagName,
+		Usage:   "SystemConfig address.",
+		EnvVars: deployer.PrefixEnvVar("SYSTEM_CONFIG"),
+		Value:   common.Address{}.Hex(),
+	}
 )
 
 var OPCMFlags = []cli.Flag{
@@ -201,6 +208,14 @@ var MIPSFlags = []cli.Flag{
 	MIPSVersionFlag,
 }
 
+var HoloceneFlags = []cli.Flag{
+	deployer.L1RPCURLFlag,
+	deployer.PrivateKeyFlag,
+	ArtifactsLocatorFlag,
+	SystemConfigFlag,
+	AbsolutePrestateFlag,
+}
+
 var Commands = []*cli.Command{
 	{
 		Name:   "opcm",
@@ -225,5 +240,12 @@ var Commands = []*cli.Command{
 		Usage:  "Bootstrap an instance of MIPS.",
 		Flags:  cliapp.ProtectFlags(MIPSFlags),
 		Action: MIPSCLI,
+	},
+	{
+		Name:        "holocene",
+		Usage:       "Prepare holocene contract upgrades.",
+		Description: "Deploys the contracts in preparation for the Holocene upgrade. The upgrade must be activated by the ProxyAdminOwner",
+		Flags:       cliapp.ProtectFlags(HoloceneFlags),
+		Action:      HoloceneCLI,
 	},
 }
