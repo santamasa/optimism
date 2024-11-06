@@ -220,9 +220,9 @@ contract L2Genesis is Deployer {
         }
         vm.stopPrank();
 
+        // TODO: remove the networkConfig struct and encapsulate this logic in a function to
+        // be shared with the similar logic in Setup.L2()
         if (_populateNetworkConfig) {
-            // writeForkGenesisAllocs will delete the DeployConfig contract from state, so we need to cache all the
-            // values we need in the _populateNetworkConfig block first.
             networkConfig.l1ChainID = cfg.l1ChainID();
             networkConfig.sequencerFeeVaultMinimumWithdrawalAmount = cfg.sequencerFeeVaultMinimumWithdrawalAmount();
             networkConfig.sequencerFeeVaultRecipient = cfg.sequencerFeeVaultRecipient();
