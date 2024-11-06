@@ -11,9 +11,10 @@ import { ISystemConfig } from "src/L1/interfaces/ISystemConfig.sol";
 contract OPContractsManagerInterop is OPContractsManager {
     constructor(
         ISuperchainConfig _superchainConfig,
-        IProtocolVersions _protocolVersions
+        IProtocolVersions _protocolVersions,
+        InputContracts memory _inputContracts
     )
-        OPContractsManager(_superchainConfig, _protocolVersions)
+        OPContractsManager(_superchainConfig, _protocolVersions, _inputContracts)
     { }
 
     // The `SystemConfigInterop` contract has an extra `address _dependencyManager` argument

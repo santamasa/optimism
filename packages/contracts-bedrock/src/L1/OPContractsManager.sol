@@ -89,6 +89,11 @@ contract OPContractsManager is ISemver, Initializable {
         IDelayedWETH delayedWETHPermissionlessGameProxy;
     }
 
+    struct StandardVersions {
+        string release;
+        mapping(string => Implementation) implementations;
+    }
+
     /// @notice The logic address and initializer selector for an implementation contract.
     struct Implementation {
         address logic; // Address containing the deployed logic contract.
@@ -120,6 +125,11 @@ contract OPContractsManager is ISemver, Initializable {
 
     /// @notice Inputs required when initializing the OPContractsManager. To avoid 'StackTooDeep' errors,
     /// all necessary inputs (excluding immutables) for initialization are bundled together in this struct.
+    struct InputContracts {
+        Blueprints blueprints;
+        ImplementationSetter[] setters;
+    }
+
     struct InitializerInputs {
         Blueprints blueprints;
         ImplementationSetter[] setters;
@@ -147,6 +157,7 @@ contract OPContractsManager is ISemver, Initializable {
 
     /// @notice Maps a release version to a contract name to it's implementation data.
     mapping(string => mapping(string => Implementation)) public implementations;
+    StandardVersions public standardVersions;
 
     /// @notice Maps an L2 Chain ID to the SystemConfig for that chain.
     mapping(uint256 => ISystemConfig) public systemConfigs;
@@ -199,11 +210,22 @@ contract OPContractsManager is ISemver, Initializable {
 
     /// @notice OPCM is proxied. Therefore the `initialize` function replaces most constructor logic for this contract.
 
-    constructor(ISuperchainConfig _superchainConfig, IProtocolVersions _protocolVersions) {
+    constructor(ISuperchainConfig _superchainConfig, IProtocolVersions _protocolVersions, InputContracts memory _inputContracts) {
         assertValidContractAddress(address(_superchainConfig));
         assertValidContractAddress(address(_protocolVersions));
         superchainConfig = _superchainConfig;
         protocolVersions = _protocolVersions;
+
+        for (uint256 i = 0; i < _inputContracts.setters.length; i++) {
+            ImplementationSetter memory setter = _inputContracts.setters[i];
+            Implementation storage impl = implementations[standardVersions.release][setter.name];
+            if (impl.logic != address(0)) revert AlreadyReleased();
+
+            impl.initializer = setter.info.initializer;
+            impl.logic = setter.info.logic;
+        }
+
+        blueprint = _inputContracts.blueprints;
         _disableInitializers();
     }
 

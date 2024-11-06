@@ -809,10 +809,11 @@ contract DeployImplementations is Script {
     {
         ISuperchainConfig superchainConfigProxy = _dii.superchainConfigProxy();
         IProtocolVersions protocolVersionsProxy = _dii.protocolVersionsProxy();
+        OPContractsManager.InputContracts memory emptyInputContracts;
 
         vm.broadcast(msg.sender);
         // TODO: Eventually we will want to select the correct implementation based on the release.
-        OPContractsManager impl = new OPContractsManager(superchainConfigProxy, protocolVersionsProxy);
+        OPContractsManager impl = new OPContractsManager(superchainConfigProxy, protocolVersionsProxy, emptyInputContracts);
 
         vm.label(address(impl), "OPContractsManagerImpl");
         _dio.set(_dio.opcmImpl.selector, address(impl));
@@ -1231,10 +1232,11 @@ contract DeployImplementationsInterop is DeployImplementations {
     {
         ISuperchainConfig superchainConfigProxy = _dii.superchainConfigProxy();
         IProtocolVersions protocolVersionsProxy = _dii.protocolVersionsProxy();
+        OPContractsManager.InputContracts memory emptyInputContracts;
 
         vm.broadcast(msg.sender);
         // TODO: Eventually we will want to select the correct implementation based on the release.
-        OPContractsManager impl = new OPContractsManagerInterop(superchainConfigProxy, protocolVersionsProxy);
+        OPContractsManager impl = new OPContractsManagerInterop(superchainConfigProxy, protocolVersionsProxy, emptyInputContracts);
 
         vm.label(address(impl), "OPContractsManagerImpl");
         _dio.set(_dio.opcmImpl.selector, address(impl));

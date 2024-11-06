@@ -14,9 +14,10 @@ import { IProtocolVersions } from "src/L1/interfaces/IProtocolVersions.sol";
 contract OPContractsManager_Harness is OPContractsManager {
     constructor(
         ISuperchainConfig _superchainConfig,
-        IProtocolVersions _protocolVersions
+        IProtocolVersions _protocolVersions,
+        InputContracts memory _inputContracts
     )
-        OPContractsManager(_superchainConfig, _protocolVersions)
+        OPContractsManager(_superchainConfig, _protocolVersions, _inputContracts)
     { }
 
     function chainIdToBatchInboxAddress_exposed(uint256 l2ChainId) public pure returns (address) {
@@ -116,12 +117,14 @@ contract OPContractsManager_InternalMethods_Test is Test {
     function setUp() public {
         ISuperchainConfig superchainConfigProxy = ISuperchainConfig(makeAddr("superchainConfig"));
         IProtocolVersions protocolVersionsProxy = IProtocolVersions(makeAddr("protocolVersions"));
+        OPContractsManager.InputContracts memory emptyInputContracts;
         vm.etch(address(superchainConfigProxy), hex"01");
         vm.etch(address(protocolVersionsProxy), hex"01");
 
         opcmHarness = new OPContractsManager_Harness({
             _superchainConfig: superchainConfigProxy,
-            _protocolVersions: protocolVersionsProxy
+            _protocolVersions: protocolVersionsProxy,
+            _inputContracts: emptyInputContracts
         });
     }
 
