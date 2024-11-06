@@ -25,15 +25,8 @@ func TestDeployDisputeGame(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	standardVersionsTOML, err := standard.L1VersionsDataFor(11155111)
-	require.NoError(t, err)
-
 	input := DeployDisputeGameInput{
-		Release:                  "dev",
-		StandardVersionsToml:     standardVersionsTOML,
-		MipsVersion:              1,
-		MinProposalSizeBytes:     standard.MinProposalSizeBytes,
-		ChallengePeriodSeconds:   standard.ChallengePeriodSeconds,
+		FpVm:                     common.Address{'V'},
 		GameKind:                 "PermissionedDisputeGame",
 		GameType:                 1,
 		AbsolutePrestate:         common.Hash{'A'},
@@ -52,6 +45,4 @@ func TestDeployDisputeGame(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NotEmpty(t, output.DisputeGameImpl)
-	require.NotEmpty(t, output.MipsSingleton)
-	require.NotEmpty(t, output.PreimageOracleSingleton)
 }
