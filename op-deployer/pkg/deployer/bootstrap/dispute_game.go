@@ -7,6 +7,9 @@ import (
 	"strings"
 
 	artifacts2 "github.com/ethereum-optimism/optimism/op-deployer/pkg/deployer/artifacts"
+	"github.com/ethereum-optimism/optimism/packages/contracts-bedrock/snapshots"
+	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/ethereum-optimism/optimism/op-deployer/pkg/env"
 
@@ -177,6 +180,25 @@ func DisputeGame(ctx context.Context, cfg DisputeGameConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to create script host: %w", err)
 	}
+	// We need to etch the VM and PreimageOracle addresses so that they have nonzero code
+	// and the checks in the FaultDisputeGame constructor pass.
+	oracleAddr, err := loadOracleAddr(ctx, err, l1Client, cfg.FPVM)
+	if err != nil {
+		return err
+	}
+	addresses := []common.Address{
+		cfg.FPVM,
+		oracleAddr,
+	}
+	for _, addr := range addresses {
+		code, err := l1Client.CodeAt(ctx, addr, nil)
+		if err != nil {
+			return fmt.Errorf("failed to get code for %v: %w", addr, err)
+		}
+		host.ImportAccount(addr, types.Account{
+			Code: code,
+		})
+	}
 
 	dgo, err := opcm.DeployDisputeGame(
 		host,
@@ -210,4 +232,16 @@ func DisputeGame(ctx context.Context, cfg DisputeGameConfig) error {
 		return fmt.Errorf("failed to write output: %w", err)
 	}
 	return nil
+}
+
+func loadOracleAddr(ctx context.Context, err error, l1Client *ethclient.Client, vmAddr common.Address) (common.Address, error) {
+	callData, err := snapshots.LoadMIPSABI().Pack("oracle")
+	if err != nil {
+		return common.Address{}, fmt.Errorf("failed to create vm.oracle() calldata: %w", err)
+	}
+	result, err := l1Client.CallContract(ctx, ethereum.CallMsg{Data: callData, To: &vmAddr}, nil)
+	if err != nil {
+		return common.Address{}, fmt.Errorf("failed to call vm.oracle(): %w", err)
+	}
+	return common.BytesToAddress(result), nil
 }
