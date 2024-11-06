@@ -497,7 +497,7 @@ contract Specification_Test is CommonTest {
         _addSpec({ _name: "SystemConfig", _sel: _getSel("basefeeScalar()") });
         _addSpec({ _name: "SystemConfig", _sel: _getSel("blobbasefeeScalar()") });
         _addSpec({ _name: "SystemConfig", _sel: _getSel("maximumGasLimit()") });
-        _addSpec({ _name: "SystemConfig", _sel: _getSel("setFeeVaultConfig(uint8,address,uint256,uint8)") });
+        _addSpec({ _name: "SystemConfig", _sel: _getSel("setFeeVaultConfig(uint8,(address,uint256,uint8))") });
 
         // SystemConfigInterop
         _addSpec({ _name: "SystemConfigInterop", _sel: _getSel("UNSAFE_BLOCK_SIGNER_SLOT()") });
@@ -587,7 +587,7 @@ contract Specification_Test is CommonTest {
             _auth: Role.DEPENDENCYMANAGER
         });
         _addSpec({ _name: "SystemConfigInterop", _sel: _getSel("dependencyManager()") });
-        _addSpec({ _name: "SystemConfigInterop", _sel: _getSel("setFeeVaultConfig(uint8,address,uint256,uint8)") });
+        _addSpec({ _name: "SystemConfigInterop", _sel: _getSel("setFeeVaultConfig(uint8,(address,uint256,uint8))") });
 
         // ProxyAdmin
         _addSpec({ _name: "ProxyAdmin", _sel: _getSel("addressManager()") });

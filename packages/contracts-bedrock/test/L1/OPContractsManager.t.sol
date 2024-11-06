@@ -74,11 +74,7 @@ contract OPContractsManager_Deploy_Test is DeployOPChain_TestBase {
                 challenger: _doi.challenger(),
                 systemConfigFeeAdmin: msg.sender
             }),
-            feeVaultConfigs: ISystemConfig.FeeVaultConfigs({
-                baseFeeVaultConfig: _doi.feeVaultConfigs().baseFeeVaultConfig,
-                sequencerFeeVaultConfig: _doi.feeVaultConfigs().sequencerFeeVaultConfig,
-                l1FeeVaultConfig: _doi.feeVaultConfigs().l1FeeVaultConfig
-            }),
+            feeVaultConfigs: _doi.feeVaultConfigs(),
             basefeeScalar: _doi.basefeeScalar(),
             blobBasefeeScalar: _doi.blobBaseFeeScalar(),
             l2ChainId: _doi.l2ChainId(),

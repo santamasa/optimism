@@ -54,7 +54,7 @@ contract OPContractsManagerInterop is OPContractsManager {
             chainIdToBatchInboxAddress(_input.l2ChainId),
             opChainAddrs,
             dependencyManager,
-            _input.feeVaultConfigs
+            abi.decode(_input.feeVaultConfigs, (ISystemConfig.FeeVaultConfigs))
         );
     }
 }

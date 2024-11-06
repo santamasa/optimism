@@ -45,7 +45,7 @@ contract DeployOPChainInput is BaseDeployIO {
     address internal _proposer;
     address internal _challenger;
 
-    ISystemConfig.FeeVaultConfigs internal _feeVaultConfigs;
+    bytes internal _feeVaultConfigs;
 
     // TODO Add fault proofs inputs in a future PR.
     uint32 internal _basefeeScalar;
@@ -118,7 +118,7 @@ contract DeployOPChainInput is BaseDeployIO {
         else revert("DeployOPChainInput: unknown selector");
     }
 
-    function set(bytes4 _sel, ISystemConfig.FeeVaultConfigs memory _value) public {
+    function set(bytes4 _sel, bytes memory _value) public {
         if (_sel == this.feeVaultConfigs.selector) _feeVaultConfigs = _value;
         else revert("DeployOPChainInput: unknown selector");
     }
@@ -163,13 +163,8 @@ contract DeployOPChainInput is BaseDeployIO {
         return _basefeeScalar;
     }
 
-    function feeVaultConfigs() public view returns (ISystemConfig.FeeVaultConfigs memory) {
-        require(
-            _feeVaultConfigs.baseFeeVaultConfig.recipient != address(0)
-                && _feeVaultConfigs.sequencerFeeVaultConfig.recipient != address(0)
-                && _feeVaultConfigs.l1FeeVaultConfig.recipient != address(0),
-            "DeployOPChainInput: not set"
-        );
+    function feeVaultConfigs() public view returns (bytes memory) {
+        require(_feeVaultConfigs.length != 0, "DeployOPChainInput: not set");
         return _feeVaultConfigs;
     }
 
@@ -385,19 +380,19 @@ contract DeployOPChain is Script {
         });
         OPContractsManager.DeployInput memory deployInput = OPContractsManager.DeployInput({
             roles: roles,
-            feeVaultConfigs: _doi.feeVaultConfigs(),
             basefeeScalar: _doi.basefeeScalar(),
             blobBasefeeScalar: _doi.blobBaseFeeScalar(),
             l2ChainId: _doi.l2ChainId(),
-            startingAnchorRoots: _doi.startingAnchorRoots(),
-            saltMixer: _doi.saltMixer(),
             gasLimit: _doi.gasLimit(),
+            feeVaultConfigs: _doi.feeVaultConfigs(),
             disputeGameType: _doi.disputeGameType(),
             disputeAbsolutePrestate: _doi.disputeAbsolutePrestate(),
             disputeMaxGameDepth: _doi.disputeMaxGameDepth(),
             disputeSplitDepth: _doi.disputeSplitDepth(),
             disputeClockExtension: _doi.disputeClockExtension(),
-            disputeMaxClockDuration: _doi.disputeMaxClockDuration()
+            disputeMaxClockDuration: _doi.disputeMaxClockDuration(),
+            startingAnchorRoots: _doi.startingAnchorRoots(),
+            saltMixer: _doi.saltMixer()
         });
 
         vm.broadcast(msg.sender);

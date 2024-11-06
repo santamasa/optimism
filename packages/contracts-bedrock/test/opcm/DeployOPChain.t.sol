@@ -21,6 +21,7 @@ import { IFaultDisputeGame } from "src/dispute/interfaces/IFaultDisputeGame.sol"
 import { IPermissionedDisputeGame } from "src/dispute/interfaces/IPermissionedDisputeGame.sol";
 import { IL1ChugSplashProxy } from "src/legacy/interfaces/IL1ChugSplashProxy.sol";
 import { IResolvedDelegateProxy } from "src/legacy/interfaces/IResolvedDelegateProxy.sol";
+import { ISystemConfig } from "src/L1/interfaces/ISystemConfig.sol";
 
 import { ISuperchainConfig } from "src/L1/interfaces/ISuperchainConfig.sol";
 import { IProtocolVersions, ProtocolVersion } from "src/L1/interfaces/IProtocolVersions.sol";
@@ -28,6 +29,7 @@ import { OPContractsManager } from "src/L1/OPContractsManager.sol";
 import { IProxy } from "src/universal/interfaces/IProxy.sol";
 
 import { Claim, Duration, GameType, GameTypes, Hash, OutputRoot } from "src/dispute/lib/Types.sol";
+import { Types } from "src/libraries/Types.sol";
 
 contract DeployOPChainInput_Test is Test {
     DeployOPChainInput doi;
@@ -348,6 +350,25 @@ contract DeployOPChain_TestBase is Test {
     OPContractsManager opcm = OPContractsManager(address(0));
     string saltMixer = "defaultSaltMixer";
     uint64 gasLimit = 60_000_000;
+    bytes feeVaultConfigs = abi.encode(
+        ISystemConfig.FeeVaultConfigs({
+            baseFeeVaultConfig: Types.FeeVaultConfig({
+                recipient: address(1),
+                min: 100,
+                withdrawalNetwork: Types.WithdrawalNetwork.L1
+            }),
+            sequencerFeeVaultConfig: Types.FeeVaultConfig({
+                recipient: address(2),
+                min: 200,
+                withdrawalNetwork: Types.WithdrawalNetwork.L1
+            }),
+            l1FeeVaultConfig: Types.FeeVaultConfig({
+                recipient: address(3),
+                min: 300,
+                withdrawalNetwork: Types.WithdrawalNetwork.L2
+            })
+        })
+    );
     // Configurable dispute game parameters.
     uint32 disputeGameType = GameType.unwrap(GameTypes.PERMISSIONED_CANNON);
     bytes32 disputeAbsolutePrestate = hex"038512e02c4c3f7bdaec27d00edf55b7155e0905301e1a88083e4e0a6764d54c";
@@ -574,6 +595,7 @@ contract DeployOPChain_Test is DeployOPChain_TestBase {
         doi.set(doi.opcmProxy.selector, address(opcm));
         doi.set(doi.saltMixer.selector, saltMixer);
         doi.set(doi.gasLimit.selector, gasLimit);
+        doi.set(doi.feeVaultConfigs.selector, feeVaultConfigs);
         doi.set(doi.disputeGameType.selector, disputeGameType);
         doi.set(doi.disputeAbsolutePrestate.selector, disputeAbsolutePrestate);
         doi.set(doi.disputeMaxGameDepth.selector, disputeMaxGameDepth);
