@@ -95,7 +95,7 @@ func (p *Prefetcher) Hint(hint string) error {
 	hintType, _, err := parseHint(hint)
 
 	// ignore parsing error, and assume non-bulk hint
-	if err == nil && (hintType == l2.HintL2ExecutionWitness || hintType == l2.HintL2AccountProof) {
+	if err == nil && (hintType == l2.HintL2ExecutionWitness || hintType == l2.HintL2AccountProof || hintType == l2.HintL2PayloadWitness) {
 		p.lastBulkHint = hint
 	} else {
 		p.lastHint = hint
@@ -419,9 +419,7 @@ func (p *Prefetcher) prefetch(ctx context.Context, hint string) error {
 			return fmt.Errorf("failed to fetch L2 output root %s: %w", hash, err)
 		}
 		return p.kvStore.Put(preimage.Keccak256Key(hash).PreimageKey(), output.Marshal())
-	case l2.HintL2Code:
-		fallthrough
-	case l2.HintL2StateNode:
+	case l2.HintL2StateNode, l2.HintL2Code:
 		// handle state access hints separately to allow for bulk fetching
 		return p.prefetchState(ctx, hint)
 	}

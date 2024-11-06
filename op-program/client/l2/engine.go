@@ -76,9 +76,17 @@ func (o *OracleEngine) GetPayload(ctx context.Context, payloadInfo eth.PayloadIn
 }
 
 func (o *OracleEngine) ForkchoiceUpdate(ctx context.Context, state *eth.ForkchoiceState, attr *eth.PayloadAttributes) (*eth.ForkchoiceUpdatedResult, error) {
-	header := o.backend.GetHeaderByHash(state.HeadBlockHash)
-
-	o.hinter.Hint(ExecutionWitnessHint(header.Number.Uint64() + 1))
+	if attr != nil {
+		o.hinter.Hint(PayloadWitnessHint{
+			ParentBlockHash: state.HeadBlockHash,
+			Transactions:    attr.Transactions,
+			PayloadAttributes: eth.PayloadAttributes{
+				PrevRandao:            attr.PrevRandao,
+				Timestamp:             attr.Timestamp,
+				SuggestedFeeRecipient: attr.SuggestedFeeRecipient,
+			},
+		})
+	}
 
 	switch method := o.rollupCfg.ForkchoiceUpdatedVersion(attr); method {
 	case eth.FCUV3:
