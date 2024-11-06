@@ -13,33 +13,6 @@ import { IDelayedWETH } from "src/dispute/interfaces/IDelayedWETH.sol";
 import { IAnchorStateRegistry } from "src/dispute/interfaces/IAnchorStateRegistry.sol";
 import { IBigStepper } from "src/dispute/interfaces/IBigStepper.sol";
 
-/// @custom:field _gameType The type ID of the game.
-/// @custom:field _absolutePrestate The absolute prestate of the instruction trace.
-/// @custom:field _maxGameDepth The maximum depth of bisection.
-/// @custom:field _splitDepth The final depth of the output bisection portion of the game.
-/// @custom:field _clockExtension The clock extension to perform when the remaining duration is less than the extension.
-/// @custom:field _maxClockDuration The maximum amount of time that may accumulate on a team's chess clock.
-/// @custom:field _vm An onchain VM that performs single instruction steps on an FPP trace.
-/// @custom:field _weth WETH contract for holding ETH.
-/// @custom:field _anchorStateRegistry The contract that stores the anchor state for each game type.
-/// @custom:field _l2ChainId Chain ID of the L2 network this contract argues about.
-/// @custom:field _proposer Address that is allowed to create instances of this contract.
-/// @custom:field _challenger Address that is allowed to challenge instances of this contract.
-struct PDGConstructorParams {
-    GameType _gameType;
-    Claim _absolutePrestate;
-    uint256 _maxGameDepth;
-    uint256 _splitDepth;
-    Duration _clockExtension;
-    Duration _maxClockDuration;
-    IBigStepper _vm;
-    IDelayedWETH _weth;
-    IAnchorStateRegistry _anchorStateRegistry;
-    uint256 _l2ChainId;
-    address _proposer;
-    address _challenger;
-}
-
 /// @title PermissionedDisputeGame
 /// @notice PermissionedDisputeGame is a contract that inherits from `FaultDisputeGame`, and contains two roles:
 ///         - The `challenger` role, which is allowed to challenge a dispute.
@@ -49,6 +22,34 @@ struct PDGConstructorParams {
 ///         costs that certain networks may not wish to support. This contract can also be used as a fallback mechanism
 ///         in case of a failure in the permissionless fault proof system in the stage one release.
 contract PermissionedDisputeGame is FaultDisputeGame {
+    /// @custom:field _gameType The type ID of the game.
+    /// @custom:field _absolutePrestate The absolute prestate of the instruction trace.
+    /// @custom:field _maxGameDepth The maximum depth of bisection.
+    /// @custom:field _splitDepth The final depth of the output bisection portion of the game.
+    /// @custom:field _clockExtension The clock extension to perform when the remaining duration is less than the
+    /// extension.
+    /// @custom:field _maxClockDuration The maximum amount of time that may accumulate on a team's chess clock.
+    /// @custom:field _vm An onchain VM that performs single instruction steps on an FPP trace.
+    /// @custom:field _weth WETH contract for holding ETH.
+    /// @custom:field _anchorStateRegistry The contract that stores the anchor state for each game type.
+    /// @custom:field _l2ChainId Chain ID of the L2 network this contract argues about.
+    /// @custom:field _proposer Address that is allowed to create instances of this contract.
+    /// @custom:field _challenger Address that is allowed to challenge instances of this contract.
+    struct PDGConstructorParams {
+        GameType _gameType;
+        Claim _absolutePrestate;
+        uint256 _maxGameDepth;
+        uint256 _splitDepth;
+        Duration _clockExtension;
+        Duration _maxClockDuration;
+        IBigStepper _vm;
+        IDelayedWETH _weth;
+        IAnchorStateRegistry _anchorStateRegistry;
+        uint256 _l2ChainId;
+        address _proposer;
+        address _challenger;
+    }
+
     /// @notice The proposer role is allowed to create proposals and participate in the dispute game.
     address internal immutable PROPOSER;
 

@@ -2,64 +2,71 @@
   {
     "inputs": [
       {
-        "internalType": "GameType",
-        "name": "_gameType",
-        "type": "uint32"
-      },
-      {
-        "internalType": "Claim",
-        "name": "_absolutePrestate",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_maxGameDepth",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_splitDepth",
-        "type": "uint256"
-      },
-      {
-        "internalType": "Duration",
-        "name": "_clockExtension",
-        "type": "uint64"
-      },
-      {
-        "internalType": "Duration",
-        "name": "_maxClockDuration",
-        "type": "uint64"
-      },
-      {
-        "internalType": "contract IBigStepper",
-        "name": "_vm",
-        "type": "address"
-      },
-      {
-        "internalType": "contract IDelayedWETH",
-        "name": "_weth",
-        "type": "address"
-      },
-      {
-        "internalType": "contract IAnchorStateRegistry",
-        "name": "_anchorStateRegistry",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_l2ChainId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_proposer",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_challenger",
-        "type": "address"
+        "components": [
+          {
+            "internalType": "GameType",
+            "name": "_gameType",
+            "type": "uint32"
+          },
+          {
+            "internalType": "Claim",
+            "name": "_absolutePrestate",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_maxGameDepth",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_splitDepth",
+            "type": "uint256"
+          },
+          {
+            "internalType": "Duration",
+            "name": "_clockExtension",
+            "type": "uint64"
+          },
+          {
+            "internalType": "Duration",
+            "name": "_maxClockDuration",
+            "type": "uint64"
+          },
+          {
+            "internalType": "contract IBigStepper",
+            "name": "_vm",
+            "type": "address"
+          },
+          {
+            "internalType": "contract IDelayedWETH",
+            "name": "_weth",
+            "type": "address"
+          },
+          {
+            "internalType": "contract IAnchorStateRegistry",
+            "name": "_anchorStateRegistry",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "_l2ChainId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "_proposer",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "_challenger",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct PermissionedDisputeGame.PDGConstructorParams",
+        "name": "_params",
+        "type": "tuple"
       }
     ],
     "stateMutability": "nonpayable",
