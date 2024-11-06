@@ -210,6 +210,7 @@ contract SystemConfig is OwnableUpgradeable, ISemver, IGasToken {
         Storage.setAddress(DISPUTE_GAME_FACTORY_SLOT, _addresses.disputeGameFactory);
         Storage.setAddress(OPTIMISM_MINTABLE_ERC20_FACTORY_SLOT, _addresses.optimismMintableERC20Factory);
 
+        _setGasPayingToken(_addresses.gasPayingToken);
         _setAddress(
             L1_CROSS_DOMAIN_MESSENGER_SLOT,
             _addresses.l1CrossDomainMessenger,
@@ -220,7 +221,6 @@ contract SystemConfig is OwnableUpgradeable, ISemver, IGasToken {
 
         _setRemoteChainId();
         _setStartBlock();
-        _setGasPayingToken(_addresses.gasPayingToken);
 
         // TODO: set fee vault config calls
 
