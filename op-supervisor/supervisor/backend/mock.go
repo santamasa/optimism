@@ -66,6 +66,10 @@ func (m *MockBackend) CrossDerivedFrom(ctx context.Context, chainID types.ChainI
 	return eth.BlockRef{}, nil
 }
 
+func (m *MockBackend) InitializeCrossSafe(ctx context.Context, chainID types.ChainID, derivedFrom eth.BlockRef, derived eth.BlockRef) error {
+	return nil
+}
+
 func (m *MockBackend) UpdateLocalUnsafe(ctx context.Context, chainID types.ChainID, head eth.BlockRef) error {
 	return nil
 }

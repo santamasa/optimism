@@ -13,6 +13,15 @@ type MockInteropBackend struct {
 	Mock mock.Mock
 }
 
+func (m *MockInteropBackend) InitializeCrossSafe(ctx context.Context, chainID types.ChainID, derivedFrom eth.BlockRef, derived eth.BlockRef) error {
+	result := m.Mock.MethodCalled("InitializeCrossSafe", chainID, derivedFrom, derived)
+	return *result.Get(0).(*error)
+}
+
+func (m *MockInteropBackend) ExpectInitializeCrossSafe(chainID types.ChainID, derivedFrom eth.BlockRef, derived eth.BlockRef, err error) {
+	m.Mock.On("InitializeCrossSafe", chainID, derivedFrom, derived).Once().Return(&err)
+}
+
 func (m *MockInteropBackend) UnsafeView(ctx context.Context, chainID types.ChainID, unsafe types.ReferenceView) (types.ReferenceView, error) {
 	result := m.Mock.MethodCalled("UnsafeView", chainID, unsafe)
 	return result.Get(0).(types.ReferenceView), *result.Get(1).(*error)

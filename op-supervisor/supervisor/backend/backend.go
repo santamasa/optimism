@@ -391,6 +391,9 @@ func (su *SupervisorBackend) SafeView(ctx context.Context, chainID types.ChainID
 	}
 	_, crossSafe, err := su.chainDBs.CrossSafe(chainID)
 	if err != nil {
+		if errors.Is(err, types.ErrFuture) { // no data? -> uninitialized cross-safe
+			return types.ReferenceView{}, types.ErrUninitializedCrossSafeErr
+		}
 		return types.ReferenceView{}, fmt.Errorf("failed to get cross-safe head: %w", err)
 	}
 
@@ -420,6 +423,10 @@ func (su *SupervisorBackend) CrossDerivedFrom(ctx context.Context, chainID types
 
 // Update methods
 // ----------------------------
+
+func (u *SupervisorBackend) InitializeCrossSafe(ctx context.Context, chainID types.ChainID, derivedFrom eth.BlockRef, derived eth.BlockRef) error {
+	return u.chainDBs.InitializeCrossSafe(chainID, derivedFrom, derived)
+}
 
 func (su *SupervisorBackend) UpdateLocalUnsafe(ctx context.Context, chainID types.ChainID, head eth.BlockRef) error {
 	ch, ok := su.chainProcessors.Get(chainID)

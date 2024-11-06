@@ -2,12 +2,14 @@ package interop
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/ethereum/go-ethereum/rpc"
 
 	"github.com/ethereum-optimism/optimism/op-node/rollup"
 	"github.com/ethereum-optimism/optimism/op-node/rollup/derive"
@@ -29,6 +31,8 @@ type InteropBackend interface {
 
 	CrossDerivedFrom(ctx context.Context, chainID types.ChainID, derived eth.BlockID) (eth.L1BlockRef, error)
 
+	InitializeCrossSafe(ctx context.Context, chainID types.ChainID, derivedFrom eth.BlockRef, derived eth.BlockRef) error
+
 	UpdateLocalUnsafe(ctx context.Context, chainID types.ChainID, head eth.BlockRef) error
 	UpdateLocalSafe(ctx context.Context, chainID types.ChainID, derivedFrom eth.L1BlockRef, lastDerived eth.BlockRef) error
 	UpdateFinalizedL1(ctx context.Context, chainID types.ChainID, finalized eth.L1BlockRef) error
@@ -43,6 +47,21 @@ var _ InteropBackend = (*sources.SupervisorClient)(nil)
 type L2Source interface {
 	L2BlockRefByNumber(context.Context, uint64) (eth.L2BlockRef, error)
 	L2BlockRefByHash(ctx context.Context, l2Hash common.Hash) (eth.L2BlockRef, error)
+}
+
+type AnchorPoint struct {
+	CrossSafe   eth.BlockRef
+	DerivedFrom eth.BlockRef
+}
+
+type AnchorPointLoader interface {
+	LoadAnchorPoint(ctx context.Context) (AnchorPoint, error)
+}
+
+type AnchorPointFn func(ctx context.Context) (AnchorPoint, error)
+
+func (fn AnchorPointFn) LoadAnchorPoint(ctx context.Context) (AnchorPoint, error) {
+	return fn(ctx)
 }
 
 // InteropDeriver watches for update events (either real changes to block safety,
@@ -61,6 +80,8 @@ type InteropDeriver struct {
 	backend InteropBackend
 	l2      L2Source
 
+	anchorLoader AnchorPointLoader
+
 	emitter event.Emitter
 
 	mu sync.Mutex
@@ -70,14 +91,15 @@ var _ event.Deriver = (*InteropDeriver)(nil)
 var _ event.AttachEmitter = (*InteropDeriver)(nil)
 
 func NewInteropDeriver(log log.Logger, cfg *rollup.Config,
-	driverCtx context.Context, backend InteropBackend, l2 L2Source) *InteropDeriver {
+	driverCtx context.Context, backend InteropBackend, l2 L2Source, anchorLoader AnchorPointLoader) *InteropDeriver {
 	return &InteropDeriver{
-		log:       log,
-		cfg:       cfg,
-		chainID:   types.ChainIDFromBig(cfg.L2ChainID),
-		driverCtx: driverCtx,
-		backend:   backend,
-		l2:        l2,
+		log:          log,
+		cfg:          cfg,
+		chainID:      types.ChainIDFromBig(cfg.L2ChainID),
+		driverCtx:    driverCtx,
+		backend:      backend,
+		l2:           l2,
+		anchorLoader: anchorLoader,
 	}
 }
 
@@ -216,6 +238,19 @@ func (d *InteropDeriver) onCrossSafeUpdateEvent(x engine.CrossSafeUpdateEvent) e
 	}
 	result, err := d.backend.SafeView(ctx, d.chainID, view)
 	if err != nil {
+		var e rpc.Error
+		if errors.As(err, &e) && e.ErrorCode() == types.SupervisorUninitializedCrossSafeErrCode {
+			anchor, err := d.anchorLoader.LoadAnchorPoint(ctx)
+			if err != nil {
+				return fmt.Errorf("unable to initialize op-supervisor, failed to get anchorLoader-point: %w", err)
+			}
+			d.log.Warn("op-supervisor chain was not initialized, initializing now", "err", err,
+				"anchorDerivedFrom", anchor.DerivedFrom, "anchorCrossSafe", anchor.CrossSafe)
+			if err := d.backend.InitializeCrossSafe(ctx, d.chainID, anchor.DerivedFrom, anchor.CrossSafe); err != nil {
+				return fmt.Errorf("failed to initialize cross-safe: %w", err)
+			}
+			return nil
+		}
 		return fmt.Errorf("failed to check safe-level view: %w", err)
 	}
 	if result.Cross.Number == x.CrossSafe.Number {

@@ -43,6 +43,25 @@ func (db *ChainsDB) Rewind(chain types.ChainID, headBlockNum uint64) error {
 	return logDB.Rewind(headBlockNum)
 }
 
+// InitializeCrossSafe sets the initial cross-safe block, for the node to start syncing from.
+func (db *ChainsDB) InitializeCrossSafe(chainID types.ChainID, derivedFrom eth.BlockRef, derived eth.BlockRef) error {
+	crossDB, ok := db.crossDBs.Get(chainID)
+	if !ok {
+		return fmt.Errorf("cannot InitializeCrossSafe: %w: %v", types.ErrUnknownChain, chainID)
+	}
+	if crossDB.IsEmpty() {
+		db.logger.Info("No previous known cross-safe data, initializing now",
+			"chain", chainID, "crossSafe", derived, "derivedFrom", derivedFrom)
+		// This may error if there was another faster InitializeCrossSafe call, that is ok.
+		if err := crossDB.AddDerived(derivedFrom, derived); err != nil {
+			return fmt.Errorf("cannot InitializeCrossSafe, failed to add initial data: %w", err)
+		}
+	} else {
+		db.logger.Debug("Supervisor cross-safe data is already initialized")
+	}
+	return nil
+}
+
 func (db *ChainsDB) UpdateLocalSafe(chain types.ChainID, derivedFrom eth.BlockRef, lastDerived eth.BlockRef) error {
 	localDB, ok := db.localDBs.Get(chain)
 	if !ok {

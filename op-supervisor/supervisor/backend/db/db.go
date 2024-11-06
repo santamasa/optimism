@@ -49,6 +49,7 @@ type LogStorage interface {
 }
 
 type LocalDerivedFromStorage interface {
+	IsEmpty() bool
 	First() (derivedFrom types.BlockSeal, derived types.BlockSeal, err error)
 	Latest() (derivedFrom types.BlockSeal, derived types.BlockSeal, err error)
 	AddDerived(derivedFrom eth.BlockRef, derived eth.BlockRef) error

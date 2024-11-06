@@ -29,20 +29,30 @@ func TestInteropDeriver(t *testing.T) {
 		L2ChainID:   big.NewInt(42),
 	}
 	chainID := supervisortypes.ChainIDFromBig(cfg.L2ChainID)
-	interopDeriver := NewInteropDeriver(logger, cfg, context.Background(), interopBackend, l2Source)
-	interopDeriver.AttachEmitter(emitter)
+
 	rng := rand.New(rand.NewSource(123))
+	genesisL1 := testutils.RandomBlockRef(rng)
+	genesisL2 := testutils.RandomL2BlockRef(rng)
+	anchor := AnchorPoint{
+		CrossSafe:   genesisL2.BlockRef(),
+		DerivedFrom: genesisL1,
+	}
+	loadAnchor := AnchorPointFn(func(ctx context.Context) (AnchorPoint, error) {
+		return anchor, nil
+	})
+	interopDeriver := NewInteropDeriver(logger, cfg, context.Background(), interopBackend, l2Source, loadAnchor)
+	interopDeriver.AttachEmitter(emitter)
 
 	t.Run("local-unsafe blocks push to supervisor and trigger cross-unsafe attempts", func(t *testing.T) {
 		emitter.ExpectOnce(engine.RequestCrossUnsafeEvent{})
-		unsafeHead := testutils.RandomL2BlockRef(rng)
+		unsafeHead := testutils.NextRandomL2Ref(rng, 2, genesisL2, genesisL2.L1Origin)
 		interopBackend.ExpectUpdateLocalUnsafe(chainID, unsafeHead.BlockRef(), nil)
 		interopDeriver.OnEvent(engine.UnsafeUpdateEvent{Ref: unsafeHead})
 		emitter.AssertExpectations(t)
 		interopBackend.AssertExpectations(t)
 	})
 	t.Run("establish cross-unsafe", func(t *testing.T) {
-		oldCrossUnsafe := testutils.RandomL2BlockRef(rng)
+		oldCrossUnsafe := testutils.NextRandomL2Ref(rng, 2, genesisL2, genesisL2.L1Origin)
 		nextCrossUnsafe := testutils.NextRandomL2Ref(rng, 2, oldCrossUnsafe, oldCrossUnsafe.L1Origin)
 		lastLocalUnsafe := testutils.NextRandomL2Ref(rng, 2, nextCrossUnsafe, nextCrossUnsafe.L1Origin)
 		localView := supervisortypes.ReferenceView{
@@ -68,7 +78,7 @@ func TestInteropDeriver(t *testing.T) {
 		l2Source.AssertExpectations(t)
 	})
 	t.Run("deny cross-unsafe", func(t *testing.T) {
-		oldCrossUnsafe := testutils.RandomL2BlockRef(rng)
+		oldCrossUnsafe := testutils.NextRandomL2Ref(rng, 2, genesisL2, genesisL2.L1Origin)
 		nextCrossUnsafe := testutils.NextRandomL2Ref(rng, 2, oldCrossUnsafe, oldCrossUnsafe.L1Origin)
 		lastLocalUnsafe := testutils.NextRandomL2Ref(rng, 2, nextCrossUnsafe, nextCrossUnsafe.L1Origin)
 		localView := supervisortypes.ReferenceView{
@@ -91,8 +101,8 @@ func TestInteropDeriver(t *testing.T) {
 	})
 	t.Run("local-safe blocks push to supervisor and trigger cross-safe attempts", func(t *testing.T) {
 		emitter.ExpectOnce(engine.RequestCrossSafeEvent{})
-		derivedFrom := testutils.RandomBlockRef(rng)
-		localSafe := testutils.RandomL2BlockRef(rng)
+		derivedFrom := testutils.NextRandomRef(rng, genesisL1)
+		localSafe := testutils.NextRandomL2Ref(rng, 2, genesisL2, genesisL2.L1Origin)
 		interopBackend.ExpectUpdateLocalSafe(chainID, derivedFrom, localSafe.BlockRef(), nil)
 		interopDeriver.OnEvent(engine.InteropPendingSafeChangedEvent{
 			Ref:         localSafe,
@@ -101,9 +111,28 @@ func TestInteropDeriver(t *testing.T) {
 		emitter.AssertExpectations(t)
 		interopBackend.AssertExpectations(t)
 	})
+	t.Run("initialize cross-safe", func(t *testing.T) {
+		oldCrossSafe := testutils.NextRandomL2Ref(rng, 2, genesisL2, genesisL2.L1Origin)
+		nextCrossSafe := testutils.NextRandomL2Ref(rng, 2, oldCrossSafe, oldCrossSafe.L1Origin)
+		lastLocalSafe := testutils.NextRandomL2Ref(rng, 2, nextCrossSafe, nextCrossSafe.L1Origin)
+		localView := supervisortypes.ReferenceView{
+			Local: lastLocalSafe.ID(),
+			Cross: oldCrossSafe.ID(),
+		}
+		supervisorView := supervisortypes.ReferenceView{}
+		interopBackend.ExpectSafeView(chainID, localView, supervisorView, supervisortypes.ErrUninitializedCrossSafeErr)
+		interopBackend.ExpectInitializeCrossSafe(chainID, anchor.DerivedFrom, anchor.CrossSafe, nil)
+		interopDeriver.OnEvent(engine.CrossSafeUpdateEvent{
+			CrossSafe: oldCrossSafe,
+			LocalSafe: lastLocalSafe,
+		})
+		interopBackend.AssertExpectations(t)
+		emitter.AssertExpectations(t)
+		l2Source.AssertExpectations(t)
+	})
 	t.Run("establish cross-safe", func(t *testing.T) {
-		derivedFrom := testutils.RandomBlockRef(rng)
-		oldCrossSafe := testutils.RandomL2BlockRef(rng)
+		derivedFrom := testutils.NextRandomRef(rng, genesisL1)
+		oldCrossSafe := testutils.NextRandomL2Ref(rng, 2, genesisL2, genesisL2.L1Origin)
 		nextCrossSafe := testutils.NextRandomL2Ref(rng, 2, oldCrossSafe, oldCrossSafe.L1Origin)
 		lastLocalSafe := testutils.NextRandomL2Ref(rng, 2, nextCrossSafe, nextCrossSafe.L1Origin)
 		localView := supervisortypes.ReferenceView{
@@ -135,7 +164,7 @@ func TestInteropDeriver(t *testing.T) {
 		l2Source.AssertExpectations(t)
 	})
 	t.Run("deny cross-safe", func(t *testing.T) {
-		oldCrossSafe := testutils.RandomL2BlockRef(rng)
+		oldCrossSafe := testutils.NextRandomL2Ref(rng, 2, genesisL2, genesisL2.L1Origin)
 		nextCrossSafe := testutils.NextRandomL2Ref(rng, 2, oldCrossSafe, oldCrossSafe.L1Origin)
 		lastLocalSafe := testutils.NextRandomL2Ref(rng, 2, nextCrossSafe, nextCrossSafe.L1Origin)
 		localView := supervisortypes.ReferenceView{
@@ -166,7 +195,7 @@ func TestInteropDeriver(t *testing.T) {
 		interopBackend.AssertExpectations(t)
 	})
 	t.Run("next L2 finalized block", func(t *testing.T) {
-		oldFinalizedL2 := testutils.RandomL2BlockRef(rng)
+		oldFinalizedL2 := testutils.NextRandomL2Ref(rng, 2, genesisL2, genesisL2.L1Origin)
 		intermediateL2 := testutils.NextRandomL2Ref(rng, 2, oldFinalizedL2, oldFinalizedL2.L1Origin)
 		nextFinalizedL2 := testutils.NextRandomL2Ref(rng, 2, intermediateL2, intermediateL2.L1Origin)
 		emitter.ExpectOnce(engine.PromoteFinalizedEvent{
@@ -179,7 +208,7 @@ func TestInteropDeriver(t *testing.T) {
 		interopBackend.AssertExpectations(t)
 	})
 	t.Run("keep L2 finalized block", func(t *testing.T) {
-		oldFinalizedL2 := testutils.RandomL2BlockRef(rng)
+		oldFinalizedL2 := testutils.NextRandomL2Ref(rng, 2, genesisL2, genesisL2.L1Origin)
 		interopBackend.ExpectFinalized(chainID, oldFinalizedL2.ID(), nil)
 		interopDeriver.OnEvent(engine.FinalizedUpdateEvent{Ref: oldFinalizedL2})
 		emitter.AssertExpectations(t) // no PromoteFinalizedEvent

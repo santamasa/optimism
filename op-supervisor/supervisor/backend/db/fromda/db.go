@@ -101,6 +101,13 @@ func (db *DB) PreviousDerived(derived eth.BlockID) (prevDerived types.BlockSeal,
 	return prev.derived, nil
 }
 
+// IsEmpty returns true if the DB is empty, false if not.
+func (db *DB) IsEmpty() bool {
+	db.rwLock.RLock()
+	defer db.rwLock.RUnlock()
+	return db.store.LastEntryIdx() < 0
+}
+
 // Latest returns the last known values:
 // derivedFrom: the L1 block that the L2 block is safe for (not necessarily the first, multiple L2 blocks may be derived from the same L1 block).
 // derived: the L2 block that was derived (not necessarily the first, the L1 block may have been empty and repeated the last safe L2 block).

@@ -111,7 +111,18 @@ func NewL2Verifier(t Testing, log log.Logger, l1 derive.L1Fetcher,
 	}
 
 	if interopBackend != nil {
-		sys.Register("interop", interop.NewInteropDeriver(log, cfg, ctx, interopBackend, eng), opts)
+		l2GenRef, err := eng.L2BlockRefByNumber(ctx, 0)
+		require.NoError(t, err)
+		l1GenRef, err := l1.L1BlockRefByNumber(ctx, 0)
+		require.NoError(t, err)
+		anchor := interop.AnchorPoint{
+			CrossSafe:   l2GenRef.BlockRef(),
+			DerivedFrom: l1GenRef,
+		}
+		loadAnchor := interop.AnchorPointFn(func(ctx context.Context) (interop.AnchorPoint, error) {
+			return anchor, nil
+		})
+		sys.Register("interop", interop.NewInteropDeriver(log, cfg, ctx, interopBackend, eng, loadAnchor), opts)
 	}
 
 	metrics := &testutils.TestDerivationMetrics{}

@@ -64,8 +64,14 @@ func TestBackendLifetime(t *testing.T) {
 
 	src := &testutils.MockL1Source{}
 
+	blockXFrom := eth.BlockRef{
+		Hash:       common.Hash{0x01, 0x01, 0xaa},
+		Number:     1234,
+		ParentHash: common.Hash{0x01, 0x00, 0xaa},
+		Time:       9000,
+	}
 	blockX := eth.BlockRef{
-		Hash:       common.Hash{0xaa},
+		Hash:       common.Hash{0x02, 0, 0xaa},
 		Number:     0,
 		ParentHash: common.Hash{}, // genesis has no parent hash
 		Time:       10000,
@@ -92,6 +98,8 @@ func TestBackendLifetime(t *testing.T) {
 
 	_, err = b.UnsafeView(context.Background(), chainA, types.ReferenceView{})
 	require.ErrorIs(t, err, types.ErrFuture, "no data yet, need local-unsafe")
+
+	require.NoError(t, b.InitializeCrossSafe(context.Background(), chainA, blockXFrom, blockX))
 
 	src.ExpectL1BlockRefByNumber(0, blockX, nil)
 	src.ExpectFetchReceipts(blockX.Hash, &testutils.MockBlockInfo{
@@ -121,7 +129,7 @@ func TestBackendLifetime(t *testing.T) {
 	proc.ProcessToHead()
 
 	_, err = b.UnsafeView(context.Background(), chainA, types.ReferenceView{})
-	require.ErrorIs(t, err, types.ErrFuture, "still no data yet, need cross-unsafe")
+	require.NoError(t, err, "cross-unsafe should default to cross-safe")
 
 	err = b.chainDBs.UpdateCrossUnsafe(chainA, types.BlockSeal{
 		Hash:      blockX.Hash,

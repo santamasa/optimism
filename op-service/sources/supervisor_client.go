@@ -125,6 +125,16 @@ func (cl *SupervisorClient) CrossDerivedFrom(ctx context.Context, chainID types.
 	return result, err
 }
 
+func (cl *SupervisorClient) InitializeCrossSafe(ctx context.Context, chainID types.ChainID, derivedFrom eth.BlockRef, derived eth.BlockRef) error {
+	return cl.client.CallContext(
+		ctx,
+		nil,
+		"supervisor_initializeCrossSafe",
+		chainID,
+		derivedFrom,
+		derived)
+}
+
 func (cl *SupervisorClient) UpdateLocalUnsafe(ctx context.Context, chainID types.ChainID, head eth.BlockRef) error {
 	return cl.client.CallContext(
 		ctx,

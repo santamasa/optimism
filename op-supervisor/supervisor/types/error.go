@@ -1,6 +1,9 @@
 package types
 
-import "errors"
+import (
+	"errors"
+	"github.com/ethereum/go-ethereum/rpc"
+)
 
 var (
 	// ErrOutOfOrder happens when you try to add data to the DB,
@@ -28,3 +31,10 @@ var (
 	// ErrNoRPCSource happens when a sub-service needs an RPC data source, but is not configured with one.
 	ErrNoRPCSource = errors.New("no RPC client configured")
 )
+
+const SupervisorUninitializedCrossSafeErrCode = -35400
+
+var ErrUninitializedCrossSafeErr = &rpc.JsonError{
+	Code:    SupervisorUninitializedCrossSafeErrCode,
+	Message: "Uninitialized cross-safe data",
+}

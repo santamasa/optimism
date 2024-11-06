@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ethereum-optimism/optimism/op-node/rollup/interop"
 	"io"
 	"sync/atomic"
 	"time"
@@ -425,8 +426,31 @@ func (n *OpNode) initL2(ctx context.Context, cfg *Config) error {
 		n.safeDB = safedb.Disabled
 	}
 	n.l2Driver = driver.NewDriver(n.eventSys, n.eventDrain, &cfg.Driver, &cfg.Rollup, n.l2Source, n.l1Source,
-		n.supervisor, n.beacon, n, n, n.log, n.metrics, cfg.ConfigPersistence, n.safeDB, &cfg.Sync, sequencerConductor, altDA)
+		n.supervisor, n, n.beacon, n, n, n.log, n.metrics, cfg.ConfigPersistence, n.safeDB, &cfg.Sync, sequencerConductor, altDA)
 	return nil
+}
+
+// LoadAnchorPoint implements the interop.AnchorPointLoader interface,
+// to determine the trusted starting point to initialize the op-supervisor with.
+// This data is lazy-loaded, as the block-contents are not always available on node startup (e.g. during EL sync).
+func (n *OpNode) LoadAnchorPoint(ctx context.Context) (interop.AnchorPoint, error) {
+	cfg := &n.cfg.Rollup
+	l2Ref, err := retry.Do(ctx, 3, retry.Exponential(), func() (eth.L2BlockRef, error) {
+		return n.l2Source.L2BlockRefByHash(ctx, cfg.Genesis.L2.Hash)
+	})
+	if err != nil {
+		return interop.AnchorPoint{}, fmt.Errorf("failed to fetch L2 anchor block: %w", err)
+	}
+	l1Ref, err := retry.Do(ctx, 3, retry.Exponential(), func() (eth.L1BlockRef, error) {
+		return n.l1Source.L1BlockRefByHash(ctx, cfg.Genesis.L1.Hash)
+	})
+	if err != nil {
+		return interop.AnchorPoint{}, fmt.Errorf("failed to fetch L1 anchor block: %w", err)
+	}
+	return interop.AnchorPoint{
+		CrossSafe:   l2Ref.BlockRef(),
+		DerivedFrom: l1Ref,
+	}, nil
 }
 
 func (n *OpNode) initRPCServer(cfg *Config) error {

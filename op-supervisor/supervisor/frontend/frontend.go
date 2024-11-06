@@ -24,6 +24,7 @@ type QueryBackend interface {
 }
 
 type UpdatesBackend interface {
+	InitializeCrossSafe(ctx context.Context, chainID types.ChainID, derivedFrom eth.BlockRef, derived eth.BlockRef) error
 	UpdateLocalUnsafe(ctx context.Context, chainID types.ChainID, head eth.BlockRef) error
 	UpdateLocalSafe(ctx context.Context, chainID types.ChainID, derivedFrom eth.BlockRef, lastDerived eth.BlockRef) error
 	UpdateFinalizedL1(ctx context.Context, chainID types.ChainID, finalized eth.BlockRef) error
@@ -97,6 +98,10 @@ type UpdatesFrontend struct {
 }
 
 var _ UpdatesBackend = (*UpdatesFrontend)(nil)
+
+func (u *UpdatesFrontend) InitializeCrossSafe(ctx context.Context, chainID types.ChainID, derivedFrom eth.BlockRef, derived eth.BlockRef) error {
+	return u.Supervisor.InitializeCrossSafe(ctx, chainID, derivedFrom, derived)
+}
 
 func (u *UpdatesFrontend) UpdateLocalUnsafe(ctx context.Context, chainID types.ChainID, head eth.BlockRef) error {
 	return u.Supervisor.UpdateLocalUnsafe(ctx, chainID, head)

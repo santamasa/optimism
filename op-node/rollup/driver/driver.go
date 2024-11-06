@@ -163,6 +163,7 @@ func NewDriver(
 	l2 L2Chain,
 	l1 L1Chain,
 	supervisor interop.InteropBackend, // may be nil pre-interop.
+	anchorLoader interop.AnchorPointLoader, // may be nil pre-interop.
 	l1Blobs derive.L1BlobsFetcher,
 	altSync AltSync,
 	network Network,
@@ -182,7 +183,7 @@ func NewDriver(
 	// It will then be ready to pick up verification work
 	// as soon as we reach the upgrade time (if the upgrade is not already active).
 	if cfg.InteropTime != nil {
-		interopDeriver := interop.NewInteropDeriver(log, cfg, driverCtx, supervisor, l2)
+		interopDeriver := interop.NewInteropDeriver(log, cfg, driverCtx, supervisor, l2, anchorLoader)
 		sys.Register("interop", interopDeriver, opts)
 	}
 

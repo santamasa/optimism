@@ -237,21 +237,9 @@ func (db *ChainsDB) CandidateCrossSafe(chain types.ChainID) (derivedFromScope, c
 	crossDerivedFrom, crossDerived, err := xDB.Latest()
 	if err != nil {
 		if errors.Is(err, types.ErrFuture) {
-			// If we do not have any cross-safe block yet, then return the first local-safe block.
-			derivedFrom, derived, err := lDB.First()
-			if err != nil {
-				return eth.BlockRef{}, eth.BlockRef{}, fmt.Errorf("failed to find first local-safe block: %w", err)
-			}
-			// the first derivedFrom (L1 block) is unlikely to be the genesis block,
-			derivedFromRef, err := derivedFrom.WithParent(eth.BlockID{})
-			if err != nil {
-				// if the first derivedFrom isn't the genesis block, just warn and continue anyway
-				db.logger.Warn("First DerivedFrom is not genesis block")
-				derivedFromRef = derivedFrom.ForceWithParent(eth.BlockID{})
-			}
-			// the first derived must be the genesis block, panic otherwise
-			derivedRef := derived.MustWithParent(eth.BlockID{})
-			return derivedFromRef, derivedRef, nil
+			// If we do not have any cross-safe block yet, then abort: InitializeCrossSafe should be called.
+			return eth.BlockRef{}, eth.BlockRef{},
+				fmt.Errorf("no initial cross-safe value, awaiting InitializeCrossSafe: %v", err)
 		}
 		return eth.BlockRef{}, eth.BlockRef{}, err
 	}
