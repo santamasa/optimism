@@ -3,6 +3,7 @@ pragma solidity 0.8.15;
 
 // Testing utilities
 import { Test } from "forge-std/Test.sol";
+import { VmSafe } from "forge-std/Vm.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 
 // Target contract
@@ -121,10 +122,24 @@ contract SafeCall_Test is Test {
 
         for (uint64 i = 40_000; i < 100_000; i++) {
             uint256 snapshot = vm.snapshot();
+            uint256 expected;
 
-            // 65_922 is the exact amount of gas required to make the safe call
-            // successfully.
-            if (i < 65_922) {
+            // Because forge coverage always runs with the optimizer disabled,
+            // if forge coverage is run before testing this with forge test or forge snapshot, forge clean should be
+            // run first so that it recompiles the contracts using the foundry.toml optimizer settings.
+            if (vm.isContext(VmSafe.ForgeContext.Coverage)) {
+                // 15_278_645 is the exact amount of gas required to make the safe call
+                // successfully with the optimizer disabled (ran via forge coverage)
+                expected = 66_290;
+            } else if (vm.isContext(VmSafe.ForgeContext.Test) || vm.isContext(VmSafe.ForgeContext.Snapshot)) {
+                // 65_922 is the exact amount of gas required to make the safe call
+                // successfully with the foundry.toml optimizer settings.
+                expected = 65_922;
+            } else {
+                revert("SafeCall_Test: unknown context");
+            }
+
+            if (i < expected) {
                 assertFalse(caller.makeSafeCall(i, 25_000));
             } else {
                 vm.expectCallMinGas(address(caller), 0, 25_000, abi.encodeCall(caller.setA, (1)));
@@ -141,10 +156,24 @@ contract SafeCall_Test is Test {
 
         for (uint64 i = 15_200_000; i < 15_300_000; i++) {
             uint256 snapshot = vm.snapshot();
+            uint256 expected;
 
-            // 15_278_621 is the exact amount of gas required to make the safe call
-            // successfully.
-            if (i < 15_278_621) {
+            // Because forge coverage always runs with the optimizer disabled,
+            // if forge coverage is run before testing this with forge test or forge snapshot, forge clean should be
+            // run first so that it recompiles the contracts using the foundry.toml optimizer settings.
+            if (vm.isContext(VmSafe.ForgeContext.Coverage)) {
+                // 15_278_645 is the exact amount of gas required to make the safe call
+                // successfully with the optimizer disabled (ran via forge coverage)
+                expected = 15_278_645;
+            } else if (vm.isContext(VmSafe.ForgeContext.Test) || vm.isContext(VmSafe.ForgeContext.Snapshot)) {
+                // 15_278_621 is the exact amount of gas required to make the safe call
+                // successfully with the foundry.toml optimizer settings.
+                expected = 15_278_621;
+            } else {
+                revert("SafeCall_Test: unknown context");
+            }
+
+            if (i < expected) {
                 assertFalse(caller.makeSafeCall(i, 15_000_000));
             } else {
                 vm.expectCallMinGas(address(caller), 0, 15_000_000, abi.encodeCall(caller.setA, (1)));
