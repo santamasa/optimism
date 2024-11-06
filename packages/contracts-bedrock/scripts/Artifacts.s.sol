@@ -47,8 +47,6 @@ abstract contract Artifacts {
     /// @notice Setup function. The arguments here
     function setUp() public virtual {
         deploymentOutfile = Config.deploymentOutfile();
-        console.log("deploymentOutfile:", deploymentOutfile);
-        console.log("Writing artifact to %s", deploymentOutfile);
         ForgeArtifacts.ensurePath(deploymentOutfile);
 
         uint256 chainId = Config.chainID();
@@ -99,8 +97,6 @@ abstract contract Artifacts {
     /// @return The address of the deployment. May be `address(0)` if the deployment does not
     ///         exist.
     function getAddress(string memory _name) public view returns (address payable) {
-        console.log("getAddress:", _name);
-        console.log("deploymentOutfile:", deploymentOutfile);
         Deployment memory existing = _namedDeployments[_name];
         if (existing.addr != address(0)) {
             if (bytes(existing.name).length == 0) {
@@ -186,7 +182,6 @@ abstract contract Artifacts {
     /// @param _name The name of the deployment.
     /// @param _deployed The address of the deployment.
     function save(string memory _name, address _deployed) public {
-        console.log("Saving %s: %s", _name, _deployed);
         if (bytes(_name).length == 0) {
             revert InvalidDeployment("EmptyName");
         }
