@@ -238,7 +238,9 @@ contract L1BlockConfig_Test is L1BlockTest {
     {
         _name = LibString.normalizeSmallString(_name);
         _symbol = LibString.normalizeSmallString(_symbol);
-        vm.assume(_token != address(0));
+        // Both the 0 address and the ether address are prevented from being set by
+        // `_setGasPayingToken` in `SystemConfig.sol`
+        vm.assume(_token != address(0) && _token != Constants.ETHER);
         vm.prank(Constants.DEPOSITOR_ACCOUNT);
         l1Block.setConfig(Types.ConfigType.GAS_PAYING_TOKEN, abi.encode(_token, _decimals, _name, _symbol));
         bytes memory data = l1Block.getConfig(Types.ConfigType.GAS_PAYING_TOKEN);

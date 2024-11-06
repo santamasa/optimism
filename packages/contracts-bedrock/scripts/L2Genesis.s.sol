@@ -185,12 +185,12 @@ contract L2Genesis is Deployer {
 
     /// @notice This is used by foundry tests to enable the latest fork with the
     ///         given L1 dependencies.
-    function runWithLatestLocal(L1Dependencies memory l1Dependencies) public {
+    function runWithLatestLocal(L1Dependencies memory _l1Dependencies) public {
         runWithOptions({
             _mode: OutputMode.NONE,
             _fork: LATEST_FORK,
             _populateNetworkConfig: true,
-            _l1Dependencies: l1Dependencies
+            _l1Dependencies: _l1Dependencies
         });
     }
 
