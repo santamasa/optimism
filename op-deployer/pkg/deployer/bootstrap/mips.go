@@ -170,9 +170,9 @@ func MIPS(ctx context.Context, cfg MIPSConfig) error {
 		release = "dev"
 	}
 
-	lgr.Info("deploying dispute game", "release", release)
+	lgr.Info("deploying mips", "release", release)
 
-	dgo, err := opcm.DeployMIPS(
+	mo, err := opcm.DeployMIPS(
 		host,
 		opcm.DeployMIPSInput{
 			MipsVersion:    cfg.MipsVersion,
@@ -180,16 +180,16 @@ func MIPS(ctx context.Context, cfg MIPSConfig) error {
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("error deploying dispute game: %w", err)
+		return fmt.Errorf("error deploying mips: %w", err)
 	}
 
 	if _, err := bcaster.Broadcast(ctx); err != nil {
 		return fmt.Errorf("failed to broadcast: %w", err)
 	}
 
-	lgr.Info("deployed dispute game")
+	lgr.Info("deployed mips")
 
-	if err := jsonutil.WriteJSON(dgo, ioutil.ToStdOut()); err != nil {
+	if err := jsonutil.WriteJSON(mo, ioutil.ToStdOut()); err != nil {
 		return fmt.Errorf("failed to write output: %w", err)
 	}
 	return nil
