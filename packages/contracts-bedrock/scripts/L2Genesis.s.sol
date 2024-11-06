@@ -38,24 +38,6 @@ struct L1Dependencies {
     address payable l1ERC721BridgeProxy;
 }
 
-/// Note:
-/// There are a 2 main options for how to do genesis
-/// - git tag based where you must use a specific git tag to create a genesis
-///   for a release. this would mean that we only support a single hardfork in
-///   the L2Genesis script
-/// - flag for creating an arbitrary L2 genesis. This would look like a library
-///   per contracts release that contains the released bytecode and then there is
-///   a call to `vm.etch` with different bytecode per hardfork
-///
-///   The flag approach i think will be better, it means that improvements to the overall
-///   deploy script will apply to previous hardforks as well, also decouples the dependency
-///   on a particular version of foundry, ie if a feature is removed then we don't need to go
-///   back and backport fixes to old tags.
-///   Therefore the genesis script should work as follows:
-///   - check to see if a fork is configured
-///   - if no, use dev bytecode with vm.getDeployedCode
-///   - if yes, use the library to get the hardcoded bytecode
-
 /// @title L2Genesis
 /// @notice Generates the genesis state for the L2 network.
 ///         The following safety invariants are used when setting state:
@@ -220,8 +202,6 @@ contract L2Genesis is Deployer {
         }
         vm.stopPrank();
 
-        // TODO: remove the networkConfig struct and encapsulate this logic in a function to
-        // be shared with the similar logic in Setup.L2()
         if (_populateNetworkConfig) {
             networkConfig.l1ChainID = cfg.l1ChainID();
             networkConfig.sequencerFeeVaultMinimumWithdrawalAmount = cfg.sequencerFeeVaultMinimumWithdrawalAmount();

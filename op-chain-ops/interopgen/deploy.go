@@ -67,7 +67,6 @@ func Deploy(logger log.Logger, fa *foundry.ArtifactsFS, srcFS *foundry.SourceMap
 	for l2ChainID, l2Cfg := range cfg.L2s {
 		l2Deployment, err := DeployL2ToL1(l1Host, cfg.Superchain, superDeployment, l2Cfg)
 		if err != nil {
-			// moose
 			return nil, nil, fmt.Errorf("failed to deploy L2 %d to L1: %w", &l2ChainID, err)
 		}
 		deployments.L2s[l2ChainID] = l2Deployment
