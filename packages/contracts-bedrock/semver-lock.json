@@ -120,8 +120,8 @@
     "sourceCodeHash": "0x35b725198c3780182408ccc76dc877b29659508592befde437754c69af7d7b5f"
   },
   "src/L2/OptimismSuperchainERC20.sol": {
-    "initCodeHash": "0xead41087e3dc64a3ff2d549608cbcd3d75fba2ddb8459c8d542de72c8bc72e2b",
-    "sourceCodeHash": "0xf2d64128b4652a63d6eca858e5422ffd491665493083bb1ee7ee5b88c7d03bb0"
+    "initCodeHash": "0x529f3756a365a8f225d7debdd15c474c1338c8973bb65a1aad98f85753f74722",
+    "sourceCodeHash": "0xf68baaee0a09ea51d5a4e821df79976c0914369ebc8e5fd27bbbf89072254fc8"
   },
   "src/L2/OptimismSuperchainERC20Beacon.sol": {
     "initCodeHash": "0xb032e99f5c205c8b474da89887e350277cdd05b99ee28374b97bfae18ef7a72c",
@@ -144,8 +144,8 @@
     "sourceCodeHash": "0x617aa994f659c5d8ebd54128d994f86f5b175ceca095b024b8524a7898e8ae62"
   },
   "src/L2/SuperchainWETH.sol": {
-    "initCodeHash": "0xb6e88b5792feac0767e453478324e4c16c692a30a6e882e481aa0991641ac13a",
-    "sourceCodeHash": "0xaae6e91eb8dcce685e436a4f1a334ed77e5e74639df7907e20a019b0575b52fb"
+    "initCodeHash": "0xb74ce648b49e3b7885a3252ff32aeb71e8cb515558f516c0dd61f1cf22028edc",
+    "sourceCodeHash": "0x095de6eeb2cd06937b3fe014392048bc494cb5ca7a4a5fd5519141a80eae3a76"
   },
   "src/L2/WETH.sol": {
     "initCodeHash": "0x480d4f8dbec1b0d3211bccbbdfb69796f3e90c784f724b1bbfd4703b0aafdeba",
@@ -243,3 +243,4 @@
     "initCodeHash": "0x06ae2c0b39c215b7fa450d382916ce6f5c6f9f2d630e572db6b72d688255b3fd",
     "sourceCodeHash": "0xa014d9c992f439dee8221e065828c3326ca2c4f5db0e83431c64c20f7e51ec14"
   }
+}
