@@ -385,6 +385,7 @@ contract Deploy is Deployer {
         dii.set(dii.superchainConfigProxy.selector, mustGetAddress("SuperchainConfigProxy"));
         dii.set(dii.protocolVersionsProxy.selector, mustGetAddress("ProtocolVersionsProxy"));
         dii.set(dii.opcmProxyOwner.selector, cfg.finalSystemOwner());
+        dii.set(dii.salt.selector, _implSalt());
 
         if (_isInterop) {
             di = DeployImplementations(new DeployImplementationsInterop());
