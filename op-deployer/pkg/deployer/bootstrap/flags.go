@@ -29,6 +29,7 @@ const (
 	ProposerFlagName                        = "proposer"
 	ChallengerFlagName                      = "challenger"
 	PreimageOracleFlagName                  = "preimage-oracle"
+	VMFlagName                              = "vm"
 )
 
 var (
@@ -79,9 +80,9 @@ var (
 		EnvVars: deployer.PrefixEnvVar("GAME_KIND"),
 		Value:   "FaultDisputeGame",
 	}
-	GameTypeFlag = &cli.StringFlag{
+	GameTypeFlag = &cli.Uint64Flag{
 		Name:    GameTypeFlagName,
-		Usage:   "Game type (integer or fractional).",
+		Usage:   "Game type (integer).",
 		EnvVars: deployer.PrefixEnvVar("GAME_TYPE"),
 	}
 	AbsolutePrestateFlag = &cli.StringFlag{
@@ -147,6 +148,12 @@ var (
 		EnvVars: deployer.PrefixEnvVar("PREIMAGE_ORACLE"),
 		Value:   common.Address{}.Hex(),
 	}
+	VMFlag = &cli.StringFlag{
+		Name:    VMFlagName,
+		Usage:   "VM address.",
+		EnvVars: deployer.PrefixEnvVar("VM"),
+		Value:   common.Address{}.Hex(),
+	}
 )
 
 var OPCMFlags = []cli.Flag{
@@ -171,9 +178,7 @@ var DisputeGameFlags = []cli.Flag{
 	deployer.L1RPCURLFlag,
 	deployer.PrivateKeyFlag,
 	ArtifactsLocatorFlag,
-	MinProposalSizeBytesFlag,
-	ChallengePeriodSecondsFlag,
-	MIPSVersionFlag,
+	VMFlag,
 	GameKindFlag,
 	GameTypeFlag,
 	AbsolutePrestateFlag,

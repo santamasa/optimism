@@ -9,11 +9,7 @@ import (
 )
 
 type DeployDisputeGameInput struct {
-	Release                  string
-	StandardVersionsToml     string
-	MipsVersion              uint64
-	MinProposalSizeBytes     uint64
-	ChallengePeriodSeconds   uint64
+	FpVm                     common.Address
 	GameKind                 string
 	GameType                 uint32
 	AbsolutePrestate         common.Hash
@@ -33,9 +29,7 @@ func (input *DeployDisputeGameInput) InputSet() bool {
 }
 
 type DeployDisputeGameOutput struct {
-	DisputeGameImpl         common.Address
-	MipsSingleton           common.Address
-	PreimageOracleSingleton common.Address
+	DisputeGameImpl common.Address
 }
 
 func (output *DeployDisputeGameOutput) CheckOutput(input common.Address) error {

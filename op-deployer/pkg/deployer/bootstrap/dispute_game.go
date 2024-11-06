@@ -10,8 +10,6 @@ import (
 
 	"github.com/ethereum-optimism/optimism/op-deployer/pkg/env"
 
-	"github.com/ethereum-optimism/optimism/op-deployer/pkg/deployer/standard"
-
 	"github.com/ethereum-optimism/optimism/op-deployer/pkg/deployer/broadcaster"
 
 	"github.com/ethereum-optimism/optimism/op-deployer/pkg/deployer"
@@ -36,9 +34,7 @@ type DisputeGameConfig struct {
 
 	privateKeyECDSA *ecdsa.PrivateKey
 
-	MinProposalSizeBytes     uint64
-	ChallengePeriodSeconds   uint64
-	MipsVersion              uint64
+	FPVM                     common.Address
 	GameKind                 string
 	GameType                 uint32
 	AbsolutePrestate         common.Hash
@@ -76,6 +72,9 @@ func (c *DisputeGameConfig) Check() error {
 		return fmt.Errorf("artifacts locator must be specified")
 	}
 
+	if c.FPVM == (common.Address{}) {
+		return fmt.Errorf("VM must be specified")
+	}
 	return nil
 }
 
@@ -92,13 +91,30 @@ func DisputeGameCLI(cliCtx *cli.Context) error {
 		return fmt.Errorf("failed to parse artifacts URL: %w", err)
 	}
 
+	vm := common.HexToAddress(cliCtx.String(VMFlagName))
+	if vm == (common.Address{}) {
+		return fmt.Errorf("VM must be specified")
+	}
 	ctx := ctxinterrupt.WithCancelOnInterrupt(cliCtx.Context)
 
 	return DisputeGame(ctx, DisputeGameConfig{
-		L1RPCUrl:         l1RPCUrl,
-		PrivateKey:       privateKey,
-		Logger:           l,
-		ArtifactsLocator: artifactsLocator,
+		L1RPCUrl:                 l1RPCUrl,
+		PrivateKey:               privateKey,
+		Logger:                   l,
+		ArtifactsLocator:         artifactsLocator,
+		FPVM:                     vm,
+		GameKind:                 cliCtx.String(GameKindFlagName),
+		GameType:                 uint32(cliCtx.Uint64(GameTypeFlagName)),
+		AbsolutePrestate:         common.HexToHash(cliCtx.String(AbsolutePrestateFlagName)),
+		MaxGameDepth:             cliCtx.Uint64(MaxGameDepthFlagName),
+		SplitDepth:               cliCtx.Uint64(SplitDepthFlagName),
+		ClockExtension:           cliCtx.Uint64(ClockExtensionFlagName),
+		MaxClockDuration:         cliCtx.Uint64(MaxClockDurationFlagName),
+		DelayedWethProxy:         common.HexToAddress(cliCtx.String(DelayedWethProxyFlagName)),
+		AnchorStateRegistryProxy: common.HexToAddress(cliCtx.String(AnchorStateRegistryProxyFlagName)),
+		L2ChainId:                cliCtx.Uint64(L2ChainIdFlagName),
+		Proposer:                 common.HexToAddress(cliCtx.String(ProposerFlagName)),
+		Challenger:               common.HexToAddress(cliCtx.String(ChallengerFlagName)),
 	})
 }
 
@@ -131,12 +147,6 @@ func DisputeGame(ctx context.Context, cfg DisputeGameConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to get chain ID: %w", err)
 	}
-	chainIDU64 := chainID.Uint64()
-
-	standardVersionsTOML, err := standard.L1VersionsDataFor(chainIDU64)
-	if err != nil {
-		return fmt.Errorf("error getting standard versions TOML: %w", err)
-	}
 
 	signer := opcrypto.SignerFnFromBind(opcrypto.PrivateKeySignerFn(cfg.privateKeyECDSA, chainID))
 	chainDeployer := crypto.PubkeyToAddress(cfg.privateKeyECDSA.PublicKey)
@@ -168,23 +178,10 @@ func DisputeGame(ctx context.Context, cfg DisputeGameConfig) error {
 		return fmt.Errorf("failed to create script host: %w", err)
 	}
 
-	var release string
-	if cfg.ArtifactsLocator.IsTag() {
-		release = cfg.ArtifactsLocator.Tag
-	} else {
-		release = "dev"
-	}
-
-	lgr.Info("deploying dispute game", "release", release)
-
 	dgo, err := opcm.DeployDisputeGame(
 		host,
 		opcm.DeployDisputeGameInput{
-			Release:                  release,
-			StandardVersionsToml:     standardVersionsTOML,
-			MipsVersion:              cfg.MipsVersion,
-			MinProposalSizeBytes:     cfg.MinProposalSizeBytes,
-			ChallengePeriodSeconds:   cfg.ChallengePeriodSeconds,
+			FpVm:                     cfg.FPVM,
 			GameKind:                 cfg.GameKind,
 			GameType:                 cfg.GameType,
 			AbsolutePrestate:         cfg.AbsolutePrestate,
