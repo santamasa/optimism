@@ -220,43 +220,20 @@ contract L2Genesis is Deployer {
         }
         vm.stopPrank();
 
-        // writeForkGenesisAllocs will delete the DeployConfig contract from state, so we need to cache all the
-        // values we need in the _populateNetworkConfig block first.
-        networkConfig.l1ChainID = cfg.l1ChainID();
-        networkConfig.sequencerFeeVaultMinimumWithdrawalAmount = cfg.sequencerFeeVaultMinimumWithdrawalAmount();
-        networkConfig.sequencerFeeVaultRecipient = cfg.sequencerFeeVaultRecipient();
-        networkConfig.sequencerFeeVaultWithdrawalNetwork = cfg.sequencerFeeVaultWithdrawalNetwork();
-        networkConfig.baseFeeVaultRecipient = cfg.baseFeeVaultRecipient();
-        networkConfig.baseFeeVaultMinimumWithdrawalAmount = cfg.baseFeeVaultMinimumWithdrawalAmount();
-        networkConfig.baseFeeVaultWithdrawalNetwork = cfg.baseFeeVaultWithdrawalNetwork();
-        networkConfig.l1FeeVaultRecipient = cfg.l1FeeVaultRecipient();
-        networkConfig.l1FeeVaultMinimumWithdrawalAmount = cfg.l1FeeVaultMinimumWithdrawalAmount();
-        networkConfig.l1FeeVaultWithdrawalNetwork = cfg.l1FeeVaultWithdrawalNetwork();
-
-        if (writeForkGenesisAllocs(_fork, Fork.DELTA, _mode)) {
-            return;
-        }
-
-        activateEcotone();
-
-        if (writeForkGenesisAllocs(_fork, Fork.ECOTONE, _mode)) {
-            return;
-        }
-
-        activateFjord();
-
-        if (writeForkGenesisAllocs(_fork, Fork.FJORD, _mode)) {
-            return;
-        }
-
-        if (writeForkGenesisAllocs(_fork, Fork.GRANITE, _mode)) {
-            return;
-        }
-
-        if (writeForkGenesisAllocs(_fork, Fork.HOLOCENE, _mode)) {
-            return;
-        }
         if (_populateNetworkConfig) {
+            // writeForkGenesisAllocs will delete the DeployConfig contract from state, so we need to cache all the
+            // values we need in the _populateNetworkConfig block first.
+            networkConfig.l1ChainID = cfg.l1ChainID();
+            networkConfig.sequencerFeeVaultMinimumWithdrawalAmount = cfg.sequencerFeeVaultMinimumWithdrawalAmount();
+            networkConfig.sequencerFeeVaultRecipient = cfg.sequencerFeeVaultRecipient();
+            networkConfig.sequencerFeeVaultWithdrawalNetwork = cfg.sequencerFeeVaultWithdrawalNetwork();
+            networkConfig.baseFeeVaultRecipient = cfg.baseFeeVaultRecipient();
+            networkConfig.baseFeeVaultMinimumWithdrawalAmount = cfg.baseFeeVaultMinimumWithdrawalAmount();
+            networkConfig.baseFeeVaultWithdrawalNetwork = cfg.baseFeeVaultWithdrawalNetwork();
+            networkConfig.l1FeeVaultRecipient = cfg.l1FeeVaultRecipient();
+            networkConfig.l1FeeVaultMinimumWithdrawalAmount = cfg.l1FeeVaultMinimumWithdrawalAmount();
+            networkConfig.l1FeeVaultWithdrawalNetwork = cfg.l1FeeVaultWithdrawalNetwork();
+
             console.log("L2Genesis: Modify the standard L2 genesis with network specific configuration");
             vm.startPrank(Constants.DEPOSITOR_ACCOUNT);
             IL1Block(Predeploys.L1_BLOCK_ATTRIBUTES).setConfig(
@@ -302,6 +279,31 @@ contract L2Genesis is Deployer {
             );
             vm.stopPrank();
         }
+
+        if (writeForkGenesisAllocs(_fork, Fork.DELTA, _mode)) {
+            return;
+        }
+
+        activateEcotone();
+
+        if (writeForkGenesisAllocs(_fork, Fork.ECOTONE, _mode)) {
+            return;
+        }
+
+        activateFjord();
+
+        if (writeForkGenesisAllocs(_fork, Fork.FJORD, _mode)) {
+            return;
+        }
+
+        if (writeForkGenesisAllocs(_fork, Fork.GRANITE, _mode)) {
+            return;
+        }
+
+        if (writeForkGenesisAllocs(_fork, Fork.HOLOCENE, _mode)) {
+            return;
+        }
+
         if (writeForkGenesisAllocs(_fork, Fork.ISTHMUS, _mode)) {
             return;
         }
