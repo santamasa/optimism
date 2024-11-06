@@ -182,7 +182,7 @@ func DisputeGame(ctx context.Context, cfg DisputeGameConfig) error {
 	}
 	// We need to etch the VM and PreimageOracle addresses so that they have nonzero code
 	// and the checks in the FaultDisputeGame constructor pass.
-	oracleAddr, err := loadOracleAddr(ctx, err, l1Client, cfg.FPVM)
+	oracleAddr, err := loadOracleAddr(ctx, l1Client, cfg.FPVM)
 	if err != nil {
 		return err
 	}
@@ -234,7 +234,7 @@ func DisputeGame(ctx context.Context, cfg DisputeGameConfig) error {
 	return nil
 }
 
-func loadOracleAddr(ctx context.Context, err error, l1Client *ethclient.Client, vmAddr common.Address) (common.Address, error) {
+func loadOracleAddr(ctx context.Context, l1Client *ethclient.Client, vmAddr common.Address) (common.Address, error) {
 	callData, err := snapshots.LoadMIPSABI().Pack("oracle")
 	if err != nil {
 		return common.Address{}, fmt.Errorf("failed to create vm.oracle() calldata: %w", err)
