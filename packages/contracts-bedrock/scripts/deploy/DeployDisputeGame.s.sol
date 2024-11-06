@@ -441,18 +441,20 @@ contract DeployDisputeGame is Script {
                         abi.encodeCall(
                             IPermissionedDisputeGame.__constructor__,
                             (
-                                args.gameType,
-                                args.absolutePrestate,
-                                args.maxGameDepth,
-                                args.splitDepth,
-                                args.clockExtension,
-                                args.maxClockDuration,
-                                args.gameVm,
-                                args.delayedWethProxy,
-                                args.anchorStateRegistryProxy,
-                                args.l2ChainId,
-                                args.proposer,
-                                args.challenger
+                                IPermissionedDisputeGame.PDGConstructorParams({
+                                    _gameType: args.gameType,
+                                    _absolutePrestate: args.absolutePrestate,
+                                    _maxGameDepth: args.maxGameDepth,
+                                    _splitDepth: args.splitDepth,
+                                    _clockExtension: args.clockExtension,
+                                    _maxClockDuration: args.maxClockDuration,
+                                    _vm: args.gameVm,
+                                    _weth: args.delayedWethProxy,
+                                    _anchorStateRegistry: args.anchorStateRegistryProxy,
+                                    _l2ChainId: args.l2ChainId,
+                                    _proposer: args.proposer,
+                                    _challenger: args.challenger
+                                })
                             )
                         )
                     )

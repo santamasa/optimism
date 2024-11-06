@@ -67,18 +67,20 @@ contract PermissionedDisputeGame_Init is DisputeGameFactory_Init {
                     abi.encodeCall(
                         IPermissionedDisputeGame.__constructor__,
                         (
-                            GAME_TYPE,
-                            absolutePrestate,
-                            2 ** 3,
-                            2 ** 2,
-                            Duration.wrap(3 hours),
-                            Duration.wrap(3.5 days),
-                            _vm,
-                            _weth,
-                            anchorStateRegistry,
-                            10,
-                            PROPOSER,
-                            CHALLENGER
+                            IPermissionedDisputeGame.PDGConstructorParams({
+                                _gameType: GAME_TYPE,
+                                _absolutePrestate: absolutePrestate,
+                                _maxGameDepth: 2 ** 3,
+                                _splitDepth: 2 ** 2,
+                                _clockExtension: Duration.wrap(3 hours),
+                                _maxClockDuration: Duration.wrap(3.5 days),
+                                _vm: _vm,
+                                _weth: _weth,
+                                _anchorStateRegistry: anchorStateRegistry,
+                                _l2ChainId: 10,
+                                _proposer: PROPOSER,
+                                _challenger: CHALLENGER
+                            })
                         )
                     )
                 )

@@ -10,6 +10,21 @@ import { IBigStepper } from "src/dispute/interfaces/IBigStepper.sol";
 import { IDisputeGame } from "src/dispute/interfaces/IDisputeGame.sol";
 
 interface IPermissionedDisputeGame is IDisputeGame {
+    struct PDGConstructorParams {
+        GameType _gameType;
+        Claim _absolutePrestate;
+        uint256 _maxGameDepth;
+        uint256 _splitDepth;
+        Duration _clockExtension;
+        Duration _maxClockDuration;
+        IBigStepper _vm;
+        IDelayedWETH _weth;
+        IAnchorStateRegistry _anchorStateRegistry;
+        uint256 _l2ChainId;
+        address _proposer;
+        address _challenger;
+    }
+
     struct ClaimData {
         uint32 parentIndex;
         address counteredBy;
@@ -119,19 +134,5 @@ interface IPermissionedDisputeGame is IDisputeGame {
     function proposer() external view returns (address proposer_);
     function challenger() external view returns (address challenger_);
 
-    function __constructor__(
-        GameType _gameType,
-        Claim _absolutePrestate,
-        uint256 _maxGameDepth,
-        uint256 _splitDepth,
-        Duration _clockExtension,
-        Duration _maxClockDuration,
-        IBigStepper _vm,
-        IDelayedWETH _weth,
-        IAnchorStateRegistry _anchorStateRegistry,
-        uint256 _l2ChainId,
-        address _proposer,
-        address _challenger
-    )
-        external;
+    function __constructor__(PDGConstructorParams memory _params) external;
 }

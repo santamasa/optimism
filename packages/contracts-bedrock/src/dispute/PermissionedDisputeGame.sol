@@ -13,6 +13,33 @@ import { IDelayedWETH } from "src/dispute/interfaces/IDelayedWETH.sol";
 import { IAnchorStateRegistry } from "src/dispute/interfaces/IAnchorStateRegistry.sol";
 import { IBigStepper } from "src/dispute/interfaces/IBigStepper.sol";
 
+/// @custom:field _gameType The type ID of the game.
+/// @custom:field _absolutePrestate The absolute prestate of the instruction trace.
+/// @custom:field _maxGameDepth The maximum depth of bisection.
+/// @custom:field _splitDepth The final depth of the output bisection portion of the game.
+/// @custom:field _clockExtension The clock extension to perform when the remaining duration is less than the extension.
+/// @custom:field _maxClockDuration The maximum amount of time that may accumulate on a team's chess clock.
+/// @custom:field _vm An onchain VM that performs single instruction steps on an FPP trace.
+/// @custom:field _weth WETH contract for holding ETH.
+/// @custom:field _anchorStateRegistry The contract that stores the anchor state for each game type.
+/// @custom:field _l2ChainId Chain ID of the L2 network this contract argues about.
+/// @custom:field _proposer Address that is allowed to create instances of this contract.
+/// @custom:field _challenger Address that is allowed to challenge instances of this contract.
+struct PDGConstructorParams {
+    GameType _gameType;
+    Claim _absolutePrestate;
+    uint256 _maxGameDepth;
+    uint256 _splitDepth;
+    Duration _clockExtension;
+    Duration _maxClockDuration;
+    IBigStepper _vm;
+    IDelayedWETH _weth;
+    IAnchorStateRegistry _anchorStateRegistry;
+    uint256 _l2ChainId;
+    address _proposer;
+    address _challenger;
+}
+
 /// @title PermissionedDisputeGame
 /// @notice PermissionedDisputeGame is a contract that inherits from `FaultDisputeGame`, and contains two roles:
 ///         - The `challenger` role, which is allowed to challenge a dispute.
@@ -36,47 +63,22 @@ contract PermissionedDisputeGame is FaultDisputeGame {
         _;
     }
 
-    /// @param _gameType The type ID of the game.
-    /// @param _absolutePrestate The absolute prestate of the instruction trace.
-    /// @param _maxGameDepth The maximum depth of bisection.
-    /// @param _splitDepth The final depth of the output bisection portion of the game.
-    /// @param _clockExtension The clock extension to perform when the remaining duration is less than the extension.
-    /// @param _maxClockDuration The maximum amount of time that may accumulate on a team's chess clock.
-    /// @param _vm An onchain VM that performs single instruction steps on an FPP trace.
-    /// @param _weth WETH contract for holding ETH.
-    /// @param _anchorStateRegistry The contract that stores the anchor state for each game type.
-    /// @param _l2ChainId Chain ID of the L2 network this contract argues about.
-    /// @param _proposer Address that is allowed to create instances of this contract.
-    /// @param _challenger Address that is allowed to challenge instances of this contract.
-    constructor(
-        GameType _gameType,
-        Claim _absolutePrestate,
-        uint256 _maxGameDepth,
-        uint256 _splitDepth,
-        Duration _clockExtension,
-        Duration _maxClockDuration,
-        IBigStepper _vm,
-        IDelayedWETH _weth,
-        IAnchorStateRegistry _anchorStateRegistry,
-        uint256 _l2ChainId,
-        address _proposer,
-        address _challenger
-    )
+    constructor(PDGConstructorParams memory _params)
         FaultDisputeGame(
-            _gameType,
-            _absolutePrestate,
-            _maxGameDepth,
-            _splitDepth,
-            _clockExtension,
-            _maxClockDuration,
-            _vm,
-            _weth,
-            _anchorStateRegistry,
-            _l2ChainId
+            _params._gameType,
+            _params._absolutePrestate,
+            _params._maxGameDepth,
+            _params._splitDepth,
+            _params._clockExtension,
+            _params._maxClockDuration,
+            _params._vm,
+            _params._weth,
+            _params._anchorStateRegistry,
+            _params._l2ChainId
         )
     {
-        PROPOSER = _proposer;
-        CHALLENGER = _challenger;
+        PROPOSER = _params._proposer;
+        CHALLENGER = _params._challenger;
     }
 
     /// @inheritdoc FaultDisputeGame
