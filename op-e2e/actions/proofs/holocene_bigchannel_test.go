@@ -71,8 +71,8 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 			data := new(bytes.Buffer)
 			data.WriteByte(derive.DerivationVersion0)
 			_, err := hugeChannelOut.OutputFrame(data, 130_000) // close to max blob size
-			// TODO probably need to send as multi blob tx, otherwise it may be mathematically impossible
-			// to get this huge channel on chain given gas limits
+			// The channel must be > 100MB compressed to be impossible to get on chain
+
 			if err == io.EOF {
 				frames = append(frames, data.Bytes())
 				break
@@ -82,12 +82,17 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 			frames = append(frames, data.Bytes())
 		}
 
-		// incluce all txs in as few blocks as possible
 		// To avoid the channel timing out, we need to get it on chain within
 		// CHANNEL_TIMEOUT which is 50 L1 blocks when Granite is activated.
+		// 100MB / 50 blocks = 2MB per block
+		// This exceeds the capacity of L1.
+		// We can use 6 blobs per block at 130KB per blob, which is 780KB per block.
+		// Only with the longer term limit of 16 blobs per block could we get up to 2MB per block.
+		// Or we can use calldata, which could mean up to 7.5MB per block if the data
+		// is all zeros. It may also be easier to modify the limits for calldata in the test environment.
 		for _, frame := range frames {
 			env.Miner.ActL1StartBlock(12)(t)
-			for i := 0; i < 10; i++ {
+			for i := 0; i < 16; i++ {
 				env.Batcher.ActL2BatchSubmitRaw(t, frame)
 				env.Miner.ActL1IncludeTxByHash(env.Batcher.LastSubmitted.Hash())(t)
 			}
@@ -102,7 +107,7 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 
 		holoceneExpectations := holoceneExpectations{}
 		if testCfg.Custom.disableCompression {
-			holoceneExpectations.safeHeadHolocene = 0 // entire channel dropped because the compressed
+			holoceneExpectations.safeHeadHolocene = 0 // entire channel dropped because the compressed size is too big
 			holoceneExpectations.safeHeadPreHolocene = env.Sequencer.L2Unsafe().Number - 1
 		} else {
 			// Because the channel will be _clipped_ to max_rlp_bytes_per_channel, the safe
