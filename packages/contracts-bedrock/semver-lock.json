@@ -48,11 +48,11 @@
     "sourceCodeHash": "0x39489a85bc3a5c8560f82d41b31bf7fe22f5b648f4ed538f61695a73092ea9eb"
   },
   "src/L1/SystemConfig.sol": {
-    "initCodeHash": "0x761f845e0c41a7b7911d53d502352315d05603a0c390d18ed1c06131a3489325",
-    "sourceCodeHash": "0xa17430d289adf99460a679ac6e23429363ac521f69b9c83f7ee783224348c227"
+    "initCodeHash": "0x387aa0c2e404065420dcd3af7e0ebbb60d23569863e06e79d93b8f1561bab2a7",
+    "sourceCodeHash": "0x6db1dee07eb951e805dedd15335f0abc3f9bea1582eb1b0404939d2ffaf35010"
   },
   "src/L1/SystemConfigInterop.sol": {
-    "initCodeHash": "0xae2bbe4dfefc94c0d41c722228cb25c5130822404b95de58f3f7558729432817",
+    "initCodeHash": "0x39b23a17137c2842c2c77edada51de99b48812969b3b5e41586e58e2a03c8e36",
     "sourceCodeHash": "0x38361a4f70a19e1b7819e933932a0c9fd2bcebaaebcbc7942f5c00dfaa2c28df"
   },
   "src/L2/BaseFeeVault.sol": {
@@ -140,8 +140,8 @@
     "sourceCodeHash": "0x0fa0633a769e73f5937514c0003ba7947a1c275bbe5b85d78879c42f0ed8895b"
   },
   "src/cannon/MIPS.sol": {
-    "initCodeHash": "0x744d490b4856a0de03dd82207e215e1e863a2b4c11712df936b2dfdcc4979e01",
-    "sourceCodeHash": "0x66564b66eab28b0f542859680c211a741dba00049eff2abdb6df902fea044d81"
+    "initCodeHash": "0xa1fa4df504af9e77aa973ff17fca2576b1bb7472b1390ea4251a4b7545bcf249",
+    "sourceCodeHash": "0x423558b9b3ed8d210f436f8101c80a5883143eee20760d1d399d642c192e1c40"
   },
   "src/cannon/MIPS2.sol": {
     "initCodeHash": "0xaedf0d0b0e94a0c5e7d987331d2fdba84230f5704a6ca33677e70cde7051b17e",
