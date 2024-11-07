@@ -3,11 +3,6 @@ pragma solidity ^0.8.0;
 
 import { Types } from "src/libraries/Types.sol";
 
-// The main benefit of this library is to give the reader the ability to observe that
-// the encode decode logic is correct by being able to see it right next to each other.
-// Otherwise the encode/decode will exist in many different locations, between mocks and
-// runtime code. It is overly verbose and I don't like it.
-
 /// @title StaticConfig
 /// @notice Library for encoding and decoding static configuration data.
 library StaticConfig {
