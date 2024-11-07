@@ -75,9 +75,7 @@ runs = 256
 depth = 32
 
 [profile.ciheavy]
-# fuzz = { runs = 20000 }
-# temporary reduce fuzz runs to unblock CI
-fuzz = { runs = 200 }
+fuzz = { runs = 20000 }
 
 [profile.ciheavy.invariant]
 runs = 128

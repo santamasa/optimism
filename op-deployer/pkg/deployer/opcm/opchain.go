@@ -15,6 +15,51 @@ var PermissionedGameStartingAnchorRoots = []byte{
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xde, 0xad, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 }
 
+<<<< HEAD
+=======
+// opcmRolesBase is an internal struct used to pass the roles to OPCM. See opcmDeployInputV160 for more info.
+type opcmRolesBase struct {
+	OpChainProxyAdminOwner common.Address
+	SystemConfigOwner      common.Address
+	Batcher                common.Address
+	UnsafeBlockSigner      common.Address
+	Proposer               common.Address
+	Challenger             common.Address
+}
+
+type opcmDeployInputBase struct {
+	BasefeeScalar           uint32
+	BlobBasefeeScalar       uint32
+	L2ChainId               *big.Int
+	StartingAnchorRoots     []byte
+	SaltMixer               string
+	GasLimit                uint64
+	DisputeGameType         uint32
+	DisputeAbsolutePrestate common.Hash
+	DisputeMaxGameDepth     *big.Int
+	DisputeSplitDepth       *big.Int
+	DisputeClockExtension   uint64
+	DisputeMaxClockDuration uint64
+}
+
+// opcmDeployInputV160 is the input struct for the deploy method of the OPStackManager contract. We
+// define a separate struct here to match what the OPSM contract expects.
+type opcmDeployInputV160 struct {
+	opcmDeployInputBase
+	Roles opcmRolesBase
+}
+
+type opcmRolesIsthmus struct {
+	opcmRolesBase
+	SystemConfigFeeAdmin common.Address
+}
+
+type opcmDeployInputIsthmus struct {
+	opcmDeployInputBase
+	Roles opcmRolesIsthmus
+}
+
+>>>> dad108772 (feat: Isthmus Contracts (#12746))
 type DeployOPChainInputV160 struct {
 	OpChainProxyAdminOwner common.Address
 	SystemConfigOwner      common.Address
@@ -52,6 +97,20 @@ type DeployOPChainInputIsthmus struct {
 	SystemConfigFeeAdmin common.Address
 }
 
+<<<< HEAD
+=======
+func DeployOPChainInputIsthmusDeployCalldata(input DeployOPChainInputIsthmus) any {
+	v160Data := DeployOPChainInputV160DeployCalldata(input.DeployOPChainInputV160).(opcmDeployInputV160)
+	return opcmDeployInputIsthmus{
+		Roles: opcmRolesIsthmus{
+			opcmRolesBase:        v160Data.Roles,
+			SystemConfigFeeAdmin: input.SystemConfigFeeAdmin,
+		},
+		opcmDeployInputBase: v160Data.opcmDeployInputBase,
+	}
+}
+
+>>>> dad108772 (feat: Isthmus Contracts (#12746))
 type DeployOPChainOutput struct {
 	OpChainProxyAdmin                 common.Address
 	AddressManager                    common.Address

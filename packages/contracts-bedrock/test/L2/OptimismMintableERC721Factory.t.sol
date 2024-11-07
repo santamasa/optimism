@@ -3,16 +3,15 @@ pragma solidity 0.8.15;
 
 import { CommonTest } from "test/setup/CommonTest.sol";
 import { OptimismMintableERC721 } from "src/universal/OptimismMintableERC721.sol";
-import { OptimismMintableERC721Factory } from "src/universal/OptimismMintableERC721Factory.sol";
 
 contract OptimismMintableERC721Factory_Test is CommonTest {
     event OptimismMintableERC721Created(address indexed localToken, address indexed remoteToken, address deployer);
 
     function test_constructor_succeeds() external view {
-        assertEq(l2OptimismMintableERC721Factory.BRIDGE(), address(l2ERC721Bridge));
-        assertEq(l2OptimismMintableERC721Factory.bridge(), address(l2ERC721Bridge));
+        assertEq(address(l2OptimismMintableERC721Factory.BRIDGE()), address(l2ERC721Bridge));
+        assertEq(address(l2OptimismMintableERC721Factory.bridge()), address(l2ERC721Bridge));
         assertEq(l2OptimismMintableERC721Factory.REMOTE_CHAIN_ID(), deploy.cfg().l1ChainID());
-        assertEq(l2OptimismMintableERC721Factory.remoteChainID(), deploy.cfg().l1ChainID());
+        assertEq(l2OptimismMintableERC721Factory.remoteChainId(), deploy.cfg().l1ChainID());
     }
 
     function test_createOptimismMintableERC721_succeeds() external {
@@ -39,7 +38,7 @@ contract OptimismMintableERC721Factory_Test is CommonTest {
         assertEq(created.name(), "L2Token");
         assertEq(created.symbol(), "L2T");
         assertEq(created.REMOTE_TOKEN(), remote);
-        assertEq(created.BRIDGE(), address(l2ERC721Bridge));
+        assertEq(address(created.BRIDGE()), address(l2ERC721Bridge));
         assertEq(created.REMOTE_CHAIN_ID(), deploy.cfg().l1ChainID());
     }
 
