@@ -4,25 +4,21 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
-	"math/big"
 	"strings"
 
 	"github.com/ethereum-optimism/optimism/op-chain-ops/script"
 	"github.com/ethereum-optimism/optimism/op-deployer/pkg/deployer"
 	artifacts2 "github.com/ethereum-optimism/optimism/op-deployer/pkg/deployer/artifacts"
 	"github.com/ethereum-optimism/optimism/op-deployer/pkg/deployer/broadcaster"
+	"github.com/ethereum-optimism/optimism/op-deployer/pkg/deployer/loader"
 	"github.com/ethereum-optimism/optimism/op-deployer/pkg/deployer/opcm"
-	"github.com/ethereum-optimism/optimism/op-deployer/pkg/deployer/standard"
 	"github.com/ethereum-optimism/optimism/op-deployer/pkg/env"
 	opcrypto "github.com/ethereum-optimism/optimism/op-service/crypto"
 	"github.com/ethereum-optimism/optimism/op-service/ctxinterrupt"
 	"github.com/ethereum-optimism/optimism/op-service/ioutil"
 	"github.com/ethereum-optimism/optimism/op-service/jsonutil"
 	oplog "github.com/ethereum-optimism/optimism/op-service/log"
-	"github.com/ethereum-optimism/optimism/op-service/sources/batching"
 	"github.com/ethereum-optimism/optimism/packages/contracts-bedrock/snapshots"
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -181,7 +177,7 @@ func Holocene(ctx context.Context, cfg HoloceneConfig) error {
 	lgr.Info("preparing holocene upgrade", "release", release)
 
 	sysCfgAbi := snapshots.LoadSystemConfigABI()
-	result, err := callContract(ctx, l1Client, sysCfgAbi, cfg.SystemConfig, "disputeGameFactory")
+	result, err := loader.CallContract(ctx, l1Client, sysCfgAbi, cfg.SystemConfig, "disputeGameFactory")
 	if err != nil {
 		return fmt.Errorf("failed to load DisputeGameFactory address: %w", err)
 	}
@@ -189,14 +185,14 @@ func Holocene(ctx context.Context, cfg HoloceneConfig) error {
 	dgfAddr := result.GetAddress(0)
 	lgr.Info("found DisputeGameFactory", "addr", dgfAddr)
 
-	result, err = callContract(ctx, l1Client, snapshots.LoadDisputeGameFactoryABI(), dgfAddr, "gameImpls", uint32(0))
+	result, err = loader.CallContract(ctx, l1Client, snapshots.LoadDisputeGameFactoryABI(), dgfAddr, "gameImpls", uint32(0))
 	if err != nil {
 		return fmt.Errorf("failed to load current FaultDisputeGame implementation addr: %w", err)
 	}
 	cannonGameImpl := result.GetAddress(0)
 	lgr.Info("found FaultDisputeGame", "addr", cannonGameImpl)
 
-	result, err = callContract(ctx, l1Client, snapshots.LoadDisputeGameFactoryABI(), dgfAddr, "gameImpls", uint32(1))
+	result, err = loader.CallContract(ctx, l1Client, snapshots.LoadDisputeGameFactoryABI(), dgfAddr, "gameImpls", uint32(1))
 	if err != nil {
 		return fmt.Errorf("failed to load current PermissionedDisputeGame implementation addr: %w", err)
 	}
@@ -204,14 +200,14 @@ func Holocene(ctx context.Context, cfg HoloceneConfig) error {
 	lgr.Info("found PermissionedDisputeGame", "addr", permissionedGameImpl)
 
 	dgfABI := snapshots.LoadFaultDisputeGameABI()
-	result, err = callContract(ctx, l1Client, dgfABI, permissionedGameImpl, "vm")
+	result, err = loader.CallContract(ctx, l1Client, dgfABI, permissionedGameImpl, "vm")
 	if err != nil {
 		return fmt.Errorf("failed to load current MIPS implementation address: %w", err)
 	}
 	oldMIPS := result.GetAddress(0)
 	lgr.Info("found existing MIPS", "addr", oldMIPS)
 
-	result, err = callContract(ctx, l1Client, snapshots.LoadMIPSABI(), oldMIPS, "oracle")
+	result, err = loader.CallContract(ctx, l1Client, snapshots.LoadMIPSABI(), oldMIPS, "oracle")
 	if err != nil {
 		return fmt.Errorf("failed to load PreimageOracle address: %w", err)
 	}
@@ -234,16 +230,11 @@ func Holocene(ctx context.Context, cfg HoloceneConfig) error {
 		return fmt.Errorf("error deploying dispute game: %w", err)
 	}
 
-	if _, err := bcaster.Broadcast(ctx); err != nil {
-		return fmt.Errorf("failed to broadcast: %w", err)
-	}
-
 	lgr.Info("deployed new mips", "addr", mipsDeployment.MipsSingleton)
 	deployment.MipsSingleton = mipsDeployment.MipsSingleton
 
 	// Populate required code in the local state
 	addresses := []common.Address{
-		mipsDeployment.MipsSingleton,
 		oracleAddr,
 	}
 	for _, addr := range addresses {
@@ -258,22 +249,27 @@ func Holocene(ctx context.Context, cfg HoloceneConfig) error {
 
 	// Next deploy new FaultDisputeGame if one was already present
 	if cannonGameImpl != (common.Address{}) {
-		cannonGameDeployment, err := deployDisputeGame(ctx, l1Client, dgfABI, cannonGameImpl, host, mipsDeployment.MipsSingleton, cfg.AbsolutePrestate)
+		out, err := deployDisputeGame(ctx, l1Client, cannonGameImpl, false, host, mipsDeployment.MipsSingleton, cfg.AbsolutePrestate)
 		if err != nil {
 			return err
 		}
-		deployment.FaultDisputeGame = cannonGameDeployment.DisputeGameImpl
+		lgr.Info("deployed FaultDisputeGame", "addr", out.DisputeGameImpl)
+		deployment.FaultDisputeGame = out.DisputeGameImpl
 	}
 
 	// Deploy PermissionedDisputeGame
-	gameDeployment, err := deployDisputeGame(ctx, l1Client, dgfABI, permissionedGameImpl, host, mipsDeployment.MipsSingleton, cfg.AbsolutePrestate)
+	out, err := deployDisputeGame(ctx, l1Client, permissionedGameImpl, true, host, mipsDeployment.MipsSingleton, cfg.AbsolutePrestate)
 	if err != nil {
 		return err
 	}
-	deployment.PermissionedDisputeGame = gameDeployment.DisputeGameImpl
+	lgr.Info("deployed PermissionedDisputeGame", "addr", out.DisputeGameImpl)
+	deployment.PermissionedDisputeGame = out.DisputeGameImpl
 
 	// TODO: Deploy the updated SystemConfig?
 
+	if _, err := bcaster.Broadcast(ctx); err != nil {
+		return fmt.Errorf("failed to broadcast: %w", err)
+	}
 	lgr.Info("deployment complete")
 	if err := jsonutil.WriteJSON(deployment, ioutil.ToStdOut()); err != nil {
 		return fmt.Errorf("failed to write output: %w", err)
@@ -281,76 +277,16 @@ func Holocene(ctx context.Context, cfg HoloceneConfig) error {
 	return nil
 }
 
-func deployDisputeGame(ctx context.Context, l1Client *ethclient.Client, dgfABI *abi.ABI, gameImpl common.Address, host *script.Host, mips common.Address, absolutePrestate common.Hash) (opcm.DeployDisputeGameOutput, error) {
-	caller := &contractCaller{
-		l1Client: l1Client,
-		abi:      dgfABI,
-		addr:     gameImpl,
-	}
-	delayedWETHProxy, err := caller.getAddress(ctx, "weth")
+func deployDisputeGame(ctx context.Context, l1Client *ethclient.Client, gameImpl common.Address, permissioned bool, host *script.Host, mips common.Address, absolutePrestate common.Hash) (opcm.DeployDisputeGameOutput, error) {
+	inputs, err := loader.LoadDisputeGameInputs(ctx, l1Client, gameImpl, permissioned)
 	if err != nil {
-		return opcm.DeployDisputeGameOutput{}, fmt.Errorf("failed to load DelayedWETH proxy for FaultDisputeGame at %v: %w", gameImpl, err)
+		return opcm.DeployDisputeGameOutput{}, err
 	}
-	anchorStateRegistryProxy, err := caller.getAddress(ctx, "anchorStateRegistry")
+	inputs.FpVm = mips
+	inputs.AbsolutePrestate = absolutePrestate
+	gameDeployment, err := opcm.DeployDisputeGame(host, inputs)
 	if err != nil {
-		return opcm.DeployDisputeGameOutput{}, fmt.Errorf("failed to load AnchorStateRegistry proxy for FaultDisputeGame at %v: %w", gameImpl, err)
-	}
-	l2ChainID, err := caller.getBigInt(ctx, "l2ChainId")
-	if err != nil {
-		return opcm.DeployDisputeGameOutput{}, fmt.Errorf("failed to load L2 chain ID for FaultDisputeGame at %v: %w", gameImpl, err)
-	}
-	gameDeployment, err := opcm.DeployDisputeGame(host, opcm.DeployDisputeGameInput{
-		FpVm:                     mips,
-		GameKind:                 "FaultDisputeGame",
-		GameType:                 0,
-		AbsolutePrestate:         absolutePrestate,
-		MaxGameDepth:             standard.DisputeMaxGameDepth,
-		SplitDepth:               standard.DisputeSplitDepth,
-		ClockExtension:           standard.DisputeClockExtension,
-		MaxClockDuration:         standard.DisputeMaxClockDuration,
-		DelayedWethProxy:         delayedWETHProxy,
-		AnchorStateRegistryProxy: anchorStateRegistryProxy,
-		L2ChainId:                l2ChainID.Uint64(),
-		Proposer:                 common.Address{},
-		Challenger:               common.Address{},
-	})
-	if err != nil {
-		return opcm.DeployDisputeGameOutput{}, fmt.Errorf("failed to deploy FaultDisputeGame: %w", err)
+		return opcm.DeployDisputeGameOutput{}, fmt.Errorf("failed to deploy %v: %w", inputs.GameKind, err)
 	}
 	return gameDeployment, nil
-}
-
-type contractCaller struct {
-	l1Client *ethclient.Client
-	abi      *abi.ABI
-	addr     common.Address
-}
-
-func (c *contractCaller) getAddress(ctx context.Context, method string, args ...interface{}) (common.Address, error) {
-	result, err := callContract(ctx, c.l1Client, c.abi, c.addr, method, args...)
-	if err != nil {
-		return common.Address{}, err
-	}
-	return result.GetAddress(0), nil
-}
-
-func (c *contractCaller) getBigInt(ctx context.Context, method string, args ...interface{}) (*big.Int, error) {
-	result, err := callContract(ctx, c.l1Client, c.abi, c.addr, method, args...)
-	if err != nil {
-		return nil, err
-	}
-	return result.GetBigInt(0), nil
-}
-
-func callContract(ctx context.Context, l1Client *ethclient.Client, contractAbi *abi.ABI, to common.Address, method string, args ...interface{}) (*batching.CallResult, error) {
-	call := batching.NewContractCall(contractAbi, to, method, args...)
-	calldata, err := call.Pack()
-	if err != nil {
-		return nil, fmt.Errorf("failed to pack %s call: %w", method, err)
-	}
-	response, err := l1Client.CallContract(ctx, ethereum.CallMsg{To: &to, Data: calldata}, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to call method %v: %w", method, err)
-	}
-	return call.Unpack(response)
 }
