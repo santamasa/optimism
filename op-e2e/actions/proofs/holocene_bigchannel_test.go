@@ -6,6 +6,7 @@ import (
 	"io"
 	"testing"
 
+	"github.com/ethereum-optimism/optimism/op-batcher/flags"
 	actionsHelpers "github.com/ethereum-optimism/optimism/op-e2e/actions/helpers"
 	"github.com/ethereum-optimism/optimism/op-e2e/actions/proofs/helpers"
 	"github.com/ethereum-optimism/optimism/op-node/rollup/derive"
@@ -30,7 +31,9 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 
 	runHoloceneDerivationTest := func(gt *testing.T, testCfg *helpers.TestCfg[testCase]) {
 		t := actionsHelpers.NewDefaultTesting(gt)
-		env := helpers.NewL2FaultProofEnv(t, testCfg, helpers.NewTestParams(), helpers.NewBatcherCfg())
+		batcherConfig := helpers.NewBatcherCfg()
+		batcherConfig.DataAvailabilityType = flags.CalldataType
+		env := helpers.NewL2FaultProofEnv(t, testCfg, helpers.NewTestParams(), batcherConfig)
 
 		// build some l1 blocks so that we don't hit sequencer drift problems
 		for i := 0; i < 200; i++ {
@@ -64,7 +67,7 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 		}
 		hugeChannelOut.Close()
 
-		t.Log(hugeChannelOut.RLPLength(), hugeChannelOut.ReadyBytes())
+		t.Log("channel closed", "uncompressed bytes", hugeChannelOut.RLPLength(), "compressed bytes", hugeChannelOut.ReadyBytes())
 
 		includeBatchTx := func() {
 			// Include the last transaction submitted by the batcher.
