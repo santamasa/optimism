@@ -199,6 +199,9 @@ contract OPContractsManager is ISemver, Initializable {
     /// @notice Thrown when the starting anchor roots are not provided.
     error InvalidStartingAnchorRoots();
 
+    /// @notice Thrown when the fee vault configs are not provided.
+    error InvalidFeeVaultConfigs();
+
     // -------- Methods --------
 
     /// @notice OPCM is proxied. Therefore the `initialize` function replaces most constructor logic for this contract.
@@ -377,6 +380,7 @@ contract OPContractsManager is ISemver, Initializable {
         if (_input.roles.challenger == address(0)) revert InvalidRoleAddress("challenger");
 
         if (_input.startingAnchorRoots.length == 0) revert InvalidStartingAnchorRoots();
+        if (_input.feeVaultConfigs.length == 0) revert InvalidFeeVaultConfigs();
     }
 
     /// @notice Maps an L2 chain ID to an L1 batch inbox address as defined by the standard

@@ -76,6 +76,7 @@ type L2Config struct {
 	Challenger           common.Address
 	SystemConfigOwner    common.Address
 	SystemConfigFeeAdmin common.Address
+	FeeVaultConfigs      []byte
 	genesis.L2InitializationConfig
 	Prefund                 map[common.Address]*big.Int
 	SaltMixer               string

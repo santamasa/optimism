@@ -64,7 +64,8 @@ type opcmRolesIsthmus struct {
 
 type opcmDeployInputIsthmus struct {
 	opcmDeployInputBase
-	Roles opcmRolesIsthmus
+	Roles           opcmRolesIsthmus
+	FeeVaultConfigs []byte
 }
 
 type DeployOPChainInputV160 struct {
@@ -129,6 +130,7 @@ func DeployOPChainInputV160DeployCalldata(input DeployOPChainInputV160) any {
 type DeployOPChainInputIsthmus struct {
 	DeployOPChainInputV160
 	SystemConfigFeeAdmin common.Address
+	FeeVaultConfigs      []byte
 }
 
 func DeployOPChainInputIsthmusDeployCalldata(input DeployOPChainInputIsthmus) any {
@@ -139,6 +141,7 @@ func DeployOPChainInputIsthmusDeployCalldata(input DeployOPChainInputIsthmus) an
 			SystemConfigFeeAdmin: input.SystemConfigFeeAdmin,
 		},
 		opcmDeployInputBase: v160Data.opcmDeployInputBase,
+		FeeVaultConfigs:     input.FeeVaultConfigs,
 	}
 }
 
@@ -177,11 +180,16 @@ func DeployOPChainIsthmus(host *script.Host, input DeployOPChainInputIsthmus) (D
 	return deployOPChain(host, input)
 }
 
+// deployOPChain is a generic function that deploys an OP Chain using a script-based deployment approach.
+// It takes a host environment and deployment input configuration, and returns the deployment output.
 func deployOPChain[T any](host *script.Host, input T) (DeployOPChainOutput, error) {
+	// Initialize output struct and generate addresses for input/output precompiles
 	var dco DeployOPChainOutput
 	inputAddr := host.NewScriptAddress()
 	outputAddr := host.NewScriptAddress()
 
+	// Set up input precompile at generated address
+	// This allows the deployment script to read the input configuration
 	cleanupInput, err := script.WithPrecompileAtAddress[*T](host, inputAddr, &input)
 	if err != nil {
 		return dco, fmt.Errorf("failed to insert DeployOPChainInput precompile: %w", err)
@@ -189,6 +197,8 @@ func deployOPChain[T any](host *script.Host, input T) (DeployOPChainOutput, erro
 	defer cleanupInput()
 	host.Label(inputAddr, "DeployOPChainInput")
 
+	// Set up output precompile at generated address
+	// This allows the deployment script to write the deployment results
 	cleanupOutput, err := script.WithPrecompileAtAddress[*DeployOPChainOutput](host, outputAddr, &dco,
 		script.WithFieldSetter[*DeployOPChainOutput])
 	if err != nil {
@@ -197,12 +207,14 @@ func deployOPChain[T any](host *script.Host, input T) (DeployOPChainOutput, erro
 	defer cleanupOutput()
 	host.Label(outputAddr, "DeployOPChainOutput")
 
+	// Load and prepare the deployment script that will perform the actual deployment
 	deployScript, cleanupDeploy, err := script.WithScript[DeployOPChainScript](host, "DeployOPChain.s.sol", "DeployOPChain")
 	if err != nil {
 		return dco, fmt.Errorf("failed to load DeployOPChain script: %w", err)
 	}
 	defer cleanupDeploy()
 
+	// Execute the deployment script with the input and output addresses
 	if err := deployScript.Run(inputAddr, outputAddr); err != nil {
 		return dco, fmt.Errorf("failed to run DeployOPChain script: %w", err)
 	}

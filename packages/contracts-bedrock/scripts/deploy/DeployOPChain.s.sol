@@ -164,7 +164,7 @@ contract DeployOPChainInput is BaseDeployIO {
     }
 
     function feeVaultConfigs() public view returns (bytes memory) {
-        require(_feeVaultConfigs.length != 0, "DeployOPChainInput: not set");
+        // require(_feeVaultConfigs.length != 0, "DeployOPChainInput: not set");
         return _feeVaultConfigs;
     }
 
