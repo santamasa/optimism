@@ -251,7 +251,7 @@ func (s *L1Miner) ActL1EndBlock(t Testing) *types.Block {
 	}
 	_, err = s.l1Chain.InsertChain(types.Blocks{block})
 	if err != nil {
-		t.Fatalf("failed to insert block into l1 chain")
+		t.Fatalf("failed to insert block into l1 chain", "err", err.Error())
 	}
 	return block
 }
