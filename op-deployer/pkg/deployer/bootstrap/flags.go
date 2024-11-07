@@ -90,7 +90,6 @@ var (
 		Name:    AbsolutePrestateFlagName,
 		Usage:   "Absolute prestate.",
 		EnvVars: deployer.PrefixEnvVar("ABSOLUTE_PRESTATE"),
-		Value:   standard.DisputeAbsolutePrestate.Hex(),
 	}
 	MaxGameDepthFlag = &cli.Uint64Flag{
 		Name:    MaxGameDepthFlagName,
