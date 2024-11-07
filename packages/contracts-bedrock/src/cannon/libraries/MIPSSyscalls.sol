@@ -354,6 +354,7 @@ library MIPSSyscalls {
                     mem := and(shr(mul(sub(space, _a2), 8), mem), mask) // align value to right, mask it
                     key := or(key, mem) // insert into key
                 }
+                _args._a2 = _a2;
 
                 // Write pre-image key to oracle
                 newPreimageKey_ = key;
