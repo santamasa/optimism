@@ -119,19 +119,5 @@ interface IPermissionedDisputeGame is IDisputeGame {
     function proposer() external view returns (address proposer_);
     function challenger() external view returns (address challenger_);
 
-    function __constructor__(
-        GameType _gameType,
-        Claim _absolutePrestate,
-        uint256 _maxGameDepth,
-        uint256 _splitDepth,
-        Duration _clockExtension,
-        Duration _maxClockDuration,
-        IBigStepper _vm,
-        IDelayedWETH _weth,
-        IAnchorStateRegistry _anchorStateRegistry,
-        uint256 _l2ChainId,
-        address _proposer,
-        address _challenger
-    )
-        external;
+    function __constructor__() external;
 }

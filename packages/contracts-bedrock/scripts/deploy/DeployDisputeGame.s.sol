@@ -417,18 +417,7 @@ contract DeployDisputeGame is Script {
                     _args: DeployUtils.encodeConstructor(
                         abi.encodeCall(
                             IFaultDisputeGame.__constructor__,
-                            (
-                                args.gameType,
-                                args.absolutePrestate,
-                                args.maxGameDepth,
-                                args.splitDepth,
-                                args.clockExtension,
-                                args.maxClockDuration,
-                                args.gameVm,
-                                args.delayedWethProxy,
-                                args.anchorStateRegistryProxy,
-                                args.l2ChainId
-                            )
+                            ()
                         )
                     )
                 })
@@ -440,20 +429,7 @@ contract DeployDisputeGame is Script {
                     _args: DeployUtils.encodeConstructor(
                         abi.encodeCall(
                             IPermissionedDisputeGame.__constructor__,
-                            (
-                                args.gameType,
-                                args.absolutePrestate,
-                                args.maxGameDepth,
-                                args.splitDepth,
-                                args.clockExtension,
-                                args.maxClockDuration,
-                                args.gameVm,
-                                args.delayedWethProxy,
-                                args.anchorStateRegistryProxy,
-                                args.l2ChainId,
-                                args.proposer,
-                                args.challenger
-                            )
+                            ()
                         )
                     )
                 })

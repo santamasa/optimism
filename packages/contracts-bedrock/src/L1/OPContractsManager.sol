@@ -341,7 +341,7 @@ contract OPContractsManager is ISemver, Initializable {
         data = encodeDisputeGameFactoryInitializer(impl.initializer, _input);
         upgradeAndCall(output.opChainProxyAdmin, address(output.disputeGameFactoryProxy), impl.logic, data);
         output.disputeGameFactoryProxy.setImplementation(
-            GameTypes.PERMISSIONED_CANNON, IDisputeGame(address(output.permissionedDisputeGame))
+            GameTypes.PERMISSIONED_CANNON, IDisputeGame(address(output.permissionedDisputeGame)), ""
         );
         output.disputeGameFactoryProxy.transferOwnership(address(_input.roles.opChainProxyAdminOwner));
 

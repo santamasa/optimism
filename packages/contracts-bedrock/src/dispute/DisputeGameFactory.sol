@@ -6,12 +6,15 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 
 // Libraries
 import { LibClone } from "@solady/utils/LibClone.sol";
-import { GameType, Claim, GameId, Timestamp, Hash, LibGameId } from "src/dispute/lib/Types.sol";
+import { GameStatus, GameType, Clock, Claim, Duration, GameId, Timestamp, Hash, LibGameId } from "src/dispute/lib/Types.sol";
 import { NoImplementation, IncorrectBondAmount, GameAlreadyExists } from "src/dispute/lib/Errors.sol";
 
 // Interfaces
 import { ISemver } from "src/universal/interfaces/ISemver.sol";
+import { IDelayedWETH } from "src/dispute/interfaces/IDelayedWETH.sol";
 import { IDisputeGame } from "src/dispute/interfaces/IDisputeGame.sol";
+import { IBigStepper, IPreimageOracle } from "src/dispute/interfaces/IBigStepper.sol";
+import { IAnchorStateRegistry } from "src/dispute/interfaces/IAnchorStateRegistry.sol";
 
 /// @custom:proxied true
 /// @title DisputeGameFactory
@@ -32,7 +35,7 @@ contract DisputeGameFactory is OwnableUpgradeable, ISemver {
     /// @notice Emitted when a new game implementation added to the factory
     /// @param impl The implementation contract for the given `GameType`.
     /// @param gameType The type of the DisputeGame.
-    event ImplementationSet(address indexed impl, GameType indexed gameType);
+    event ImplementationSet(address indexed impl, bytes args, GameType indexed gameType);
 
     /// @notice Emitted when a game type's initialization bond is updated
     /// @param gameType The type of the DisputeGame.
@@ -55,6 +58,10 @@ contract DisputeGameFactory is OwnableUpgradeable, ISemver {
     /// @notice `gameImpls` is a mapping that maps `GameType`s to their respective
     ///         `IDisputeGame` implementations.
     mapping(GameType => IDisputeGame) public gameImpls;
+
+    /// @notice Maps each Game Type to an assosiated configuration to use with it, but because we need to pass them
+    ///         to a clone with immutable args so they have to be stored as arbitrary bytes unfortunately
+    mapping(GameType => bytes) public gameArgs;
 
     /// @notice Returns the required bonds for initializing a dispute game of the given type.
     mapping(GameType => uint256) public initBonds;
@@ -150,18 +157,12 @@ contract DisputeGameFactory is OwnableUpgradeable, ISemver {
         // Get the hash of the parent block.
         bytes32 parentHash = blockhash(block.number - 1);
 
-        // Clone the implementation contract and initialize it with the given parameters.
-        //
-        // CWIA Calldata Layout:
-        // ┌──────────────┬────────────────────────────────────┐
-        // │    Bytes     │            Description             │
-        // ├──────────────┼────────────────────────────────────┤
-        // │ [0, 20)      │ Game creator address               │
-        // │ [20, 52)     │ Root claim                         │
-        // │ [52, 84)     │ Parent block hash at creation time │
-        // │ [84, 84 + n) │ Extra data (opaque)                │
-        // └──────────────┴────────────────────────────────────┘
-        proxy_ = IDisputeGame(address(impl).clone(abi.encodePacked(msg.sender, _rootClaim, parentHash, _extraData)));
+        // Load base constructor args for the implementation into memory
+        bytes memory baseConstructorArgs = gameArgs[_gameType];
+        // Pack arguments specific to this given instatiation of the game
+        bytes memory gameSpecificArgs = abi.encodePacked(msg.sender, _rootClaim, parentHash, _extraData);
+
+        proxy_ = IDisputeGame(address(impl).clone(bytes.concat(gameSpecificArgs, baseConstructorArgs)));
         proxy_.initialize{ value: msg.value }();
 
         // Compute the unique identifier for the dispute game.
@@ -257,9 +258,12 @@ contract DisputeGameFactory is OwnableUpgradeable, ISemver {
     /// @dev May only be called by the `owner`.
     /// @param _gameType The type of the DisputeGame.
     /// @param _impl The implementation contract for the given `GameType`.
-    function setImplementation(GameType _gameType, IDisputeGame _impl) external onlyOwner {
+    /// @param _args The constructor args to be passed for each implementation
+    function setImplementation(GameType _gameType, IDisputeGame _impl, bytes calldata _args) external onlyOwner {
         gameImpls[_gameType] = _impl;
-        emit ImplementationSet(address(_impl), _gameType);
+        gameArgs[_gameType] = _args;
+
+        emit ImplementationSet(address(_impl), _args, _gameType);
     }
 
     /// @notice Sets the bond (in wei) for initializing a game type.

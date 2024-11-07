@@ -52,7 +52,7 @@ contract DisputeGameFactory_Create_Test is DisputeGameFactory_Init {
         // Set all three implementations to the same `FakeClone` contract.
         for (uint8 i; i < 3; i++) {
             GameType lgt = GameType.wrap(i);
-            disputeGameFactory.setImplementation(lgt, IDisputeGame(address(fakeClone)));
+            disputeGameFactory.setImplementation(lgt, IDisputeGame(address(fakeClone)), "");
             disputeGameFactory.setInitBond(lgt, _value);
         }
 
@@ -93,7 +93,7 @@ contract DisputeGameFactory_Create_Test is DisputeGameFactory_Init {
         // Set all three implementations to the same `FakeClone` contract.
         for (uint8 i; i < 3; i++) {
             GameType lgt = GameType.wrap(i);
-            disputeGameFactory.setImplementation(lgt, IDisputeGame(address(fakeClone)));
+            disputeGameFactory.setImplementation(lgt, IDisputeGame(address(fakeClone)), "");
             disputeGameFactory.setInitBond(lgt, 1 ether);
         }
 
@@ -123,7 +123,7 @@ contract DisputeGameFactory_Create_Test is DisputeGameFactory_Init {
 
         // Set all three implementations to the same `FakeClone` contract.
         for (uint8 i; i < 3; i++) {
-            disputeGameFactory.setImplementation(GameType.wrap(i), IDisputeGame(address(fakeClone)));
+            disputeGameFactory.setImplementation(GameType.wrap(i), IDisputeGame(address(fakeClone)), "");
         }
 
         // Create our first dispute game - this should succeed.
@@ -157,7 +157,7 @@ contract DisputeGameFactory_SetImplementation_Test is DisputeGameFactory_Init {
         emit ImplementationSet(address(1), GameTypes.CANNON);
 
         // Set the implementation for the `GameTypes.CANNON` enum value.
-        disputeGameFactory.setImplementation(GameTypes.CANNON, IDisputeGame(address(1)));
+        disputeGameFactory.setImplementation(GameTypes.CANNON, IDisputeGame(address(1)), "");
 
         // Ensure that the implementation for the `GameTypes.CANNON` enum value is set.
         assertEq(address(disputeGameFactory.gameImpls(GameTypes.CANNON)), address(1));
@@ -168,7 +168,7 @@ contract DisputeGameFactory_SetImplementation_Test is DisputeGameFactory_Init {
         // Ensure that the `setImplementation` function reverts when called by a non-owner.
         vm.prank(address(0));
         vm.expectRevert("Ownable: caller is not the owner");
-        disputeGameFactory.setImplementation(GameTypes.CANNON, IDisputeGame(address(1)));
+        disputeGameFactory.setImplementation(GameTypes.CANNON, IDisputeGame(address(1)), "");
     }
 }
 
@@ -240,7 +240,7 @@ contract DisputeGameFactory_FindLatestGames_Test is DisputeGameFactory_Init {
         // Set three implementations to the same `FakeClone` contract.
         for (uint8 i; i < 3; i++) {
             GameType lgt = GameType.wrap(i);
-            disputeGameFactory.setImplementation(lgt, IDisputeGame(address(fakeClone)));
+            disputeGameFactory.setImplementation(lgt, IDisputeGame(address(fakeClone)), "");
             disputeGameFactory.setInitBond(lgt, 0);
         }
     }

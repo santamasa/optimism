@@ -113,17 +113,5 @@ interface IFaultDisputeGame is IDisputeGame {
     function vm() external view returns (IBigStepper vm_);
     function weth() external view returns (IDelayedWETH weth_);
 
-    function __constructor__(
-        GameType _gameType,
-        Claim _absolutePrestate,
-        uint256 _maxGameDepth,
-        uint256 _splitDepth,
-        Duration _clockExtension,
-        Duration _maxClockDuration,
-        IBigStepper _vm,
-        IDelayedWETH _weth,
-        IAnchorStateRegistry _anchorStateRegistry,
-        uint256 _l2ChainId
-    )
-        external;
+    function __constructor__() external;
 }

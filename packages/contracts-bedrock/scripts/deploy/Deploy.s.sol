@@ -1169,22 +1169,12 @@ contract Deploy is Deployer {
                     _args: DeployUtils.encodeConstructor(
                         abi.encodeCall(
                             IFaultDisputeGame.__constructor__,
-                            (
-                                _params_.gameType,
-                                _params_.absolutePrestate,
-                                _params_.maxGameDepth,
-                                cfg.faultGameSplitDepth(),
-                                Duration.wrap(uint64(cfg.faultGameClockExtension())),
-                                _params_.maxClockDuration,
-                                _params_.faultVm,
-                                _params_.weth,
-                                IAnchorStateRegistry(mustGetAddress("AnchorStateRegistryProxy")),
-                                cfg.l2ChainID()
-                            )
+                            ()
                         )
                     )
                 })
-            )
+            ),
+            ""
         );
 
         string memory gameTypeString;

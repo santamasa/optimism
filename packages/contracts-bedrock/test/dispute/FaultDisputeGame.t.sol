@@ -42,6 +42,9 @@ contract FaultDisputeGame_Init is DisputeGameFactory_Init {
     /// @dev The extra data passed to the game for initialization.
     bytes internal extraData;
 
+    /// @dev The data passed to the game for initialization.
+    bytes public implementationArgs;
+
     event Move(uint256 indexed parentIndex, Claim indexed pivot, address indexed claimant);
 
     event ReceiveETH(uint256 amount);
@@ -65,6 +68,19 @@ contract FaultDisputeGame_Init is DisputeGameFactory_Init {
             )
         );
 
+        implementationArgs = abi.encodePacked(
+            GAME_TYPE,
+            absolutePrestate,
+            uint256(2 ** 3),
+            uint256(2 ** 2),
+            Duration.wrap(3 hours),
+            Duration.wrap(3.5 days),
+            _vm,
+            IDelayedWETH(payable(address(0))),
+            IAnchorStateRegistry(address(0)),
+            uint256(10)
+        );
+
         // Deploy an implementation of the fault game
         gameImpl = IFaultDisputeGame(
             DeployUtils.create1({
@@ -72,25 +88,14 @@ contract FaultDisputeGame_Init is DisputeGameFactory_Init {
                 _args: DeployUtils.encodeConstructor(
                     abi.encodeCall(
                         IFaultDisputeGame.__constructor__,
-                        (
-                            GAME_TYPE,
-                            absolutePrestate,
-                            2 ** 3,
-                            2 ** 2,
-                            Duration.wrap(3 hours),
-                            Duration.wrap(3.5 days),
-                            _vm,
-                            delayedWeth,
-                            anchorStateRegistry,
-                            10
-                        )
+                        ()
                     )
                 )
             })
         );
 
         // Register the game implementation with the factory.
-        disputeGameFactory.setImplementation(GAME_TYPE, gameImpl);
+        disputeGameFactory.setImplementation(GAME_TYPE, gameImpl, implementationArgs);
         // Create a new game.
         gameProxy = IFaultDisputeGame(payable(address(disputeGameFactory.create(GAME_TYPE, rootClaim, extraData))));
 
@@ -153,18 +158,7 @@ contract FaultDisputeGame_Test is FaultDisputeGame_Init {
             _args: DeployUtils.encodeConstructor(
                 abi.encodeCall(
                     IFaultDisputeGame.__constructor__,
-                    (
-                        GAME_TYPE,
-                        absolutePrestate,
-                        _maxGameDepth,
-                        _maxGameDepth + 1,
-                        Duration.wrap(3 hours),
-                        Duration.wrap(3.5 days),
-                        alphabetVM,
-                        IDelayedWETH(payable(address(0))),
-                        IAnchorStateRegistry(address(0)),
-                        10
-                    )
+                    ()
                 )
             )
         });
@@ -196,16 +190,7 @@ contract FaultDisputeGame_Test is FaultDisputeGame_Init {
                 abi.encodeCall(
                     IFaultDisputeGame.__constructor__,
                     (
-                        GAME_TYPE,
-                        absolutePrestate,
-                        2 ** 3,
-                        2 ** 2,
-                        Duration.wrap(3 hours),
-                        Duration.wrap(3.5 days),
-                        alphabetVM,
-                        IDelayedWETH(payable(address(0))),
-                        IAnchorStateRegistry(address(0)),
-                        10
+                        
                     )
                 )
             )
@@ -234,16 +219,6 @@ contract FaultDisputeGame_Test is FaultDisputeGame_Init {
                 abi.encodeCall(
                     IFaultDisputeGame.__constructor__,
                     (
-                        GAME_TYPE,
-                        absolutePrestate,
-                        maxGameDepth,
-                        _splitDepth,
-                        Duration.wrap(3 hours),
-                        Duration.wrap(3.5 days),
-                        alphabetVM,
-                        IDelayedWETH(payable(address(0))),
-                        IAnchorStateRegistry(address(0)),
-                        10
                     )
                 )
             )
@@ -271,18 +246,7 @@ contract FaultDisputeGame_Test is FaultDisputeGame_Init {
             _args: DeployUtils.encodeConstructor(
                 abi.encodeCall(
                     IFaultDisputeGame.__constructor__,
-                    (
-                        GAME_TYPE,
-                        absolutePrestate,
-                        2 ** 3,
-                        _splitDepth,
-                        Duration.wrap(3 hours),
-                        Duration.wrap(3.5 days),
-                        alphabetVM,
-                        IDelayedWETH(payable(address(0))),
-                        IAnchorStateRegistry(address(0)),
-                        10
-                    )
+                    ()
                 )
             )
         });
@@ -317,18 +281,7 @@ contract FaultDisputeGame_Test is FaultDisputeGame_Init {
             _args: DeployUtils.encodeConstructor(
                 abi.encodeCall(
                     IFaultDisputeGame.__constructor__,
-                    (
-                        GAME_TYPE,
-                        absolutePrestate,
-                        16,
-                        8,
-                        Duration.wrap(_clockExtension),
-                        Duration.wrap(_maxClockDuration),
-                        alphabetVM,
-                        IDelayedWETH(payable(address(0))),
-                        IAnchorStateRegistry(address(0)),
-                        10
-                    )
+                    ()
                 )
             )
         });

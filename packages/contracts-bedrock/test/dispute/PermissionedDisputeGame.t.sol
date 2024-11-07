@@ -66,26 +66,13 @@ contract PermissionedDisputeGame_Init is DisputeGameFactory_Init {
                 _args: DeployUtils.encodeConstructor(
                     abi.encodeCall(
                         IPermissionedDisputeGame.__constructor__,
-                        (
-                            GAME_TYPE,
-                            absolutePrestate,
-                            2 ** 3,
-                            2 ** 2,
-                            Duration.wrap(3 hours),
-                            Duration.wrap(3.5 days),
-                            _vm,
-                            _weth,
-                            anchorStateRegistry,
-                            10,
-                            PROPOSER,
-                            CHALLENGER
-                        )
+                        ()
                     )
                 )
             })
         );
         // Register the game implementation with the factory.
-        disputeGameFactory.setImplementation(GAME_TYPE, gameImpl);
+        disputeGameFactory.setImplementation(GAME_TYPE, gameImpl, "");
         // Create a new game.
         vm.prank(PROPOSER, PROPOSER);
         gameProxy =
