@@ -44,7 +44,7 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 			for i := 0; i < 2; i++ {
 				env.Alice.L2.ActResetTxOpts(t)
 				env.Alice.L2.ActSetTxToAddr(&env.Dp.Addresses.Bob)(t)
-				env.Alice.L2.ActSetTxCalldata(bytes.Repeat([]byte{1}, 130_000))(t)
+				env.Alice.L2.ActSetTxCalldata(bytes.Repeat([]byte{0}, 130_000))(t) // use 0 bytes which are cheap as calldata
 				env.Alice.L2.ActMakeTx(t)
 				env.Engine.ActL2IncludeTx(env.Alice.Address())(t)
 			}
