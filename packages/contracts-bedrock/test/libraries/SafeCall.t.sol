@@ -122,6 +122,12 @@ contract SafeCall_Test is Test {
 
         for (uint64 i = 40_000; i < 100_000; i++) {
             uint256 snapshot = vm.snapshot();
+
+            // The values below are best gotten by setting the value to a high number and running the test with a
+            // verbosity of `-vvv` then setting the value to the value (gas arg) of the failed assertion.
+            // A faster way to do this for forge coverage cases, is to comment out the optimizer and optimizer runs in
+            // the foundry.toml file and then run forge test. This is faster because forge test only compiles modified
+            // contracts unlike forge coverage.
             uint256 expected;
 
             // Because forge coverage always runs with the optimizer disabled,
@@ -156,6 +162,12 @@ contract SafeCall_Test is Test {
 
         for (uint64 i = 15_200_000; i < 15_300_000; i++) {
             uint256 snapshot = vm.snapshot();
+
+            // The values below are best gotten by setting the value to a high number and running the test with a
+            // verbosity of `-vvv` then setting the value to the value (gas arg) of the failed assertion.
+            // A faster way to do this for forge coverage cases, is to comment out the optimizer and optimizer runs in
+            // the foundry.toml file and then run forge test. This is faster because forge test only compiles modified
+            // contracts unlike forge coverage.
             uint256 expected;
 
             // Because forge coverage always runs with the optimizer disabled,
