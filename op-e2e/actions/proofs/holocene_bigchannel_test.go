@@ -11,20 +11,34 @@ import (
 	"github.com/ethereum-optimism/optimism/op-e2e/actions/proofs/helpers"
 	"github.com/ethereum-optimism/optimism/op-node/rollup/derive"
 	"github.com/ethereum-optimism/optimism/op-program/client/claim"
+	"github.com/ethereum-optimism/optimism/op-service/testlog"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_ProgramAction_BigChannel(gt *testing.T) {
 
+	type logExpectation struct {
+		role         string
+		filterString string
+		num          int
+	}
+
 	type testCase struct {
-		name               string
-		disableCompression bool
+		name                    string
+		disableCompression      bool
+		expectedLogsPreHolocene []logExpectation
+		expectedLogsHolocene    []logExpectation
 	}
 
 	var testCases = []testCase{
-		{name: "case-0"},
-		{name: "case-1", disableCompression: true}}
+		{
+			name: "case-0"},
+		// {name: "case-1",
+		// 	disableCompression:   true,
+		// 	expectedLogsHolocene: []logExpectation{{"sequencer", "dropping oversized channel", 1}},
+		// }, // This is impossible to trigger.
+	}
 
 	runHoloceneDerivationTest := func(gt *testing.T, testCfg *helpers.TestCfg[testCase]) {
 		t := actionsHelpers.NewDefaultTesting(gt)
@@ -46,7 +60,7 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 			for i := 0; i < 2; i++ {
 				env.Alice.L2.ActResetTxOpts(t)
 				env.Alice.L2.ActSetTxToAddr(&env.Dp.Addresses.Bob)(t)
-				env.Alice.L2.ActSetTxCalldata(bytes.Repeat([]byte{0}, 1_000_000))(t) // use 0 bytes which are cheap as calldata
+				env.Alice.L2.ActSetTxCalldata(bytes.Repeat([]byte{0}, 130_000))(t) // use 0 bytes which are cheap as calldata
 				env.Alice.L2.ActMakeTx(t)
 				env.Engine.ActL2IncludeTx(env.Alice.Address())(t)
 			}
@@ -72,7 +86,7 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 			// Collect the output frames and submit them.
 			data := new(bytes.Buffer)
 			data.WriteByte(derive.DerivationVersion0)
-			_, err := hugeChannelOut.OutputFrame(data, 1_00_000) // close to max blob size
+			_, err := hugeChannelOut.OutputFrame(data, 130_000) // close to max blob size
 			// The channel must be > 100MB compressed to be impossible to get on chain
 
 			if err == io.EOF {
@@ -119,9 +133,26 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 			holoceneExpectations.safeHeadPreHolocene = env.Sequencer.L2Unsafe().Number - 1
 		}
 
-		holoceneExpectations.RequireExpectedProgress(t, l2SafeHead, testCfg.Hardfork.Precedence < helpers.Holocene.Precedence, env.Engine)
+		isHolocene := testCfg.Hardfork.Precedence >= helpers.Holocene.Precedence
+		holoceneExpectations.RequireExpectedProgress(t, l2SafeHead, !isHolocene, env.Engine)
 
 		t.Log("Safe head progressed as expected", "l2SafeHeadNumber", l2SafeHead.Number)
+
+		requireLogs := func(role string, filterString string, expNumLogs int) {
+			t.Helper()
+			recs := env.Logs.FindLogs(testlog.NewMessageContainsFilter(filterString), testlog.NewAttributesFilter("role", role))
+			require.Len(t, recs, expNumLogs)
+		}
+
+		if isHolocene {
+			for _, eL := range testCfg.Custom.expectedLogsHolocene {
+				requireLogs(eL.role, eL.filterString, eL.num)
+			}
+		} else {
+			for _, eL := range testCfg.Custom.expectedLogsPreHolocene {
+				requireLogs(eL.role, eL.filterString, eL.num)
+			}
+		}
 
 		if safeHeadNumber := l2SafeHead.Number; safeHeadNumber > 0 {
 			env.RunFaultProofProgram(t, safeHeadNumber, testCfg.CheckResult, testCfg.InputParams...)
