@@ -176,7 +176,7 @@ contract SafeCall_Test is Test {
             if (vm.isContext(VmSafe.ForgeContext.Coverage)) {
                 // 15_278_645 is the exact amount of gas required to make the safe call
                 // successfully with the optimizer disabled (ran via forge coverage)
-                expected = 15_278_645;
+                expected = 15_278_989;
             } else if (vm.isContext(VmSafe.ForgeContext.Test) || vm.isContext(VmSafe.ForgeContext.Snapshot)) {
                 // 15_278_621 is the exact amount of gas required to make the safe call
                 // successfully with the foundry.toml optimizer settings.
