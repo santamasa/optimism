@@ -96,7 +96,7 @@ COPY ./versions.json ./versions.json
 
 RUN /bin/sh -c set -eux; \
   apt-get update; \
-  apt-get install -y --no-install-recommends bash curl openssh-client git build-essential ca-certificates jq gnupg binutils-mips-linux-gnu python3 python3-pip python3-setuptools; \
+  apt-get install -y --no-install-recommends bash curl openssh-client git build-essential ca-certificates jq gnupg binutils-mips-linux-gnu python3 python3-pip python3-setuptools mercurial make binutils bison gcc bsdmainutils; \
   mkdir -p /etc/apt/keyrings; \
   curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg; \
   chmod a+r /etc/apt/keyrings/docker.gpg; \
@@ -107,7 +107,11 @@ RUN /bin/sh -c set -eux; \
   pip install capstone pyelftools; \
   pip install semgrep==$(jq -r .semgrep < versions.json); \
   curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh | bash; \
-  apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash; \
+  bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer); \
+  nvm install 18.12.1;
+
+RUN  apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
   rm -rf /var/lib/apt/lists/*; \
   rm -rf /root/.cache/pip;
 
