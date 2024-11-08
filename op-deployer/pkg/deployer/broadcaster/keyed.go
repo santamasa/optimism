@@ -91,7 +91,7 @@ func NewKeyedBroadcaster(cfg KeyedBroadcasterOpts) (*KeyedBroadcaster, error) {
 
 func (t *KeyedBroadcaster) Hook(bcast script.Broadcast) {
 	if bcast.From != t.mgr.From() {
-		panic("invalid from for broadcast")
+		panic(fmt.Sprintf("invalid from for broadcast:%v, expected:%v", bcast.From, t.mgr.From()))
 	}
 	t.mtx.Lock()
 	t.bcasts = append(t.bcasts, bcast)
