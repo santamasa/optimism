@@ -6,6 +6,7 @@ import (
 	"io"
 	"testing"
 
+	"github.com/ethereum-optimism/optimism/op-batcher/flags"
 	actionsHelpers "github.com/ethereum-optimism/optimism/op-e2e/actions/helpers"
 	"github.com/ethereum-optimism/optimism/op-e2e/actions/proofs/helpers"
 	"github.com/ethereum-optimism/optimism/op-node/rollup/derive"
@@ -28,6 +29,7 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 	runHoloceneDerivationTest := func(gt *testing.T, testCfg *helpers.TestCfg[testCase]) {
 		t := actionsHelpers.NewDefaultTesting(gt)
 		batcherConfig := helpers.NewBatcherCfg()
+		batcherConfig.DataAvailabilityType = flags.CalldataType
 		batcherConfig.GarbageCfg = &actionsHelpers.GarbageChannelCfg{
 			IgnoreMaxRLPBytesPerChannel: true,
 			DisableCompression:          testCfg.Custom.disableCompression,
@@ -44,7 +46,7 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 			for i := 0; i < 2; i++ {
 				env.Alice.L2.ActResetTxOpts(t)
 				env.Alice.L2.ActSetTxToAddr(&env.Dp.Addresses.Bob)(t)
-				env.Alice.L2.ActSetTxCalldata(bytes.Repeat([]byte{0}, 130_000))(t) // use 0 bytes which are cheap as calldata
+				env.Alice.L2.ActSetTxCalldata(bytes.Repeat([]byte{0}, 1_000_000))(t) // use 0 bytes which are cheap as calldata
 				env.Alice.L2.ActMakeTx(t)
 				env.Engine.ActL2IncludeTx(env.Alice.Address())(t)
 			}
@@ -70,7 +72,7 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 			// Collect the output frames and submit them.
 			data := new(bytes.Buffer)
 			data.WriteByte(derive.DerivationVersion0)
-			_, err := hugeChannelOut.OutputFrame(data, 130_000) // close to max blob size
+			_, err := hugeChannelOut.OutputFrame(data, 1_00_000) // close to max blob size
 			// The channel must be > 100MB compressed to be impossible to get on chain
 
 			if err == io.EOF {
@@ -90,6 +92,7 @@ func Test_ProgramAction_BigChannel(gt *testing.T) {
 		// Only with the longer term limit of 16 blobs per block could we get up to 2MB per block.
 		// Or we can use calldata, which could mean up to 7.5MB per block if the data
 		// is all zeros. It may also be easier to modify the limits for calldata in the test environment.
+		// However, geth has DoS limits on transactions -- only 130KB per transaction. So we can't use calldata.
 		for _, frame := range frames {
 			env.Miner.ActL1StartBlock(12)(t)
 			for i := 0; i < 16; i++ {
