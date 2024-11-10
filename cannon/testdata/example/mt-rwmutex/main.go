@@ -1,7 +1,8 @@
-// Copyright 2009 The Go Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
+// Portions of this code are derived from code written by The Go Authors.
+// See original source: https://github.com/golang/go/blob/master/src/sync/rwmutex_test.go
+//
+// --- Original License Notice ---
+//
 // Copyright 2009 The Go Authors.
 //
 // Redistribution and use in source and binary forms, with or without
