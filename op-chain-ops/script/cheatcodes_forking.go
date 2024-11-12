@@ -3,6 +3,7 @@ package script
 import (
 	"errors"
 	"fmt"
+	"math/big"
 
 	"github.com/holiman/uint256"
 
@@ -11,21 +12,21 @@ import (
 	"github.com/ethereum-optimism/optimism/op-chain-ops/script/forking"
 )
 
-func (c *CheatCodesPrecompile) CreateFork_31ba3498(urlOrAlias string) (*uint256.Int, error) {
+func (c *CheatCodesPrecompile) CreateFork_31ba3498(urlOrAlias string) (*big.Int, error) {
 	return c.createFork(ForkWithURLOrAlias(urlOrAlias))
 }
 
-func (c *CheatCodesPrecompile) CreateFork_6ba3ba2b(urlOrAlias string, block *uint256.Int) (*uint256.Int, error) {
+func (c *CheatCodesPrecompile) CreateFork_6ba3ba2b(urlOrAlias string, block *big.Int) (*big.Int, error) {
 	return c.createFork(ForkWithURLOrAlias(urlOrAlias), ForkWithBlockNumberU256(block))
 }
 
-func (c *CheatCodesPrecompile) CreateFork_7ca29682(urlOrAlias string, txHash common.Hash) (*uint256.Int, error) {
+func (c *CheatCodesPrecompile) CreateFork_7ca29682(urlOrAlias string, txHash common.Hash) (*big.Int, error) {
 	return c.createFork(ForkWithURLOrAlias(urlOrAlias), ForkWithTransaction(txHash))
 }
 
 // createFork implements vm.createFork:
 // https://book.getfoundry.sh/cheatcodes/create-fork
-func (c *CheatCodesPrecompile) createFork(opts ...ForkOption) (*uint256.Int, error) {
+func (c *CheatCodesPrecompile) createFork(opts ...ForkOption) (*big.Int, error) {
 	src, err := c.h.onFork(opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup fork source: %w", err)
@@ -34,24 +35,24 @@ func (c *CheatCodesPrecompile) createFork(opts ...ForkOption) (*uint256.Int, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to create fork: %w", err)
 	}
-	return id.U256(), nil
+	return id.U256().ToBig(), nil
 }
 
-func (c *CheatCodesPrecompile) CreateSelectFork_98680034(urlOrAlias string) (*uint256.Int, error) {
+func (c *CheatCodesPrecompile) CreateSelectFork_98680034(urlOrAlias string) (*big.Int, error) {
 	return c.createSelectFork(ForkWithURLOrAlias(urlOrAlias))
 }
 
-func (c *CheatCodesPrecompile) CreateSelectFork_71ee464d(urlOrAlias string, block *uint256.Int) (*uint256.Int, error) {
+func (c *CheatCodesPrecompile) CreateSelectFork_71ee464d(urlOrAlias string, block *big.Int) (*big.Int, error) {
 	return c.createSelectFork(ForkWithURLOrAlias(urlOrAlias), ForkWithBlockNumberU256(block))
 }
 
-func (c *CheatCodesPrecompile) CreateSelectFork_84d52b7a(urlOrAlias string, txHash common.Hash) (*uint256.Int, error) {
+func (c *CheatCodesPrecompile) CreateSelectFork_84d52b7a(urlOrAlias string, txHash common.Hash) (*big.Int, error) {
 	return c.createSelectFork(ForkWithURLOrAlias(urlOrAlias), ForkWithTransaction(txHash))
 }
 
 // createSelectFork implements vm.createSelectFork:
 // https://book.getfoundry.sh/cheatcodes/create-select-fork
-func (c *CheatCodesPrecompile) createSelectFork(opts ...ForkOption) (*uint256.Int, error) {
+func (c *CheatCodesPrecompile) createSelectFork(opts ...ForkOption) (*big.Int, error) {
 	src, err := c.h.onFork(opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup fork source: %w", err)
@@ -60,7 +61,7 @@ func (c *CheatCodesPrecompile) createSelectFork(opts ...ForkOption) (*uint256.In
 	if err != nil {
 		return nil, fmt.Errorf("failed to create-select fork: %w", err)
 	}
-	return id.U256(), nil
+	return id.U256().ToBig(), nil
 }
 
 // ActiveFork implements vm.activeFork:
@@ -84,7 +85,7 @@ func (c *CheatCodesPrecompile) forkURLOption(id forking.ForkID) ForkOption {
 	}
 }
 
-func (c *CheatCodesPrecompile) RollFork_d9bbf3a1(block *uint256.Int) error {
+func (c *CheatCodesPrecompile) RollFork_d9bbf3a1(block *big.Int) error {
 	id, ok := c.h.state.ActiveFork()
 	if !ok {
 		return errors.New("no active fork")
@@ -100,8 +101,8 @@ func (c *CheatCodesPrecompile) RollFork_0f29772b(txHash common.Hash) error {
 	return c.rollFork(id, c.forkURLOption(id), ForkWithTransaction(txHash))
 }
 
-func (c *CheatCodesPrecompile) RollFork_d74c83a4(forkID *uint256.Int, block *uint256.Int) error {
-	id := forking.ForkID(*forkID)
+func (c *CheatCodesPrecompile) RollFork_d74c83a4(forkID *big.Int, block *big.Int) error {
+	id := forking.ForkIDFromBig(forkID)
 	return c.rollFork(id, c.forkURLOption(id), ForkWithBlockNumberU256(block))
 }
 

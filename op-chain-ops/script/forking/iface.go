@@ -1,6 +1,8 @@
 package forking
 
 import (
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/holiman/uint256"
 
@@ -17,6 +19,10 @@ type VMStateDB interface {
 
 // ForkID is an identifier of a fork
 type ForkID uint256.Int
+
+func ForkIDFromBig(b *big.Int) ForkID {
+	return ForkID(*uint256.MustFromBig(b))
+}
 
 // U256 returns a uint256 copy of the fork ID, for usage inside the EVM.
 func (id *ForkID) U256() *uint256.Int {

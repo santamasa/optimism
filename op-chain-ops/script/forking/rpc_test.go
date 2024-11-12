@@ -31,11 +31,11 @@ func TestRPCSourceInitialization(t *testing.T) {
 	expectedBlockHash := common.HexToHash("0x5678")
 
 	t.Run("initialization by block number", func(t *testing.T) {
-		mockClient.On("CallContext", mock.Anything, mock.AnythingOfType("**forking.header"),
+		mockClient.On("CallContext", mock.Anything, mock.AnythingOfType("**forking.Header"),
 			"eth_getBlockByNumber", []any{hexutil.Uint64(123), false}).
 			Run(func(args mock.Arguments) {
-				result := args.Get(1).(**header)
-				*result = &header{
+				result := args.Get(1).(**Header)
+				*result = &Header{
 					StateRoot: expectedStateRoot,
 					BlockHash: expectedBlockHash,
 				}
@@ -50,11 +50,11 @@ func TestRPCSourceInitialization(t *testing.T) {
 
 	t.Run("initialization by block hash", func(t *testing.T) {
 		blockHash := common.HexToHash("0xabcd")
-		mockClient.On("CallContext", mock.Anything, mock.AnythingOfType("**forking.header"),
+		mockClient.On("CallContext", mock.Anything, mock.AnythingOfType("**forking.Header"),
 			"eth_getBlockByNumber", []any{blockHash, false}).
 			Run(func(args mock.Arguments) {
-				result := args.Get(1).(**header)
-				*result = &header{
+				result := args.Get(1).(**Header)
+				*result = &Header{
 					StateRoot: expectedStateRoot,
 					BlockHash: expectedBlockHash,
 				}
@@ -68,7 +68,7 @@ func TestRPCSourceInitialization(t *testing.T) {
 	})
 
 	t.Run("initialization failure", func(t *testing.T) {
-		mockClient.On("CallContext", mock.Anything, mock.AnythingOfType("**forking.header"),
+		mockClient.On("CallContext", mock.Anything, mock.AnythingOfType("**forking.Header"),
 			"eth_getBlockByNumber", []any{hexutil.Uint64(999), false}).
 			Return(ethereum.NotFound).Times(2)
 
