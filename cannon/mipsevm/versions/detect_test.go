@@ -7,10 +7,11 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/ethereum-optimism/optimism/cannon/mipsevm/multithreaded"
 	"github.com/ethereum-optimism/optimism/cannon/mipsevm/singlethreaded"
 	"github.com/ethereum-optimism/optimism/op-service/ioutil"
-	"github.com/stretchr/testify/require"
 )
 
 const statesPath = "testdata/states"
@@ -34,9 +35,6 @@ func TestDetectVersion(t *testing.T) {
 	// Iterate all known versions to ensure we have a test case to detect every state version
 	for _, version := range StateVersionTypes {
 		version := version
-		if version == VersionMultiThreaded64 {
-			t.Skip("TODO(#12205)")
-		}
 		t.Run(version.String(), func(t *testing.T) {
 			testDetection(t, version, ".bin.gz")
 		})
