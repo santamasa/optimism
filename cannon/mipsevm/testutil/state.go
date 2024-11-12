@@ -119,7 +119,7 @@ func WithRandomization(seed int64) StateOption {
 func AlignPC(pc arch.Word) arch.Word {
 	// Memory-align random pc and leave room for nextPC
 	pc = pc & arch.AddressMask // Align address
-	if pc >= arch.AddressMask && arch.IsMips32 {
+	if pc >= arch.AddressMask {
 		// Leave room to set and then increment nextPC
 		pc = arch.AddressMask - 8
 	}
@@ -175,11 +175,6 @@ func (e *ExpectedState) ExpectStep() {
 	e.Step += 1
 	e.PC += 4
 	e.NextPC += 4
-}
-
-func (e *ExpectedState) ExpectMemoryWrite(addr arch.Word, val uint32) {
-	e.expectedMemory.SetUint32(addr, val)
-	e.MemoryRoot = e.expectedMemory.MerkleRoot()
 }
 
 func (e *ExpectedState) ExpectMemoryWriteWord(addr arch.Word, val arch.Word) {

@@ -21,7 +21,6 @@ import { Types } from "src/libraries/Types.sol";
 import { ISequencerFeeVault } from "src/L2/interfaces/ISequencerFeeVault.sol";
 import { IBaseFeeVault } from "src/L2/interfaces/IBaseFeeVault.sol";
 import { IL1FeeVault } from "src/L2/interfaces/IL1FeeVault.sol";
-import { IOptimismSuperchainERC20Beacon } from "src/L2/interfaces/IOptimismSuperchainERC20Beacon.sol";
 import { IOptimismMintableERC721Factory } from "src/universal/interfaces/IOptimismMintableERC721Factory.sol";
 import { IGovernanceToken } from "src/governance/interfaces/IGovernanceToken.sol";
 import { IOptimismMintableERC20Factory } from "src/universal/interfaces/IOptimismMintableERC20Factory.sol";
@@ -32,10 +31,6 @@ import { ICrossDomainMessenger } from "src/universal/interfaces/ICrossDomainMess
 import { IL2CrossDomainMessenger } from "src/L2/interfaces/IL2CrossDomainMessenger.sol";
 import { IGasPriceOracle } from "src/L2/interfaces/IGasPriceOracle.sol";
 import { IL1Block } from "src/L2/interfaces/IL1Block.sol";
-
-interface IInitializable {
-    function initialize(address _addr) external;
-}
 
 struct L1Dependencies {
     address payable l1CrossDomainMessengerProxy;
@@ -183,6 +178,10 @@ contract L2Genesis is Deployer {
         if (writeForkGenesisAllocs(_fork, Fork.GRANITE, _mode)) {
             return;
         }
+
+        if (writeForkGenesisAllocs(_fork, Fork.HOLOCENE, _mode)) {
+            return;
+        }
     }
 
     function writeForkGenesisAllocs(Fork _latest, Fork _current, OutputMode _mode) internal returns (bool isLatest_) {
@@ -277,6 +276,7 @@ contract L2Genesis is Deployer {
             setETHLiquidity(); // 25
             setOptimismSuperchainERC20Factory(); // 26
             setOptimismSuperchainERC20Beacon(); // 27
+            setSuperchainTokenBridge(); // 28
         }
     }
 
@@ -576,29 +576,20 @@ contract L2Genesis is Deployer {
         _setImplementationCode(Predeploys.OPTIMISM_SUPERCHAIN_ERC20_FACTORY);
     }
 
-    /// @notice This predeploy is following the safety invariant #2.
+    /// @notice This predeploy is following the safety invariant #1.
+    ///         This contract has no initializer.
     function setOptimismSuperchainERC20Beacon() internal {
         address superchainERC20Impl = Predeploys.OPTIMISM_SUPERCHAIN_ERC20;
         console.log("Setting %s implementation at: %s", "OptimismSuperchainERC20", superchainERC20Impl);
         vm.etch(superchainERC20Impl, vm.getDeployedCode("OptimismSuperchainERC20.sol:OptimismSuperchainERC20"));
 
-        IOptimismSuperchainERC20Beacon beacon = IOptimismSuperchainERC20Beacon(
-            DeployUtils.create1(
-                "OptimismSuperchainERC20Beacon",
-                DeployUtils.encodeConstructor(
-                    abi.encodeCall(IOptimismSuperchainERC20Beacon.__constructor__, (superchainERC20Impl))
-                )
-            )
-        );
+        _setImplementationCode(Predeploys.OPTIMISM_SUPERCHAIN_ERC20_BEACON);
+    }
 
-        address beaconImpl = Predeploys.predeployToCodeNamespace(Predeploys.OPTIMISM_SUPERCHAIN_ERC20_BEACON);
-
-        console.log("Setting %s implementation at: %s", "OptimismSuperchainERC20Beacon", beaconImpl);
-        vm.etch(beaconImpl, address(beacon).code);
-
-        /// Reset so its not included state dump
-        vm.etch(address(beacon), "");
-        vm.resetNonce(address(beacon));
+    /// @notice This predeploy is following the safety invariant #1.
+    ///         This contract has no initializer.
+    function setSuperchainTokenBridge() internal {
+        _setImplementationCode(Predeploys.SUPERCHAIN_TOKEN_BRIDGE);
     }
 
     /// @notice Sets all the preinstalls.
@@ -651,11 +642,7 @@ contract L2Genesis is Deployer {
 
     /// @notice Sorts the allocs by address
     function sortJsonByKeys(string memory _path) internal {
-        string[] memory commands = new string[](3);
-        commands[0] = "bash";
-        commands[1] = "-c";
-        commands[2] = string.concat("cat <<< $(jq -S '.' ", _path, ") > ", _path);
-        Process.run(commands);
+        Process.bash(string.concat("cat <<< $(jq -S '.' ", _path, ") > ", _path));
     }
 
     /// @notice Funds the default dev accounts with ether

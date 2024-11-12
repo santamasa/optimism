@@ -12,20 +12,19 @@ import { EIP1967Helper } from "test/mocks/EIP1967Helper.sol";
 import { Deployer } from "scripts/deploy/Deployer.sol";
 import { Chains } from "scripts/libraries/Chains.sol";
 import { Config } from "scripts/libraries/Config.sol";
-import { LibStateDiff } from "scripts/libraries/LibStateDiff.sol";
+import { StateDiff } from "scripts/libraries/StateDiff.sol";
 import { Process } from "scripts/libraries/Process.sol";
 import { ChainAssertions } from "scripts/deploy/ChainAssertions.sol";
 import { DeployUtils } from "scripts/libraries/DeployUtils.sol";
-import { DeploySuperchainInput, DeploySuperchain, DeploySuperchainOutput } from "scripts/DeploySuperchain.s.sol";
+import { DeploySuperchainInput, DeploySuperchain, DeploySuperchainOutput } from "scripts/deploy/DeploySuperchain.s.sol";
 import {
     DeployImplementationsInput,
     DeployImplementations,
     DeployImplementationsInterop,
     DeployImplementationsOutput
-} from "scripts/DeployImplementations.s.sol";
+} from "scripts/deploy/DeployImplementations.s.sol";
 
 // Contracts
-import { AddressManager } from "src/legacy/AddressManager.sol";
 import { StorageSetter } from "src/universal/StorageSetter.sol";
 import { OPContractsManager } from "src/L1/OPContractsManager.sol";
 
@@ -34,7 +33,7 @@ import { Constants } from "src/libraries/Constants.sol";
 import { Types } from "scripts/libraries/Types.sol";
 import { Duration } from "src/dispute/lib/LibUDT.sol";
 import { StorageSlot, ForgeArtifacts } from "scripts/libraries/ForgeArtifacts.sol";
-import "src/dispute/lib/Types.sol";
+import { GameType, Claim, GameTypes, OutputRoot, Hash } from "src/dispute/lib/Types.sol";
 
 // Interfaces
 import { IProxy } from "src/universal/interfaces/IProxy.sol";
@@ -129,7 +128,7 @@ contract Deploy is Deployer {
             accesses.length,
             vm.toString(block.chainid)
         );
-        string memory json = LibStateDiff.encodeAccountAccesses(accesses);
+        string memory json = StateDiff.encodeAccountAccesses(accesses);
         string memory statediffPath =
             string.concat(vm.projectRoot(), "/snapshots/state-diff/", vm.toString(block.chainid), ".json");
         vm.writeJson({ json: json, path: statediffPath });
@@ -444,6 +443,7 @@ contract Deploy is Deployer {
     /// @notice Deploy all of the OP Chain specific contracts
     function deployOpChain() public {
         console.log("Deploying OP Chain");
+
         // Ensure that the requisite contracts are deployed
         address superchainConfigProxy = mustGetAddress("SuperchainConfigProxy");
         OPContractsManager opcm = OPContractsManager(mustGetAddress("OPContractsManagerProxy"));
@@ -509,12 +509,16 @@ contract Deploy is Deployer {
 
     /// @notice Deploy the AddressManager
     function deployAddressManager() public broadcast returns (address addr_) {
-        console.log("Deploying AddressManager");
-        AddressManager manager = new AddressManager();
+        // Use create instead of create2 because we need the owner to be set to msg.sender but
+        // forge will automatically use the create2 factory which messes up the sender.
+        IAddressManager manager = IAddressManager(
+            DeployUtils.create1AndSave({
+                _save: this,
+                _name: "AddressManager",
+                _args: DeployUtils.encodeConstructor(abi.encodeCall(IAddressManager.__constructor__, ()))
+            })
+        );
         require(manager.owner() == msg.sender);
-
-        save("AddressManager", address(manager));
-        console.log("AddressManager deployed at %s", address(manager));
         addr_ = address(manager);
     }
 
@@ -991,17 +995,13 @@ contract Deploy is Deployer {
     function _loadDevnetStMipsAbsolutePrestate() internal returns (Claim mipsAbsolutePrestate_) {
         // Fetch the absolute prestate dump
         string memory filePath = string.concat(vm.projectRoot(), "/../../op-program/bin/prestate-proof.json");
-        string[] memory commands = new string[](3);
-        commands[0] = "bash";
-        commands[1] = "-c";
-        commands[2] = string.concat("[[ -f ", filePath, " ]] && echo \"present\"");
-        if (Process.run(commands).length == 0) {
+        if (bytes(Process.bash(string.concat("[[ -f ", filePath, " ]] && echo \"present\""))).length == 0) {
             revert(
                 "Deploy: cannon prestate dump not found, generate it with `make cannon-prestate` in the monorepo root"
             );
         }
-        commands[2] = string.concat("cat ", filePath, " | jq -r .pre");
-        mipsAbsolutePrestate_ = Claim.wrap(abi.decode(Process.run(commands), (bytes32)));
+        mipsAbsolutePrestate_ =
+            Claim.wrap(abi.decode(bytes(Process.bash(string.concat("cat ", filePath, " | jq -r .pre"))), (bytes32)));
         console.log(
             "[Cannon Dispute Game] Using devnet MIPS Absolute prestate: %s",
             vm.toString(Claim.unwrap(mipsAbsolutePrestate_))
@@ -1013,17 +1013,13 @@ contract Deploy is Deployer {
     function _loadDevnetMtMipsAbsolutePrestate() internal returns (Claim mipsAbsolutePrestate_) {
         // Fetch the absolute prestate dump
         string memory filePath = string.concat(vm.projectRoot(), "/../../op-program/bin/prestate-proof-mt.json");
-        string[] memory commands = new string[](3);
-        commands[0] = "bash";
-        commands[1] = "-c";
-        commands[2] = string.concat("[[ -f ", filePath, " ]] && echo \"present\"");
-        if (Process.run(commands).length == 0) {
+        if (bytes(Process.bash(string.concat("[[ -f ", filePath, " ]] && echo \"present\""))).length == 0) {
             revert(
                 "Deploy: MT-Cannon prestate dump not found, generate it with `make cannon-prestate-mt` in the monorepo root"
             );
         }
-        commands[2] = string.concat("cat ", filePath, " | jq -r .pre");
-        mipsAbsolutePrestate_ = Claim.wrap(abi.decode(Process.run(commands), (bytes32)));
+        mipsAbsolutePrestate_ =
+            Claim.wrap(abi.decode(bytes(Process.bash(string.concat("cat ", filePath, " | jq -r .pre"))), (bytes32)));
         console.log(
             "[MT-Cannon Dispute Game] Using devnet MIPS2 Absolute prestate: %s",
             vm.toString(Claim.unwrap(mipsAbsolutePrestate_))
