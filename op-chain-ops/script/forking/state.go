@@ -175,6 +175,10 @@ func (fst *ForkableState) ForkURLOrAlias(id ForkID) (string, error) {
 // SubstituteBaseState substitutes in a fallback state.
 func (fst *ForkableState) SubstituteBaseState(base VMStateDB) {
 	fst.fallback = base
+	// If the fallback is currently selected, also updated the fallback.
+	if fst.activeFork == (ForkID{}) {
+		fst.selected = base
+	}
 }
 
 // MakePersistent is like vm.makePersistent, it maintains this account context across all forks.
@@ -203,10 +207,7 @@ func (fst *ForkableState) stateFor(addr common.Address) VMStateDB {
 		}
 		return fst.forks[persistedForkID].state
 	}
-	// if not forked, then use the fallback state
-	if fst.activeFork == (ForkID{}) {
-		return fst.fallback
-	}
+	// This may be the fallback state, if no fork is active.
 	return fst.selected
 }
 
