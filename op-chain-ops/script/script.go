@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ethereum-optimism/optimism/op-chain-ops/script/addresses"
+
 	"github.com/holiman/uint256"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -316,8 +318,8 @@ func (h *Host) EnableCheats() error {
 	// Solidity does EXTCODESIZE checks on functions without return-data.
 	// We need to insert some placeholder code to prevent it from aborting calls.
 	// Emulates Forge script: https://github.com/foundry-rs/foundry/blob/224fe9cbf76084c176dabf7d3b2edab5df1ab818/crates/evm/evm/src/executors/mod.rs#L108
-	h.state.SetCode(VMAddr, []byte{0x00})
-	h.precompiles[VMAddr] = h.cheatcodes
+	h.state.SetCode(addresses.VMAddr, []byte{0x00})
+	h.precompiles[addresses.VMAddr] = h.cheatcodes
 
 	consolePrecompile, err := NewPrecompile[*ConsolePrecompile](&ConsolePrecompile{
 		logger: h.log,
@@ -327,7 +329,7 @@ func (h *Host) EnableCheats() error {
 		return fmt.Errorf("failed to init console precompile: %w", err)
 	}
 	h.console = consolePrecompile
-	h.precompiles[ConsoleAddr] = h.console
+	h.precompiles[addresses.ConsoleAddr] = h.console
 	// The Console precompile does not need bytecode,
 	// calls all go through a console lib, which avoids the EXTCODESIZE.
 	return nil
@@ -490,7 +492,7 @@ func (h *Host) onEnter(depth int, typ byte, from common.Address, to common.Addre
 	if !parentCallFrame.Prank.Broadcast {
 		return
 	}
-	if to == VMAddr || to == ConsoleAddr { // no broadcasts to the cheatcode or console address
+	if to == addresses.VMAddr || to == addresses.ConsoleAddr { // no broadcasts to the cheatcode or console address
 		return
 	}
 
@@ -712,8 +714,8 @@ func (h *Host) StateDump() (*foundry.ForgeAllocs, error) {
 	allocs.FromState(st) // use the old committed-to state (see FromState docs)
 
 	// Sanity check we have no lingering scripts.
-	for i := uint64(0); i <= allocs.Accounts[ScriptDeployer].Nonce; i++ {
-		scriptAddr := crypto.CreateAddress(ScriptDeployer, i)
+	for i := uint64(0); i <= allocs.Accounts[addresses.ScriptDeployer].Nonce; i++ {
+		scriptAddr := crypto.CreateAddress(addresses.ScriptDeployer, i)
 		h.log.Info("removing script from state-dump", "addr", scriptAddr, "label", h.labels[scriptAddr])
 		delete(allocs.Accounts, scriptAddr)
 	}
@@ -735,12 +737,12 @@ func (h *Host) StateDump() (*foundry.ForgeAllocs, error) {
 	}
 
 	// Remove the script deployer from the output
-	delete(allocs.Accounts, ScriptDeployer)
-	delete(allocs.Accounts, ForgeDeployer)
+	delete(allocs.Accounts, addresses.ScriptDeployer)
+	delete(allocs.Accounts, addresses.ForgeDeployer)
 
 	// The cheatcodes VM has a placeholder bytecode,
 	// because solidity checks if the code exists prior to regular EVM-calls to it.
-	delete(allocs.Accounts, VMAddr)
+	delete(allocs.Accounts, addresses.VMAddr)
 
 	// Precompile overrides come with temporary state account placeholders. Ignore those.
 	for addr := range h.precompiles {
@@ -817,7 +819,7 @@ func (h *Host) Label(addr common.Address, label string) {
 
 // NewScriptAddress creates a new address for the ScriptDeployer account, and bumps the nonce.
 func (h *Host) NewScriptAddress() common.Address {
-	deployer := ScriptDeployer
+	deployer := addresses.ScriptDeployer
 	deployNonce := h.state.GetNonce(deployer)
 	// compute address of script contract to be deployed
 	addr := crypto.CreateAddress(deployer, deployNonce)

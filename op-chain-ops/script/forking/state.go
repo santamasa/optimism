@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ethereum-optimism/optimism/op-chain-ops/script/addresses"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/stateless"
@@ -49,9 +50,15 @@ func NewForkableState(base VMStateDB) *ForkableState {
 		selected:   base,
 		activeFork: ForkID{},
 		forks:      make(map[ForkID]*forkStateEntry),
-		persistent: make(map[common.Address]ForkID),
-		fallback:   base,
-		idCounter:  0,
+		persistent: map[common.Address]ForkID{
+			addresses.DefaultSenderAddr: ForkID{},
+			addresses.VMAddr:            ForkID{},
+			addresses.ConsoleAddr:       ForkID{},
+			addresses.ScriptDeployer:    ForkID{},
+			addresses.ForgeDeployer:     ForkID{},
+		},
+		fallback:  base,
+		idCounter: 0,
 	}
 }
 

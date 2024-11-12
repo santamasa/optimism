@@ -2,11 +2,10 @@ package script
 
 import (
 	"fmt"
-
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/holiman/uint256"
+	"math/big"
 
 	"github.com/ethereum-optimism/optimism/op-chain-ops/script/forking"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // ForkOption modifies a ForkConfig, and can be used by Host internals,
@@ -31,7 +30,7 @@ func ForkWithURLOrAlias(urlOrAlias string) ForkOption {
 	}
 }
 
-func ForkWithBlockNumberU256(num *uint256.Int) ForkOption {
+func ForkWithBlockNumberU256(num *big.Int) ForkOption {
 	return func(cfg *ForkConfig) error {
 		if !num.IsUint64() {
 			return fmt.Errorf("block number %s is too large", num.String())

@@ -60,14 +60,14 @@ func newRPCSource(urlOrAlias string, cl RPCClient) *RPCSource {
 	}
 }
 
-type header struct {
+type Header struct {
 	StateRoot common.Hash `json:"stateRoot"`
 	BlockHash common.Hash `json:"hash"`
 }
 
 func (r *RPCSource) init(id any) error {
-	head, err := retry.Do[*header](r.ctx, r.maxAttempts, r.strategy, func() (*header, error) {
-		var result *header
+	head, err := retry.Do[*Header](r.ctx, r.maxAttempts, r.strategy, func() (*Header, error) {
+		var result *Header
 		err := r.client.CallContext(r.ctx, &result, "eth_getBlockByNumber", id, false)
 		if err == nil && result == nil {
 			err = ethereum.NotFound

@@ -3,6 +3,8 @@ package script
 import (
 	"fmt"
 
+	"github.com/ethereum-optimism/optimism/op-chain-ops/script/addresses"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -26,7 +28,7 @@ func WithScript[B any](h *Host, name string, contract string) (b *B, cleanup fun
 		return nil, nil, fmt.Errorf("could not load script artifact: %w", err)
 	}
 
-	deployer := ScriptDeployer
+	deployer := addresses.ScriptDeployer
 	deployNonce := h.state.GetNonce(deployer)
 	// compute address of script contract to be deployed
 	addr := crypto.CreateAddress(deployer, deployNonce)
