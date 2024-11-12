@@ -84,6 +84,7 @@ func TestForking(t *testing.T) {
 
 	name, err := forkState.ForkURLOrAlias(ForkID{})
 	require.ErrorContains(t, err, "default")
+	require.Equal(t, "", name)
 
 	alice := common.Address(bytes.Repeat([]byte{0xaa}, 20))
 	bob := common.Address(bytes.Repeat([]byte{0xbb}, 20))

@@ -26,7 +26,7 @@ type ForkDB struct {
 // So the state-DB creates one initially, and then holds on to it.
 // The diff will be overlayed on the reader still. To get rid of the diff, it has to be explicitly cleared.
 // Warning: diffs applied to the original state that the reader wraps will be visible.
-// Geth StateDB is meant to be reinitialized after commiting state.
+// Geth StateDB is meant to be reinitialized after committing state.
 func (f *ForkDB) Reader(root common.Hash) (state.Reader, error) {
 	if root != f.active.stateRoot {
 		return nil, fmt.Errorf("current state is at %s, cannot open state at %s", f.active.stateRoot, root)
