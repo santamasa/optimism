@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/ethereum-optimism/optimism/op-node/rollup"
 	"github.com/ethereum-optimism/optimism/op-service/eth"
@@ -12,7 +13,8 @@ type PayloadProcessEvent struct {
 	// if payload should be promoted to (local) safe (must also be pending safe, see DerivedFrom)
 	Concluding bool
 	// payload is promoted to pending-safe if non-zero
-	DerivedFrom eth.L1BlockRef
+	DerivedFrom  eth.L1BlockRef
+	BuildStarted time.Time
 
 	Envelope *eth.ExecutionPayloadEnvelope
 	Ref      eth.L2BlockRef

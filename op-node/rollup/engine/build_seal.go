@@ -113,13 +113,17 @@ func (eq *EngDeriver) onBuildSeal(ev BuildSealEvent) {
 	eq.metrics.CountSequencedTxs(txnCount)
 
 	eq.log.Debug("Processed new L2 block", "l2_unsafe", ref, "l1_origin", ref.L1Origin,
-		"txs", txnCount, "time", ref.Time, "seal_time", sealTime, "build_time", buildTime)
+		"txs", txnCount, "time", ref.Time, "seal_time", sealTime, "build_time", buildTime,
+		"mgas", float64(envelope.ExecutionPayload.GasUsed)/1000000,
+		"mgasps", float64(envelope.ExecutionPayload.GasUsed)*1000/float64(buildTime),
+	)
 
 	eq.emitter.Emit(BuildSealedEvent{
-		Concluding:  ev.Concluding,
-		DerivedFrom: ev.DerivedFrom,
-		Info:        ev.Info,
-		Envelope:    envelope,
-		Ref:         ref,
+		Concluding:   ev.Concluding,
+		DerivedFrom:  ev.DerivedFrom,
+		BuildStarted: ev.BuildStarted,
+		Info:         ev.Info,
+		Envelope:     envelope,
+		Ref:          ref,
 	})
 }
