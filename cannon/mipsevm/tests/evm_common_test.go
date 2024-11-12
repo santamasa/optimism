@@ -248,6 +248,44 @@ func TestEVM_SingleStep_LoadStore32(t *testing.T) {
 	testLoadStore(t, cases)
 }
 
+func TestEVM_SingleStep_Lui(t *testing.T) {
+	versions := GetMipsVersionTestCases(t)
+
+	cases := []struct {
+		name     string
+		rtReg    uint32
+		imm      uint32
+		expectRt Word
+	}{
+		{name: "lui unsigned", rtReg: 5, imm: 0x1234, expectRt: 0x1234_0000},
+		{name: "lui signed", rtReg: 7, imm: 0x8765, expectRt: signExtend64(0x8765_0000)},
+	}
+
+	for _, v := range versions {
+		for i, tt := range cases {
+			testName := fmt.Sprintf("%v (%v)", tt.name, v.Name)
+			t.Run(testName, func(t *testing.T) {
+				goVm := v.VMFactory(nil, os.Stdout, os.Stderr, testutil.CreateLogger(), testutil.WithRandomization(int64(i)))
+				state := goVm.GetState()
+				insn := 0b1111<<26 | uint32(tt.rtReg)<<16 | (tt.imm & 0xFFFF)
+				testutil.StoreInstruction(state.GetMemory(), state.GetPC(), insn)
+				step := state.GetStep()
+
+				// Setup expectations
+				expected := testutil.NewExpectedState(state)
+				expected.ExpectStep()
+				expected.Registers[tt.rtReg] = tt.expectRt
+				stepWitness, err := goVm.Step(true)
+				require.NoError(t, err)
+
+				// Check expectations
+				expected.Validate(t, state)
+				testutil.ValidateEVM(t, stepWitness, step, goVm, v.StateHashFn, v.Contracts)
+			})
+		}
+	}
+}
+
 func TestEVM_SingleStep_MovzMovn(t *testing.T) {
 	versions := GetMipsVersionTestCases(t)
 	cases := []struct {
