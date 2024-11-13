@@ -123,6 +123,14 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 			programName: "mt-pool",
 			steps:       50_000_000,
 		},
+		{
+			name: "value test",
+			expectedOutput: []string{
+				"Value tests passed",
+			},
+			programName: "mt-value",
+			steps:       2_000_000,
+		},
 	}
 
 	for _, test := range cases {
