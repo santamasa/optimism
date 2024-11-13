@@ -52,6 +52,14 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 			steps:       5_000_000,
 		},
 		{
+			name: "atomic test",
+			expectedOutput: []string{
+				"Atomic tests passed",
+			},
+			programName: "mt-atomic",
+			steps:       200_000_000,
+		},
+		{
 			name: "waitgroup test",
 			expectedOutput: []string{
 				"WaitGroup tests passed",
