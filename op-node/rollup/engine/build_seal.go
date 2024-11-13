@@ -44,6 +44,7 @@ func (ev PayloadSealExpiredErrorEvent) String() string {
 type BuildSealEvent struct {
 	Info         eth.PayloadInfo
 	BuildStarted time.Time
+	BuildTime    time.Duration
 	// if payload should be promoted to safe (must also be pending safe, see DerivedFrom)
 	Concluding bool
 	// payload is promoted to pending-safe if non-zero
@@ -112,7 +113,7 @@ func (eq *EngDeriver) onBuildSeal(ev BuildSealEvent) {
 	txnCount := len(envelope.ExecutionPayload.Transactions)
 	eq.metrics.CountSequencedTxs(txnCount)
 
-	eq.log.Debug("Processed new L2 block", "l2_unsafe", ref, "l1_origin", ref.L1Origin,
+	eq.log.Debug("Built new L2 block", "l2_unsafe", ref, "l1_origin", ref.L1Origin,
 		"txs", txnCount, "time", ref.Time, "seal_time", sealTime, "build_time", buildTime,
 		"mgas", float64(envelope.ExecutionPayload.GasUsed)/1000000,
 		"mgasps", float64(envelope.ExecutionPayload.GasUsed)*1000/float64(buildTime),
@@ -122,6 +123,7 @@ func (eq *EngDeriver) onBuildSeal(ev BuildSealEvent) {
 		Concluding:   ev.Concluding,
 		DerivedFrom:  ev.DerivedFrom,
 		BuildStarted: ev.BuildStarted,
+		BuildTime:    buildTime,
 		Info:         ev.Info,
 		Envelope:     envelope,
 		Ref:          ref,

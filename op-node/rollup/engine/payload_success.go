@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/ethereum-optimism/optimism/op-service/eth"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type PayloadSuccessEvent struct {
@@ -12,6 +13,8 @@ type PayloadSuccessEvent struct {
 	// payload is promoted to pending-safe if non-zero
 	DerivedFrom  eth.L1BlockRef
 	BuildStarted time.Time
+	BuildTime    time.Duration
+	ImportTime   time.Duration
 
 	Envelope *eth.ExecutionPayloadEnvelope
 	Ref      eth.L2BlockRef
@@ -39,7 +42,10 @@ func (eq *EngDeriver) onPayloadSuccess(ev PayloadSuccessEvent) {
 		"state_root", payload.StateRoot, "timestamp", uint64(payload.Timestamp), "parent", payload.ParentHash,
 		"prev_randao", payload.PrevRandao, "fee_recipient", payload.FeeRecipient,
 		"txs", len(payload.Transactions), "concluding", ev.Concluding, "derived_from", ev.DerivedFrom,
-		"elapsed", elapsed, "mgas", float64(payload.GasUsed)/1000000,
+		"build_time", common.PrettyDuration(ev.BuildTime),
+		"import_time", common.PrettyDuration(ev.ImportTime),
+		"total_time", common.PrettyDuration(elapsed),
+		"mgas", float64(payload.GasUsed)/1000000,
 		"mgasps", float64(payload.GasUsed)*1000/float64(elapsed))
 
 	eq.emitter.Emit(TryUpdateEngineEvent{})

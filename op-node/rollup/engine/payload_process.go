@@ -15,6 +15,7 @@ type PayloadProcessEvent struct {
 	// payload is promoted to pending-safe if non-zero
 	DerivedFrom  eth.L1BlockRef
 	BuildStarted time.Time
+	BuildTime    time.Duration
 
 	Envelope *eth.ExecutionPayloadEnvelope
 	Ref      eth.L2BlockRef
@@ -28,6 +29,7 @@ func (eq *EngDeriver) onPayloadProcess(ev PayloadProcessEvent) {
 	ctx, cancel := context.WithTimeout(eq.ctx, payloadProcessTimeout)
 	defer cancel()
 
+	startTime := time.Now()
 	status, err := eq.ec.engine.NewPayload(ctx,
 		ev.Envelope.ExecutionPayload, ev.Envelope.ParentBeaconBlockRoot)
 	if err != nil {
@@ -51,7 +53,16 @@ func (eq *EngDeriver) onPayloadProcess(ev PayloadProcessEvent) {
 		})
 		return
 	case eth.ExecutionValid:
-		eq.emitter.Emit(PayloadSuccessEvent(ev))
+		importTime := time.Since(startTime)
+		eq.emitter.Emit(PayloadSuccessEvent{
+			Concluding:   ev.Concluding,
+			DerivedFrom:  ev.DerivedFrom,
+			BuildStarted: ev.BuildStarted,
+			BuildTime:    ev.BuildTime,
+			ImportTime:   importTime,
+			Envelope:     ev.Envelope,
+			Ref:          ev.Ref,
+		})
 		return
 	default:
 		eq.emitter.Emit(rollup.EngineTemporaryErrorEvent{
