@@ -40,6 +40,7 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 		name           string
 		expectedOutput []string
 		programName    string
+		steps          int
 	}{
 		{
 			name: "wg and chan test",
@@ -48,6 +49,7 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 				"channels result: 1234",
 			},
 			programName: "mt-wg",
+			steps:       5_000_000,
 		},
 		{
 			name: "mutex test",
@@ -55,6 +57,7 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 				"Mutex test passed",
 			},
 			programName: "mt-mutex",
+			steps:       5_000_000,
 		},
 		{
 			name: "cond test",
@@ -62,6 +65,7 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 				"Cond test passed",
 			},
 			programName: "mt-cond",
+			steps:       5_000_000,
 		},
 		{
 			name: "rwmutex test",
@@ -69,6 +73,7 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 				"RWMutex test passed",
 			},
 			programName: "mt-rwmutex",
+			steps:       5_000_000,
 		},
 		{
 			name: "once test",
@@ -76,6 +81,7 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 				"Once test passed",
 			},
 			programName: "mt-once",
+			steps:       5_000_000,
 		},
 		{
 			name: "map test",
@@ -83,6 +89,7 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 				"Map test passed",
 			},
 			programName: "mt-map",
+			steps:       100_000_000,
 		},
 		{
 			name: "pool test",
@@ -90,6 +97,7 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 				"Pool test passed",
 			},
 			programName: "mt-pool",
+			steps:       5_000_000,
 		},
 	}
 
@@ -102,7 +110,7 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 
 			var stdOutBuf, stdErrBuf bytes.Buffer
 			us := NewInstrumentedState(state, oracle, io.MultiWriter(&stdOutBuf, os.Stdout), io.MultiWriter(&stdErrBuf, os.Stderr), testutil.CreateLogger(), nil)
-			for i := 0; i < 5_000_000; i++ {
+			for i := 0; i < test.steps; i++ {
 				if us.GetState().GetExited() {
 					break
 				}

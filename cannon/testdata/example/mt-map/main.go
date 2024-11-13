@@ -2,42 +2,29 @@ package main
 
 import (
 	"fmt"
-	"sync"
+	"os"
+	"testing"
 )
 
 func main() {
-	var m sync.Map
-
-	m.Store("hello", "world")
-	m.Store("foo", "bar")
-	m.Store("baz", "qux")
-
-	m.Delete("foo")
-	m.Load("baz")
-
-	go func() {
-		m.CompareAndDelete("hello", "world")
-		m.LoadAndDelete("baz")
-	}()
-
-	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
-		wg.Add(1)
-		go func() {
-			m.Load("hello")
-			m.Load("baz")
-			m.Range(func(k, v interface{}) bool {
-				m.Load("hello")
-				m.Load("baz")
-				return true
-			})
-			m.CompareAndSwap("hello", "world", "Go")
-			m.LoadOrStore("hello", "world")
-			wg.Done()
-		}()
-	}
-
-	wg.Wait()
+	runTest(TestMapMatchesRWMutex, "TestMapMatchesRWMutex")
+	runTest(TestMapMatchesDeepCopy, "TestMapMatchesDeepCopy")
+	runTest(TestConcurrentRange, "TestConcurrentRange")
+	runTest(TestIssue40999, "TestIssue40999")
+	runTest(TestMapRangeNestedCall, "TestMapRangeNestedCall")
+	runTest(TestCompareAndSwap_NonExistingKey, "TestCompareAndSwap_NonExistingKey")
+	runTest(TestMapRangeNoAllocations, "TestMapRangeNoAllocations")
 
 	fmt.Println("Map test passed")
+}
+
+func runTest(testFunc func(*testing.T), name string) {
+	t := &testing.T{}
+	testFunc(t)
+	if t.Failed() {
+		fmt.Printf("Test failed: %v\n", name)
+		os.Exit(1)
+	} else {
+		fmt.Printf("Test passed: %v\n", name)
+	}
 }
