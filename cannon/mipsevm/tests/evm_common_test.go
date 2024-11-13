@@ -455,7 +455,7 @@ func TestEVM_SingleStep_BeqBne(t *testing.T) {
 
 }
 
-func TestEVMSingleStep_SlSr(t *testing.T) {
+func TestEVM_SingleStep_SlSr(t *testing.T) {
 	versions := GetMipsVersionTestCases(t)
 	cases := []struct {
 		name      string
@@ -465,12 +465,12 @@ func TestEVMSingleStep_SlSr(t *testing.T) {
 		funct     uint16
 		expectVal Word
 	}{
-		{name: "sll", funct: uint16(4) << 6, rt: Word(0x20), rsReg: uint32(0x0), expectVal: Word(0x20) << uint8(4)},                                      // sll t0, t1, 3
-		{name: "srl", funct: uint16(4)<<6 | 2, rt: Word(0x20), rsReg: uint32(0x0), expectVal: Word(0x20) >> uint8(4)},                                    // srl t0, t1, 3
-		{name: "sra", funct: uint16(4)<<6 | 3, rt: Word(0x80_00_00_20), rsReg: uint32(0x0), expectVal: signExtend64(0xF8_00_00_02)},   // sra t0, t1, 3
-		{name: "sllv", funct: uint16(4), rt: Word(0x20), rs: Word(4), rsReg: uint32(0xa), expectVal: Word(0x20) << Word(4)},                              // sllv t0, t1, t2
-		{name: "srlv", funct: uint16(6), rt: Word(0x20_00), rs: Word(4), rsReg: uint32(0xa), expectVal: Word(0x20_00) >> Word(4)},                        // srlv t0, t1, t2
-		{name: "srav", funct: uint16(7), rt: Word(0xdeafbeef), rs: Word(12), rsReg: uint32(0xa), expectVal: exec.SignExtend(Word(0xfffdeafb), Word(32))}, // srav t0, t1, t2
+		{name: "sll", funct: uint16(4) << 6, rt: Word(0x20), rsReg: uint32(0x0), expectVal: Word(0x20) << uint8(4)},                         // sll t0, t1, 3
+		{name: "srl", funct: uint16(4)<<6 | 2, rt: Word(0x20), rsReg: uint32(0x0), expectVal: Word(0x20) >> uint8(4)},                       // srl t0, t1, 3
+		{name: "sra", funct: uint16(4)<<6 | 3, rt: Word(0x80_00_00_20), rsReg: uint32(0x0), expectVal: signExtend64(0xF8_00_00_02)},         // sra t0, t1, 3
+		{name: "sllv", funct: uint16(4), rt: Word(0x20), rs: Word(4), rsReg: uint32(0xa), expectVal: Word(0x20) << Word(4)},                 // sllv t0, t1, t2
+		{name: "srlv", funct: uint16(6), rt: Word(0x20_00), rs: Word(4), rsReg: uint32(0xa), expectVal: Word(0x20_00) >> Word(4)},           // srlv t0, t1, t2
+		{name: "srav", funct: uint16(7), rt: Word(0xdeafbeef), rs: Word(12), rsReg: uint32(0xa), expectVal: signExtend64(Word(0xfffdeafb))}, // srav t0, t1, t2
 	}
 
 	for _, v := range versions {
@@ -505,7 +505,7 @@ func TestEVMSingleStep_SlSr(t *testing.T) {
 	}
 }
 
-func TestEVMSingleStep_JrJalr(t *testing.T) {
+func TestEVM_SingleStep_JrJalr(t *testing.T) {
 	versions := GetMipsVersionTestCases(t)
 	cases := []struct {
 		name       string
