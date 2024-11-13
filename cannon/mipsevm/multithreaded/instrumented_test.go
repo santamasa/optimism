@@ -43,13 +43,21 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 		steps          int
 	}{
 		{
-			name: "wg and chan test",
+			name: "general concurrency test",
 			expectedOutput: []string{
 				"waitgroup result: 42",
 				"channels result: 1234",
 			},
-			programName: "mt-wg",
+			programName: "mt-general",
 			steps:       5_000_000,
+		},
+		{
+			name: "waitgroup test",
+			expectedOutput: []string{
+				"WaitGroup tests passed",
+			},
+			programName: "mt-wg",
+			steps:       15_000_000,
 		},
 		{
 			name: "mutex test",
