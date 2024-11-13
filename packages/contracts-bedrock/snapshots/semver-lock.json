@@ -144,8 +144,8 @@
     "sourceCodeHash": "0x8e420e17d49176eefc48ddcb92c50a37588778ef971eadd7d6af67f62c0d1e24"
   },
   "src/cannon/MIPS2.sol": {
-    "initCodeHash": "0x099b4d28f15ea0adffe19de454bcf3b6dc2d672821b7f7c756da56e47c95dedc",
-    "sourceCodeHash": "0x9e5e4a8806da4446aff07ceccabca9206ad323f3722bc9c4e97c11436f16e556"
+    "initCodeHash": "0x34ebc0155d4f34129d7869f1c0c02d17261a92dfa5029a988824ba626e3dc997",
+    "sourceCodeHash": "0x4c297474d0ac926233eae89ae285a37b7edb4829a8c3c694b6e71227682815c4"
   },
   "src/cannon/MIPS64.sol": {
     "initCodeHash": "0x2f26c72f7fadedb10d356c00f79108ee35140b990c6b8823c6e450b39c9104d1",
