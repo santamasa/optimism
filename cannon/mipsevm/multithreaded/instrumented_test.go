@@ -92,6 +92,14 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 			steps:       5_000_000,
 		},
 		{
+			name: "oncefunc test",
+			expectedOutput: []string{
+				"OnceFunc tests passed",
+			},
+			programName: "mt-oncefunc",
+			steps:       5_000_000,
+		},
+		{
 			name: "map test",
 			expectedOutput: []string{
 				"Map test passed",
