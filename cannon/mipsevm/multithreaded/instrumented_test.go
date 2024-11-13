@@ -97,7 +97,7 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 				"Pool test passed",
 			},
 			programName: "mt-pool",
-			steps:       5_000_000,
+			steps:       50_000_000,
 		},
 	}
 
@@ -105,11 +105,23 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			state, _ := testutil.LoadELFProgram(t, testutil.ProgramPath(test.programName), CreateInitialState, false)
+
+			state, meta := testutil.LoadELFProgram(t, testutil.ProgramPath(test.programName), CreateInitialState, false)
 			oracle := testutil.StaticOracle(t, []byte{})
 
 			var stdOutBuf, stdErrBuf bytes.Buffer
-			us := NewInstrumentedState(state, oracle, io.MultiWriter(&stdOutBuf, os.Stdout), io.MultiWriter(&stdErrBuf, os.Stderr), testutil.CreateLogger(), nil)
+			us := NewInstrumentedState(state, oracle, io.MultiWriter(&stdOutBuf, os.Stdout), io.MultiWriter(&stdErrBuf, os.Stderr), testutil.CreateLogger(), meta)
+			err := us.InitDebug()
+			require.NoError(t, err)
+
+			// Log traceback if there is a panic
+			defer func() {
+				if r := recover(); r != nil {
+					us.Traceback()
+					t.Fatalf("Test panicked: %v", r)
+				}
+			}()
+
 			for i := 0; i < test.steps; i++ {
 				if us.GetState().GetExited() {
 					break
