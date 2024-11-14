@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"sync"
 	"testing"
@@ -90,6 +91,7 @@ func runTest(testFunc func(testing.TB), name string) {
 
 			if t.Failed() {
 				fmt.Printf("Test failed: %v\n", name)
+				os.Exit(1)
 			} else if t.Skipped() {
 				fmt.Printf("Test skipped: %v\n", name)
 			} else {
