@@ -14,9 +14,7 @@ func main() {
 	testutil.RunTest(TestPoolStress, "TestPoolStress")
 	testutil.RunTest(TestPoolDequeue, "TestPoolDequeue")
 	testutil.RunTest(TestPoolChain, "TestPoolChain")
-
-	// TODO(#12162) This test is currently failing - need to debug it
-	// runTestExpectingPanic(TestNilPool, "TestNilPool")
+	testutil.ExecRunnableTest(TestNilPool, "TestNilPool")
 
 	fmt.Println("Pool test passed")
 }

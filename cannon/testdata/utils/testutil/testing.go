@@ -9,29 +9,54 @@ import (
 )
 
 func RunTest(testFunc func(testing.TB), name string) {
+	runner := newTestRunner(name)
+	runner.Run("", testFunc)
+}
+
+func ExecRunnableTest(testFunc func(*TestRunner), name string) {
+	runner := newTestRunner(name)
+	testFunc(runner)
+}
+
+type TestRunner struct {
+	*mockT
+	baseName string
+}
+
+func newTestRunner(baseName string) *TestRunner {
+	return &TestRunner{mockT: newMockT(), baseName: baseName}
+}
+
+func (r *TestRunner) Run(name string, f func(t testing.TB)) bool {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		t := newMockT()
 		defer func() {
 			recover() // Recover in case of runtime.Goexit()
 
-			if t.Failed() {
-				fmt.Printf("Test failed: %v\n", name)
+			testName := r.baseName
+			if name != "" {
+				testName = fmt.Sprintf("%v (%v)", r.baseName, name)
+			}
+
+			if r.Failed() {
+				fmt.Printf("Test failed: %v\n", testName)
 				os.Exit(1)
-			} else if t.Skipped() {
-				fmt.Printf("Test skipped: %v\n", name)
+			} else if r.Skipped() {
+				fmt.Printf("Test skipped: %v\n", testName)
 			} else {
-				fmt.Printf("Test passed: %v\n", name)
+				fmt.Printf("Test passed: %v\n", testName)
 			}
 
 			wg.Done()
 		}()
 
-		testFunc(t)
+		f(r)
 	}()
 
 	wg.Wait()
+
+	return !r.failed
 }
 
 type mockT struct {

@@ -15,10 +15,8 @@ func main() {
 	testutil.RunTest(TestOnceValuesPanic, "TestOnceValuesPanic")
 	testutil.RunTest(TestOnceFuncPanicNil, "TestOnceFuncPanicNil")
 	testutil.RunTest(TestOnceFuncGoexit, "TestOnceFuncGoexit")
-
-	// TODO(#12162) Debug the following tests
-	//runTest(TestOnceFuncPanicTraceback, "TestOnceFuncPanicTraceback")
-	//runTest(TestOnceXGC, "TestOnceXGC")
+	testutil.RunTest(TestOnceFuncPanicTraceback, "TestOnceFuncPanicTraceback")
+	testutil.ExecRunnableTest(TestOnceXGC, "TestOnceXGC")
 
 	fmt.Println("OnceFunc tests passed")
 }

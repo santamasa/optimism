@@ -41,6 +41,8 @@ import (
 	"sync/atomic"
 	. "sync/atomic"
 	"testing"
+
+	"utils/testutil"
 )
 
 var short bool = true
@@ -181,9 +183,9 @@ var Value_SwapTests = []struct {
 	{init: true, new: false, want: true, err: nil},
 }
 
-func TestValue_Swap(t *testing.T) {
+func TestValue_Swap(t *testutil.TestRunner) {
 	for i, tt := range Value_SwapTests {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
+		t.Run(strconv.Itoa(i), func(t testing.TB) {
 			var v Value
 			if tt.init != nil {
 				v.Store(tt.init)
@@ -257,9 +259,9 @@ var Value_CompareAndSwapTests = []struct {
 	{init: heapA, new: struct{ uint }{1}, old: heapB, want: true, err: nil},
 }
 
-func TestValue_CompareAndSwap(t *testing.T) {
+func TestValue_CompareAndSwap(t *testutil.TestRunner) {
 	for i, tt := range Value_CompareAndSwapTests {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
+		t.Run(strconv.Itoa(i), func(t testing.TB) {
 			var v Value
 			if tt.init != nil {
 				v.Store(tt.init)

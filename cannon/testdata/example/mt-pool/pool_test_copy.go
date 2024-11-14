@@ -40,6 +40,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"utils/testutil"
 )
 
 var short bool = true
@@ -273,7 +275,7 @@ func testPoolDequeue(t testing.TB, d PoolDequeue) {
 	}
 }
 
-func TestNilPool(t *testing.T) {
+func TestNilPool(t *testutil.TestRunner) {
 	catch := func() {
 		if recover() == nil {
 			t.Error("expected panic")
@@ -281,14 +283,14 @@ func TestNilPool(t *testing.T) {
 	}
 
 	var p *Pool
-	t.Run("Get", func(t *testing.T) {
+	t.Run("Get", func(t testing.TB) {
 		defer catch()
 		if p.Get() != nil {
 			t.Error("expected empty")
 		}
 		t.Error("should have panicked already")
 	})
-	t.Run("Put", func(t *testing.T) {
+	t.Run("Put", func(t testing.TB) {
 		defer catch()
 		p.Put("a")
 		t.Error("should have panicked already")

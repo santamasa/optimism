@@ -42,6 +42,8 @@ import (
 	"sync/atomic"
 	"testing"
 	_ "unsafe"
+
+	"utils/testutil"
 )
 
 // We assume that the Once.Do tests have already covered parallelism.
@@ -202,7 +204,8 @@ func TestOnceFuncPanicTraceback(t testing.TB) {
 			t.Fatalf("want panic %v, got %v", "x", p)
 		}
 		stack := debug.Stack()
-		want := "sync_test.onceFuncPanic"
+		//want := "sync_test.onceFuncPanic"
+		want := "main.onceFuncPanic"
 		if !bytes.Contains(stack, []byte(want)) {
 			t.Fatalf("want stack containing %v, got:\n%s", want, string(stack))
 		}
@@ -214,7 +217,7 @@ func onceFuncPanic() {
 	panic("x")
 }
 
-func TestOnceXGC(t *testing.T) {
+func TestOnceXGC(t *testutil.TestRunner) {
 	fns := map[string]func([]byte) func(){
 		"OnceFunc": func(buf []byte) func() {
 			return sync.OnceFunc(func() { buf[0] = 1 })
@@ -229,7 +232,7 @@ func TestOnceXGC(t *testing.T) {
 		},
 	}
 	for n, fn := range fns {
-		t.Run(n, func(t *testing.T) {
+		t.Run(n, func(t testing.TB) {
 			buf := make([]byte, 1024)
 			var gc atomic.Bool
 			runtime.SetFinalizer(&buf[0], func(_ *byte) {
