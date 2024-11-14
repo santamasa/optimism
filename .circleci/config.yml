@@ -1271,6 +1271,22 @@ jobs:
           command: |
             goreleaser release --clean -f ./<<parameters.module>>/<<parameters.filename>>
 
+  stale-check:
+    docker:
+      - image: cimg/python:3.11 # Specify the Python Docker image directly
+    environment:
+      GITHUB_TOKEN: ${STALE_GITHUB_TOKEN}
+      REPO: "ethereum-optimism/optimism" # Set the repository name
+    steps:
+      - checkout
+      - run:
+          name: Run Stale Check Script
+          command: |
+            python -m venv venv
+            . venv/bin/activate
+            pip install -r .circleci/scripts/requirements.txt
+            python .circleci/scripts/stale-check.py
+
 workflows:
   main:
     when:
@@ -1697,3 +1713,14 @@ workflows:
       - preimage-reproducibility:
           context:
             slack
+
+  scheduled-stale-check:
+    triggers:
+      - schedule:
+          cron: "30 1 * * *"
+          filters:
+            branches:
+              only: main
+    jobs:
+      - stale-check:
+          context: github-token-stale-check
