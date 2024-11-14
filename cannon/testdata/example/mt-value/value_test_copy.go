@@ -45,7 +45,7 @@ import (
 
 var short bool = true
 
-func TestValue(t *testing.T) {
+func TestValue(t testing.TB) {
 	var v Value
 	if v.Load() != nil {
 		t.Fatal("initial Value is not nil")
@@ -62,7 +62,7 @@ func TestValue(t *testing.T) {
 	}
 }
 
-func TestValueLarge(t *testing.T) {
+func TestValueLarge(t testing.TB) {
 	var v Value
 	v.Store("foo")
 	x := v.Load()
@@ -76,7 +76,7 @@ func TestValueLarge(t *testing.T) {
 	}
 }
 
-func TestValuePanic(t *testing.T) {
+func TestValuePanic(t testing.TB) {
 	const nilErr = "sync/atomic: store of nil value into Value"
 	const badErr = "sync/atomic: store of inconsistently typed value into Value"
 	var v Value
@@ -110,7 +110,7 @@ func TestValuePanic(t *testing.T) {
 	}()
 }
 
-func TestValueConcurrent(t *testing.T) {
+func TestValueConcurrent(t testing.TB) {
 	tests := [][]any{
 		{uint16(0), ^uint16(0), uint16(1 + 2<<8), uint16(3 + 4<<8)},
 		{uint32(0), ^uint32(0), uint32(1 + 2<<16), uint32(3 + 4<<16)},
@@ -207,7 +207,7 @@ func TestValue_Swap(t *testing.T) {
 	}
 }
 
-func TestValueSwapConcurrent(t *testing.T) {
+func TestValueSwapConcurrent(t testing.TB) {
 	var v Value
 	var count uint64
 	var g sync.WaitGroup
@@ -280,7 +280,7 @@ func TestValue_CompareAndSwap(t *testing.T) {
 	}
 }
 
-func TestValueCompareAndSwapConcurrent(t *testing.T) {
+func TestValueCompareAndSwapConcurrent(t testing.TB) {
 	var v Value
 	var w sync.WaitGroup
 	v.Store(0)

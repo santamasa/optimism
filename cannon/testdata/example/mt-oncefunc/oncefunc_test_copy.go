@@ -46,7 +46,7 @@ import (
 
 // We assume that the Once.Do tests have already covered parallelism.
 
-func TestOnceFunc(t *testing.T) {
+func TestOnceFunc(t testing.TB) {
 	calls := 0
 	f := sync.OnceFunc(func() { calls++ })
 	allocs := testing.AllocsPerRun(10, f)
@@ -58,7 +58,7 @@ func TestOnceFunc(t *testing.T) {
 	}
 }
 
-func TestOnceValue(t *testing.T) {
+func TestOnceValue(t testing.TB) {
 	calls := 0
 	f := sync.OnceValue(func() int {
 		calls++
@@ -77,7 +77,7 @@ func TestOnceValue(t *testing.T) {
 	}
 }
 
-func TestOnceValues(t *testing.T) {
+func TestOnceValues(t testing.TB) {
 	calls := 0
 	f := sync.OnceValues(func() (int, int) {
 		calls++
@@ -96,7 +96,7 @@ func TestOnceValues(t *testing.T) {
 	}
 }
 
-func testOncePanicX(t *testing.T, calls *int, f func()) {
+func testOncePanicX(t testing.TB, calls *int, f func()) {
 	testOncePanicWith(t, calls, f, func(label string, p any) {
 		if p != "x" {
 			t.Fatalf("%s: want panic %v, got %v", label, "x", p)
@@ -104,7 +104,7 @@ func testOncePanicX(t *testing.T, calls *int, f func()) {
 	})
 }
 
-func testOncePanicWith(t *testing.T, calls *int, f func(), check func(label string, p any)) {
+func testOncePanicWith(t testing.TB, calls *int, f func(), check func(label string, p any)) {
 	// Check that the each call to f panics with the same value, but the
 	// underlying function is only called once.
 	for _, label := range []string{"first time", "second time"} {
@@ -127,7 +127,7 @@ func testOncePanicWith(t *testing.T, calls *int, f func(), check func(label stri
 	}
 }
 
-func TestOnceFuncPanic(t *testing.T) {
+func TestOnceFuncPanic(t testing.TB) {
 	calls := 0
 	f := sync.OnceFunc(func() {
 		calls++
@@ -136,7 +136,7 @@ func TestOnceFuncPanic(t *testing.T) {
 	testOncePanicX(t, &calls, f)
 }
 
-func TestOnceValuePanic(t *testing.T) {
+func TestOnceValuePanic(t testing.TB) {
 	calls := 0
 	f := sync.OnceValue(func() int {
 		calls++
@@ -145,7 +145,7 @@ func TestOnceValuePanic(t *testing.T) {
 	testOncePanicX(t, &calls, func() { f() })
 }
 
-func TestOnceValuesPanic(t *testing.T) {
+func TestOnceValuesPanic(t testing.TB) {
 	calls := 0
 	f := sync.OnceValues(func() (int, int) {
 		calls++
@@ -154,7 +154,7 @@ func TestOnceValuesPanic(t *testing.T) {
 	testOncePanicX(t, &calls, func() { f() })
 }
 
-func TestOnceFuncPanicNil(t *testing.T) {
+func TestOnceFuncPanicNil(t testing.TB) {
 	calls := 0
 	f := sync.OnceFunc(func() {
 		calls++
@@ -169,7 +169,7 @@ func TestOnceFuncPanicNil(t *testing.T) {
 	})
 }
 
-func TestOnceFuncGoexit(t *testing.T) {
+func TestOnceFuncGoexit(t testing.TB) {
 	// If f calls Goexit, the results are unspecified. But check that f doesn't
 	// get called twice.
 	calls := 0
@@ -192,7 +192,7 @@ func TestOnceFuncGoexit(t *testing.T) {
 	}
 }
 
-func TestOnceFuncPanicTraceback(t *testing.T) {
+func TestOnceFuncPanicTraceback(t testing.TB) {
 	// Test that on the first invocation of a OnceFunc, the stack trace goes all
 	// the way to the origin of the panic.
 	f := sync.OnceFunc(onceFuncPanic)

@@ -39,7 +39,7 @@ import (
 	"testing"
 )
 
-func testWaitGroup(t *testing.T, wg1 *WaitGroup, wg2 *WaitGroup) {
+func testWaitGroup(t testing.TB, wg1 *WaitGroup, wg2 *WaitGroup) {
 	n := 16
 	wg1.Add(n)
 	wg2.Add(n)
@@ -65,7 +65,7 @@ func testWaitGroup(t *testing.T, wg1 *WaitGroup, wg2 *WaitGroup) {
 	}
 }
 
-func TestWaitGroup(t *testing.T) {
+func TestWaitGroup(t testing.TB) {
 	wg1 := &WaitGroup{}
 	wg2 := &WaitGroup{}
 
@@ -75,7 +75,7 @@ func TestWaitGroup(t *testing.T) {
 	}
 }
 
-func TestWaitGroupMisuse(t *testing.T) {
+func TestWaitGroupMisuse(t testing.TB) {
 	defer func() {
 		err := recover()
 		if err != "sync: negative WaitGroup counter" {
@@ -89,7 +89,7 @@ func TestWaitGroupMisuse(t *testing.T) {
 	t.Fatal("Should panic")
 }
 
-func TestWaitGroupRace(t *testing.T) {
+func TestWaitGroupRace(t testing.TB) {
 	// Run this test for about 1ms.
 	for i := 0; i < 1000; i++ {
 		wg := &WaitGroup{}
@@ -114,7 +114,7 @@ func TestWaitGroupRace(t *testing.T) {
 	}
 }
 
-func TestWaitGroupAlign(t *testing.T) {
+func TestWaitGroupAlign(t testing.TB) {
 	type X struct {
 		x  byte
 		wg WaitGroup

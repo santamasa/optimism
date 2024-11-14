@@ -2,32 +2,21 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"testing"
+
+	"utils/testutil"
 )
 
 func main() {
 
 	// TODO(#12162) Debug commented out tests which are currently failing
-	runTest(TestValue, "TestValue")
-	runTest(TestValueLarge, "TestValueLarge")
-	runTest(TestValuePanic, "TestValuePanic")
-	runTest(TestValueConcurrent, "TestValueConcurrent")
-	//runTest(TestValue_Swap, "TestValue_Swap")
-	runTest(TestValueSwapConcurrent, "TestValueSwapConcurrent")
-	//runTest(TestValue_CompareAndSwap, "TestValue_CompareAndSwap")
-	runTest(TestValueCompareAndSwapConcurrent, "TestValueCompareAndSwapConcurrent")
+	testutil.RunTest(TestValue, "TestValue")
+	testutil.RunTest(TestValueLarge, "TestValueLarge")
+	testutil.RunTest(TestValuePanic, "TestValuePanic")
+	testutil.RunTest(TestValueConcurrent, "TestValueConcurrent")
+	//testutil.RunTest(TestValue_Swap, "TestValue_Swap")
+	testutil.RunTest(TestValueSwapConcurrent, "TestValueSwapConcurrent")
+	//testutil.RunTest(TestValue_CompareAndSwap, "TestValue_CompareAndSwap")
+	testutil.RunTest(TestValueCompareAndSwapConcurrent, "TestValueCompareAndSwapConcurrent")
 
 	fmt.Println("Value tests passed")
-}
-
-func runTest(testFunc func(*testing.T), name string) {
-	t := &testing.T{}
-	testFunc(t)
-	if t.Failed() {
-		fmt.Printf("Test failed: %v\n", name)
-		os.Exit(1)
-	} else {
-		fmt.Printf("Test passed: %v\n", name)
-	}
 }

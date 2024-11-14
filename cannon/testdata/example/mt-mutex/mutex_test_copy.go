@@ -48,7 +48,7 @@ func HammerSemaphore(s *uint32, loops int, cdone chan bool) {
 	cdone <- true
 }
 
-func TestSemaphore(t *testing.T) {
+func TestSemaphore(t testing.TB) {
 	s := new(uint32)
 	*s = 1
 	c := make(chan bool)
@@ -74,7 +74,7 @@ func HammerMutex(m *Mutex, loops int, cdone chan bool) {
 	cdone <- true
 }
 
-func TestMutex(t *testing.T) {
+func TestMutex(t testing.TB) {
 	if n := runtime.SetMutexProfileFraction(1); n != 0 {
 		t.Logf("got mutexrate %d expected 0", n)
 	}
@@ -101,7 +101,7 @@ func TestMutex(t *testing.T) {
 	}
 }
 
-func TestMutexFairness(t *testing.T) {
+func TestMutexFairness(t testing.TB) {
 	var mu Mutex
 	stop := make(chan bool)
 	defer close(stop)
