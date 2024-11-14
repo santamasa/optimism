@@ -38,7 +38,7 @@ func (eq *EngDeriver) onPayloadSuccess(ev PayloadSuccessEvent) {
 
 	elapsed := time.Since(ev.BuildStarted)
 	payload := ev.Envelope.ExecutionPayload
-	eq.log.Info("Inserted block", "hash", payload.BlockHash, "number", uint64(payload.BlockNumber),
+	eq.log.Info("Inserted new L2 unsafe block", "hash", payload.BlockHash, "number", uint64(payload.BlockNumber),
 		"state_root", payload.StateRoot, "timestamp", uint64(payload.Timestamp), "parent", payload.ParentHash,
 		"prev_randao", payload.PrevRandao, "fee_recipient", payload.FeeRecipient,
 		"txs", len(payload.Transactions), "concluding", ev.Concluding, "derived_from", ev.DerivedFrom,
