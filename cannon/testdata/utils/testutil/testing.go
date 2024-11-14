@@ -13,7 +13,7 @@ func RunTest(testFunc func(testing.TB), name string) {
 	runner.Run("", testFunc)
 }
 
-func ExecRunnableTest(testFunc func(*TestRunner), name string) {
+func ExecRunnerTest(testFunc func(*TestRunner), name string) {
 	runner := newTestRunner(name)
 	testFunc(runner)
 }

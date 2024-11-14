@@ -14,7 +14,7 @@ func main() {
 	testutil.RunTest(TestPoolStress, "TestPoolStress")
 	testutil.RunTest(TestPoolDequeue, "TestPoolDequeue")
 	testutil.RunTest(TestPoolChain, "TestPoolChain")
-	testutil.ExecRunnableTest(TestNilPool, "TestNilPool")
+	testutil.ExecRunnerTest(TestNilPool, "TestNilPool")
 
 	fmt.Println("Pool test passed")
 }

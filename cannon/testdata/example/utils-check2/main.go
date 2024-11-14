@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	testutil.ExecRunnableTest(ShouldFail, "ShouldFail")
+	testutil.ExecRunnerTest(ShouldFail, "ShouldFail")
 
 	fmt.Println("Passed test that should have failed")
 }
