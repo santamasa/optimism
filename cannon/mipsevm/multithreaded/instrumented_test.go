@@ -34,6 +34,30 @@ func TestInstrumentedState_Claim(t *testing.T) {
 	testutil.RunVMTest_Claim(t, CreateInitialState, vmFactory, false)
 }
 
+func TestInstrumentedState_UtilsCheck(t *testing.T) {
+	// Sanity check that test running utility will return a non-zero exit code on failure
+	state, meta := testutil.LoadELFProgram(t, testutil.ProgramPath("utils-check"), CreateInitialState, false)
+	oracle := testutil.StaticOracle(t, []byte{})
+
+	var stdOutBuf, stdErrBuf bytes.Buffer
+	us := NewInstrumentedState(state, oracle, io.MultiWriter(&stdOutBuf, os.Stdout), io.MultiWriter(&stdErrBuf, os.Stderr), testutil.CreateLogger(), meta)
+
+	for i := 0; i < 1_000_000; i++ {
+		if us.GetState().GetExited() {
+			break
+		}
+		_, err := us.Step(false)
+		require.NoError(t, err)
+	}
+	t.Logf("Completed in %d steps", state.Step)
+
+	require.True(t, state.Exited, "must complete program")
+	require.Equal(t, uint8(1), state.ExitCode, "exit with 1")
+	require.Contains(t, stdOutBuf.String(), "Test failed: ShouldFail")
+	require.NotContains(t, stdOutBuf.String(), "Passed test that should have failed")
+	require.Equal(t, "", stdErrBuf.String(), "should not print any errors")
+}
+
 func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
