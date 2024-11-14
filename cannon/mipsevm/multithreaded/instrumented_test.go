@@ -57,7 +57,7 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 				"Atomic tests passed",
 			},
 			programName: "mt-atomic",
-			steps:       200_000_000,
+			steps:       350_000_000,
 		},
 		{
 			name: "waitgroup test",
