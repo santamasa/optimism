@@ -35,27 +35,39 @@ func TestInstrumentedState_Claim(t *testing.T) {
 }
 
 func TestInstrumentedState_UtilsCheck(t *testing.T) {
-	// Sanity check that test running utility will return a non-zero exit code on failure
-	state, meta := testutil.LoadELFProgram(t, testutil.ProgramPath("utils-check"), CreateInitialState, false)
-	oracle := testutil.StaticOracle(t, []byte{})
-
-	var stdOutBuf, stdErrBuf bytes.Buffer
-	us := NewInstrumentedState(state, oracle, io.MultiWriter(&stdOutBuf, os.Stdout), io.MultiWriter(&stdErrBuf, os.Stderr), testutil.CreateLogger(), meta)
-
-	for i := 0; i < 1_000_000; i++ {
-		if us.GetState().GetExited() {
-			break
-		}
-		_, err := us.Step(false)
-		require.NoError(t, err)
+	// Sanity check that test running utilities will return a non-zero exit code on failure
+	t.Parallel()
+	cases := []struct {
+		name string
+	}{
+		{name: "utils-check"},
+		{name: "utils-check2"},
 	}
-	t.Logf("Completed in %d steps", state.Step)
 
-	require.True(t, state.Exited, "must complete program")
-	require.Equal(t, uint8(1), state.ExitCode, "exit with 1")
-	require.Contains(t, stdOutBuf.String(), "Test failed: ShouldFail")
-	require.NotContains(t, stdOutBuf.String(), "Passed test that should have failed")
-	require.Equal(t, "", stdErrBuf.String(), "should not print any errors")
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			state, meta := testutil.LoadELFProgram(t, testutil.ProgramPath(c.name), CreateInitialState, false)
+			oracle := testutil.StaticOracle(t, []byte{})
+
+			var stdOutBuf, stdErrBuf bytes.Buffer
+			us := NewInstrumentedState(state, oracle, io.MultiWriter(&stdOutBuf, os.Stdout), io.MultiWriter(&stdErrBuf, os.Stderr), testutil.CreateLogger(), meta)
+
+			for i := 0; i < 1_000_000; i++ {
+				if us.GetState().GetExited() {
+					break
+				}
+				_, err := us.Step(false)
+				require.NoError(t, err)
+			}
+			t.Logf("Completed in %d steps", state.Step)
+
+			require.True(t, state.Exited, "must complete program")
+			require.Equal(t, uint8(1), state.ExitCode, "exit with 1")
+			require.Contains(t, stdOutBuf.String(), "Test failed: ShouldFail")
+			require.NotContains(t, stdOutBuf.String(), "Passed test that should have failed")
+			require.Equal(t, "", stdErrBuf.String(), "should not print any errors")
+		})
+	}
 }
 
 func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
@@ -129,7 +141,7 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 				"OnceFunc tests passed",
 			},
 			programName: "mt-oncefunc",
-			steps:       10_000_000,
+			steps:       15_000_000,
 		},
 		{
 			name: "map test",
@@ -153,7 +165,7 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 				"Value tests passed",
 			},
 			programName: "mt-value",
-			steps:       2_000_000,
+			steps:       3_000_000,
 		},
 	}
 

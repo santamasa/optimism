@@ -1,4 +1,4 @@
-module utilscheck
+module utilscheck2
 
 go 1.22
 
