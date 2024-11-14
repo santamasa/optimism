@@ -61,7 +61,7 @@ const (
 	magic64 = 0xdeddeadbeefbeef
 )
 
-func TestSwapInt32(t *testing.T) {
+func TestSwapInt32(t testing.TB) {
 	var x struct {
 		before int32
 		i      int32
@@ -82,7 +82,7 @@ func TestSwapInt32(t *testing.T) {
 	}
 }
 
-func TestSwapInt32Method(t *testing.T) {
+func TestSwapInt32Method(t testing.TB) {
 	var x struct {
 		before int32
 		i      Int32
@@ -103,7 +103,7 @@ func TestSwapInt32Method(t *testing.T) {
 	}
 }
 
-func TestSwapUint32(t *testing.T) {
+func TestSwapUint32(t testing.TB) {
 	var x struct {
 		before uint32
 		i      uint32
@@ -124,7 +124,7 @@ func TestSwapUint32(t *testing.T) {
 	}
 }
 
-func TestSwapUint32Method(t *testing.T) {
+func TestSwapUint32Method(t testing.TB) {
 	var x struct {
 		before uint32
 		i      Uint32
@@ -145,7 +145,7 @@ func TestSwapUint32Method(t *testing.T) {
 	}
 }
 
-func TestSwapInt64(t *testing.T) {
+func TestSwapInt64(t testing.TB) {
 	var x struct {
 		before int64
 		i      int64
@@ -167,7 +167,7 @@ func TestSwapInt64(t *testing.T) {
 	}
 }
 
-func TestSwapInt64Method(t *testing.T) {
+func TestSwapInt64Method(t testing.TB) {
 	var x struct {
 		before int64
 		i      Int64
@@ -189,7 +189,7 @@ func TestSwapInt64Method(t *testing.T) {
 	}
 }
 
-func TestSwapUint64(t *testing.T) {
+func TestSwapUint64(t testing.TB) {
 	var x struct {
 		before uint64
 		i      uint64
@@ -211,7 +211,7 @@ func TestSwapUint64(t *testing.T) {
 	}
 }
 
-func TestSwapUint64Method(t *testing.T) {
+func TestSwapUint64Method(t testing.TB) {
 	var x struct {
 		before uint64
 		i      Uint64
@@ -233,7 +233,7 @@ func TestSwapUint64Method(t *testing.T) {
 	}
 }
 
-func TestSwapUintptr(t *testing.T) {
+func TestSwapUintptr(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      uintptr
@@ -256,7 +256,7 @@ func TestSwapUintptr(t *testing.T) {
 	}
 }
 
-func TestSwapUintptrMethod(t *testing.T) {
+func TestSwapUintptrMethod(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      Uintptr
@@ -296,7 +296,7 @@ func testPointers() []unsafe.Pointer {
 
 var short bool = true
 
-func TestSwapPointer(t *testing.T) {
+func TestSwapPointer(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      unsafe.Pointer
@@ -320,7 +320,7 @@ func TestSwapPointer(t *testing.T) {
 	}
 }
 
-func TestSwapPointerMethod(t *testing.T) {
+func TestSwapPointerMethod(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      Pointer[byte]
@@ -344,7 +344,7 @@ func TestSwapPointerMethod(t *testing.T) {
 	}
 }
 
-func TestAddInt32(t *testing.T) {
+func TestAddInt32(t testing.TB) {
 	var x struct {
 		before int32
 		i      int32
@@ -365,7 +365,7 @@ func TestAddInt32(t *testing.T) {
 	}
 }
 
-func TestAddInt32Method(t *testing.T) {
+func TestAddInt32Method(t testing.TB) {
 	var x struct {
 		before int32
 		i      Int32
@@ -386,7 +386,7 @@ func TestAddInt32Method(t *testing.T) {
 	}
 }
 
-func TestAddUint32(t *testing.T) {
+func TestAddUint32(t testing.TB) {
 	var x struct {
 		before uint32
 		i      uint32
@@ -407,7 +407,7 @@ func TestAddUint32(t *testing.T) {
 	}
 }
 
-func TestAddUint32Method(t *testing.T) {
+func TestAddUint32Method(t testing.TB) {
 	var x struct {
 		before uint32
 		i      Uint32
@@ -428,7 +428,7 @@ func TestAddUint32Method(t *testing.T) {
 	}
 }
 
-func TestAddInt64(t *testing.T) {
+func TestAddInt64(t testing.TB) {
 	var x struct {
 		before int64
 		i      int64
@@ -450,7 +450,7 @@ func TestAddInt64(t *testing.T) {
 	}
 }
 
-func TestAddInt64Method(t *testing.T) {
+func TestAddInt64Method(t testing.TB) {
 	var x struct {
 		before int64
 		i      Int64
@@ -472,7 +472,7 @@ func TestAddInt64Method(t *testing.T) {
 	}
 }
 
-func TestAddUint64(t *testing.T) {
+func TestAddUint64(t testing.TB) {
 	var x struct {
 		before uint64
 		i      uint64
@@ -494,7 +494,7 @@ func TestAddUint64(t *testing.T) {
 	}
 }
 
-func TestAddUint64Method(t *testing.T) {
+func TestAddUint64Method(t testing.TB) {
 	var x struct {
 		before uint64
 		i      Uint64
@@ -516,7 +516,7 @@ func TestAddUint64Method(t *testing.T) {
 	}
 }
 
-func TestAddUintptr(t *testing.T) {
+func TestAddUintptr(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      uintptr
@@ -539,7 +539,7 @@ func TestAddUintptr(t *testing.T) {
 	}
 }
 
-func TestAddUintptrMethod(t *testing.T) {
+func TestAddUintptrMethod(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      Uintptr
@@ -562,7 +562,7 @@ func TestAddUintptrMethod(t *testing.T) {
 	}
 }
 
-func TestCompareAndSwapInt32(t *testing.T) {
+func TestCompareAndSwapInt32(t testing.TB) {
 	var x struct {
 		before int32
 		i      int32
@@ -591,7 +591,7 @@ func TestCompareAndSwapInt32(t *testing.T) {
 	}
 }
 
-func TestCompareAndSwapInt32Method(t *testing.T) {
+func TestCompareAndSwapInt32Method(t testing.TB) {
 	var x struct {
 		before int32
 		i      Int32
@@ -620,7 +620,7 @@ func TestCompareAndSwapInt32Method(t *testing.T) {
 	}
 }
 
-func TestCompareAndSwapUint32(t *testing.T) {
+func TestCompareAndSwapUint32(t testing.TB) {
 	var x struct {
 		before uint32
 		i      uint32
@@ -649,7 +649,7 @@ func TestCompareAndSwapUint32(t *testing.T) {
 	}
 }
 
-func TestCompareAndSwapUint32Method(t *testing.T) {
+func TestCompareAndSwapUint32Method(t testing.TB) {
 	var x struct {
 		before uint32
 		i      Uint32
@@ -678,7 +678,7 @@ func TestCompareAndSwapUint32Method(t *testing.T) {
 	}
 }
 
-func TestCompareAndSwapInt64(t *testing.T) {
+func TestCompareAndSwapInt64(t testing.TB) {
 	var x struct {
 		before int64
 		i      int64
@@ -708,7 +708,7 @@ func TestCompareAndSwapInt64(t *testing.T) {
 	}
 }
 
-func TestCompareAndSwapInt64Method(t *testing.T) {
+func TestCompareAndSwapInt64Method(t testing.TB) {
 	var x struct {
 		before int64
 		i      Int64
@@ -738,7 +738,7 @@ func TestCompareAndSwapInt64Method(t *testing.T) {
 	}
 }
 
-func testCompareAndSwapUint64(t *testing.T, cas func(*uint64, uint64, uint64) bool) {
+func testCompareAndSwapUint64(t testing.TB, cas func(*uint64, uint64, uint64) bool) {
 	var x struct {
 		before uint64
 		i      uint64
@@ -768,11 +768,11 @@ func testCompareAndSwapUint64(t *testing.T, cas func(*uint64, uint64, uint64) bo
 	}
 }
 
-func TestCompareAndSwapUint64(t *testing.T) {
+func TestCompareAndSwapUint64(t testing.TB) {
 	testCompareAndSwapUint64(t, CompareAndSwapUint64)
 }
 
-func TestCompareAndSwapUint64Method(t *testing.T) {
+func TestCompareAndSwapUint64Method(t testing.TB) {
 	var x struct {
 		before uint64
 		i      Uint64
@@ -802,7 +802,7 @@ func TestCompareAndSwapUint64Method(t *testing.T) {
 	}
 }
 
-func TestCompareAndSwapUintptr(t *testing.T) {
+func TestCompareAndSwapUintptr(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      uintptr
@@ -833,7 +833,7 @@ func TestCompareAndSwapUintptr(t *testing.T) {
 	}
 }
 
-func TestCompareAndSwapUintptrMethod(t *testing.T) {
+func TestCompareAndSwapUintptrMethod(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      Uintptr
@@ -864,7 +864,7 @@ func TestCompareAndSwapUintptrMethod(t *testing.T) {
 	}
 }
 
-func TestCompareAndSwapPointer(t *testing.T) {
+func TestCompareAndSwapPointer(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      unsafe.Pointer
@@ -895,7 +895,7 @@ func TestCompareAndSwapPointer(t *testing.T) {
 	}
 }
 
-func TestCompareAndSwapPointerMethod(t *testing.T) {
+func TestCompareAndSwapPointerMethod(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      Pointer[byte]
@@ -927,7 +927,7 @@ func TestCompareAndSwapPointerMethod(t *testing.T) {
 	}
 }
 
-func TestLoadInt32(t *testing.T) {
+func TestLoadInt32(t testing.TB) {
 	var x struct {
 		before int32
 		i      int32
@@ -947,7 +947,7 @@ func TestLoadInt32(t *testing.T) {
 	}
 }
 
-func TestLoadInt32Method(t *testing.T) {
+func TestLoadInt32Method(t testing.TB) {
 	var x struct {
 		before int32
 		i      Int32
@@ -969,7 +969,7 @@ func TestLoadInt32Method(t *testing.T) {
 	}
 }
 
-func TestLoadUint32(t *testing.T) {
+func TestLoadUint32(t testing.TB) {
 	var x struct {
 		before uint32
 		i      uint32
@@ -989,7 +989,7 @@ func TestLoadUint32(t *testing.T) {
 	}
 }
 
-func TestLoadUint32Method(t *testing.T) {
+func TestLoadUint32Method(t testing.TB) {
 	var x struct {
 		before uint32
 		i      Uint32
@@ -1011,7 +1011,7 @@ func TestLoadUint32Method(t *testing.T) {
 	}
 }
 
-func TestLoadInt64(t *testing.T) {
+func TestLoadInt64(t testing.TB) {
 	var x struct {
 		before int64
 		i      int64
@@ -1032,7 +1032,7 @@ func TestLoadInt64(t *testing.T) {
 	}
 }
 
-func TestLoadInt64Method(t *testing.T) {
+func TestLoadInt64Method(t testing.TB) {
 	var x struct {
 		before int64
 		i      Int64
@@ -1055,7 +1055,7 @@ func TestLoadInt64Method(t *testing.T) {
 	}
 }
 
-func TestLoadUint64(t *testing.T) {
+func TestLoadUint64(t testing.TB) {
 	var x struct {
 		before uint64
 		i      uint64
@@ -1076,7 +1076,7 @@ func TestLoadUint64(t *testing.T) {
 	}
 }
 
-func TestLoadUint64Method(t *testing.T) {
+func TestLoadUint64Method(t testing.TB) {
 	var x struct {
 		before uint64
 		i      Uint64
@@ -1099,7 +1099,7 @@ func TestLoadUint64Method(t *testing.T) {
 	}
 }
 
-func TestLoadUintptr(t *testing.T) {
+func TestLoadUintptr(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      uintptr
@@ -1121,7 +1121,7 @@ func TestLoadUintptr(t *testing.T) {
 	}
 }
 
-func TestLoadUintptrMethod(t *testing.T) {
+func TestLoadUintptrMethod(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      Uintptr
@@ -1145,7 +1145,7 @@ func TestLoadUintptrMethod(t *testing.T) {
 	}
 }
 
-func TestLoadPointer(t *testing.T) {
+func TestLoadPointer(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      unsafe.Pointer
@@ -1167,7 +1167,7 @@ func TestLoadPointer(t *testing.T) {
 	}
 }
 
-func TestLoadPointerMethod(t *testing.T) {
+func TestLoadPointerMethod(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      Pointer[byte]
@@ -1190,7 +1190,7 @@ func TestLoadPointerMethod(t *testing.T) {
 	}
 }
 
-func TestStoreInt32(t *testing.T) {
+func TestStoreInt32(t testing.TB) {
 	var x struct {
 		before int32
 		i      int32
@@ -1211,7 +1211,7 @@ func TestStoreInt32(t *testing.T) {
 	}
 }
 
-func TestStoreInt32Method(t *testing.T) {
+func TestStoreInt32Method(t testing.TB) {
 	var x struct {
 		before int32
 		i      Int32
@@ -1232,7 +1232,7 @@ func TestStoreInt32Method(t *testing.T) {
 	}
 }
 
-func TestStoreUint32(t *testing.T) {
+func TestStoreUint32(t testing.TB) {
 	var x struct {
 		before uint32
 		i      uint32
@@ -1253,7 +1253,7 @@ func TestStoreUint32(t *testing.T) {
 	}
 }
 
-func TestStoreUint32Method(t *testing.T) {
+func TestStoreUint32Method(t testing.TB) {
 	var x struct {
 		before uint32
 		i      Uint32
@@ -1274,7 +1274,7 @@ func TestStoreUint32Method(t *testing.T) {
 	}
 }
 
-func TestStoreInt64(t *testing.T) {
+func TestStoreInt64(t testing.TB) {
 	var x struct {
 		before int64
 		i      int64
@@ -1296,7 +1296,7 @@ func TestStoreInt64(t *testing.T) {
 	}
 }
 
-func TestStoreInt64Method(t *testing.T) {
+func TestStoreInt64Method(t testing.TB) {
 	var x struct {
 		before int64
 		i      Int64
@@ -1318,7 +1318,7 @@ func TestStoreInt64Method(t *testing.T) {
 	}
 }
 
-func TestStoreUint64(t *testing.T) {
+func TestStoreUint64(t testing.TB) {
 	var x struct {
 		before uint64
 		i      uint64
@@ -1340,7 +1340,7 @@ func TestStoreUint64(t *testing.T) {
 	}
 }
 
-func TestStoreUint64Method(t *testing.T) {
+func TestStoreUint64Method(t testing.TB) {
 	var x struct {
 		before uint64
 		i      Uint64
@@ -1362,7 +1362,7 @@ func TestStoreUint64Method(t *testing.T) {
 	}
 }
 
-func TestStoreUintptr(t *testing.T) {
+func TestStoreUintptr(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      uintptr
@@ -1385,7 +1385,7 @@ func TestStoreUintptr(t *testing.T) {
 	}
 }
 
-func TestStoreUintptrMethod(t *testing.T) {
+func TestStoreUintptrMethod(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      Uintptr
@@ -1408,7 +1408,7 @@ func TestStoreUintptrMethod(t *testing.T) {
 	}
 }
 
-func TestStorePointer(t *testing.T) {
+func TestStorePointer(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      unsafe.Pointer
@@ -1429,7 +1429,7 @@ func TestStorePointer(t *testing.T) {
 	}
 }
 
-func TestStorePointerMethod(t *testing.T) {
+func TestStorePointerMethod(t testing.TB) {
 	var x struct {
 		before uintptr
 		i      Pointer[byte]
@@ -1693,7 +1693,7 @@ func hammerCompareAndSwapUintptr32Method(uaddr *uint32, count int) {
 	}
 }
 
-func TestHammer32(t *testing.T) {
+func TestHammer32(t testing.TB) {
 	const p = 4
 	n := 100000
 	if short {
@@ -1960,7 +1960,7 @@ func hammerCompareAndSwapUintptr64Method(uaddr *uint64, count int) {
 	}
 }
 
-func TestHammer64(t *testing.T) {
+func TestHammer64(t testing.TB) {
 	const p = 4
 	n := 100000
 	if short {
@@ -1991,7 +1991,7 @@ func TestHammer64(t *testing.T) {
 	}
 }
 
-func hammerStoreLoadInt32(t *testing.T, paddr unsafe.Pointer) {
+func hammerStoreLoadInt32(t testing.TB, paddr unsafe.Pointer) {
 	addr := (*int32)(paddr)
 	v := LoadInt32(addr)
 	vlo := v & ((1 << 16) - 1)
@@ -2006,7 +2006,7 @@ func hammerStoreLoadInt32(t *testing.T, paddr unsafe.Pointer) {
 	StoreInt32(addr, new)
 }
 
-func hammerStoreLoadInt32Method(t *testing.T, paddr unsafe.Pointer) {
+func hammerStoreLoadInt32Method(t testing.TB, paddr unsafe.Pointer) {
 	addr := (*int32)(paddr)
 	v := LoadInt32(addr)
 	vlo := v & ((1 << 16) - 1)
@@ -2021,7 +2021,7 @@ func hammerStoreLoadInt32Method(t *testing.T, paddr unsafe.Pointer) {
 	StoreInt32(addr, new)
 }
 
-func hammerStoreLoadUint32(t *testing.T, paddr unsafe.Pointer) {
+func hammerStoreLoadUint32(t testing.TB, paddr unsafe.Pointer) {
 	addr := (*uint32)(paddr)
 	v := LoadUint32(addr)
 	vlo := v & ((1 << 16) - 1)
@@ -2036,7 +2036,7 @@ func hammerStoreLoadUint32(t *testing.T, paddr unsafe.Pointer) {
 	StoreUint32(addr, new)
 }
 
-func hammerStoreLoadUint32Method(t *testing.T, paddr unsafe.Pointer) {
+func hammerStoreLoadUint32Method(t testing.TB, paddr unsafe.Pointer) {
 	addr := (*Uint32)(paddr)
 	v := addr.Load()
 	vlo := v & ((1 << 16) - 1)
@@ -2051,7 +2051,7 @@ func hammerStoreLoadUint32Method(t *testing.T, paddr unsafe.Pointer) {
 	addr.Store(new)
 }
 
-func hammerStoreLoadInt64(t *testing.T, paddr unsafe.Pointer) {
+func hammerStoreLoadInt64(t testing.TB, paddr unsafe.Pointer) {
 	addr := (*int64)(paddr)
 	v := LoadInt64(addr)
 	vlo := v & ((1 << 32) - 1)
@@ -2063,7 +2063,7 @@ func hammerStoreLoadInt64(t *testing.T, paddr unsafe.Pointer) {
 	StoreInt64(addr, new)
 }
 
-func hammerStoreLoadInt64Method(t *testing.T, paddr unsafe.Pointer) {
+func hammerStoreLoadInt64Method(t testing.TB, paddr unsafe.Pointer) {
 	addr := (*Int64)(paddr)
 	v := addr.Load()
 	vlo := v & ((1 << 32) - 1)
@@ -2075,7 +2075,7 @@ func hammerStoreLoadInt64Method(t *testing.T, paddr unsafe.Pointer) {
 	addr.Store(new)
 }
 
-func hammerStoreLoadUint64(t *testing.T, paddr unsafe.Pointer) {
+func hammerStoreLoadUint64(t testing.TB, paddr unsafe.Pointer) {
 	addr := (*uint64)(paddr)
 	v := LoadUint64(addr)
 	vlo := v & ((1 << 32) - 1)
@@ -2087,7 +2087,7 @@ func hammerStoreLoadUint64(t *testing.T, paddr unsafe.Pointer) {
 	StoreUint64(addr, new)
 }
 
-func hammerStoreLoadUint64Method(t *testing.T, paddr unsafe.Pointer) {
+func hammerStoreLoadUint64Method(t testing.TB, paddr unsafe.Pointer) {
 	addr := (*Uint64)(paddr)
 	v := addr.Load()
 	vlo := v & ((1 << 32) - 1)
@@ -2099,7 +2099,7 @@ func hammerStoreLoadUint64Method(t *testing.T, paddr unsafe.Pointer) {
 	addr.Store(new)
 }
 
-func hammerStoreLoadUintptr(t *testing.T, paddr unsafe.Pointer) {
+func hammerStoreLoadUintptr(t testing.TB, paddr unsafe.Pointer) {
 	addr := (*uintptr)(paddr)
 	v := LoadUintptr(addr)
 	new := v
@@ -2126,7 +2126,7 @@ func hammerStoreLoadUintptr(t *testing.T, paddr unsafe.Pointer) {
 }
 
 //go:nocheckptr
-func hammerStoreLoadUintptrMethod(t *testing.T, paddr unsafe.Pointer) {
+func hammerStoreLoadUintptrMethod(t testing.TB, paddr unsafe.Pointer) {
 	addr := (*Uintptr)(paddr)
 	v := addr.Load()
 	new := v
@@ -2156,7 +2156,7 @@ func hammerStoreLoadUintptrMethod(t *testing.T, paddr unsafe.Pointer) {
 // atomically; it's not actually calculating pointers.
 //
 //go:nocheckptr
-func hammerStoreLoadPointer(t *testing.T, paddr unsafe.Pointer) {
+func hammerStoreLoadPointer(t testing.TB, paddr unsafe.Pointer) {
 	addr := (*unsafe.Pointer)(paddr)
 	v := uintptr(LoadPointer(addr))
 	new := v
@@ -2186,7 +2186,7 @@ func hammerStoreLoadPointer(t *testing.T, paddr unsafe.Pointer) {
 // atomically; it's not actually calculating pointers.
 //
 //go:nocheckptr
-func hammerStoreLoadPointerMethod(t *testing.T, paddr unsafe.Pointer) {
+func hammerStoreLoadPointerMethod(t testing.TB, paddr unsafe.Pointer) {
 	addr := (*Pointer[byte])(paddr)
 	v := uintptr(unsafe.Pointer(addr.Load()))
 	new := v
@@ -2212,8 +2212,8 @@ func hammerStoreLoadPointerMethod(t *testing.T, paddr unsafe.Pointer) {
 	addr.Store((*byte)(unsafe.Pointer(new)))
 }
 
-func TestHammerStoreLoad(t *testing.T) {
-	tests := []func(*testing.T, unsafe.Pointer){
+func TestHammerStoreLoad(t testing.TB) {
+	tests := []func(testing.TB, unsafe.Pointer){
 		hammerStoreLoadInt32, hammerStoreLoadUint32,
 		hammerStoreLoadUintptr, hammerStoreLoadPointer,
 		hammerStoreLoadInt32Method, hammerStoreLoadUint32Method,
@@ -2249,7 +2249,7 @@ func TestHammerStoreLoad(t *testing.T) {
 	}
 }
 
-func TestStoreLoadSeqCst32(t *testing.T) {
+func TestStoreLoadSeqCst32(t testing.TB) {
 	if runtime.NumCPU() == 1 {
 		t.Skipf("Skipping test on %v processor machine", runtime.NumCPU())
 	}
@@ -2291,7 +2291,7 @@ func TestStoreLoadSeqCst32(t *testing.T) {
 	<-c
 }
 
-func TestStoreLoadSeqCst64(t *testing.T) {
+func TestStoreLoadSeqCst64(t testing.TB) {
 	if runtime.NumCPU() == 1 {
 		t.Skipf("Skipping test on %v processor machine", runtime.NumCPU())
 	}
@@ -2333,7 +2333,7 @@ func TestStoreLoadSeqCst64(t *testing.T) {
 	<-c
 }
 
-func TestStoreLoadRelAcq32(t *testing.T) {
+func TestStoreLoadRelAcq32(t testing.TB) {
 	if runtime.NumCPU() == 1 {
 		t.Skipf("Skipping test on %v processor machine", runtime.NumCPU())
 	}
@@ -2379,7 +2379,7 @@ func TestStoreLoadRelAcq32(t *testing.T) {
 	<-c
 }
 
-func TestStoreLoadRelAcq64(t *testing.T) {
+func TestStoreLoadRelAcq64(t testing.TB) {
 	if runtime.NumCPU() == 1 {
 		t.Skipf("Skipping test on %v processor machine", runtime.NumCPU())
 	}
@@ -2425,7 +2425,7 @@ func TestStoreLoadRelAcq64(t *testing.T) {
 	<-c
 }
 
-func shouldPanic(t *testing.T, name string, f func()) {
+func shouldPanic(t testing.TB, name string, f func()) {
 	defer func() {
 		// Check that all GC maps are sane.
 		runtime.GC()
@@ -2441,7 +2441,7 @@ func shouldPanic(t *testing.T, name string, f func()) {
 	f()
 }
 
-func TestUnaligned64(t *testing.T) {
+func TestUnaligned64(t testing.TB) {
 	// Unaligned 64-bit atomics on 32-bit systems are
 	// a continual source of pain. Test that on 32-bit systems they crash
 	// instead of failing silently.
@@ -2462,7 +2462,7 @@ func TestUnaligned64(t *testing.T) {
 	shouldPanic(t, "AddUint64Method", func() { (*Uint64)(unsafe.Pointer(p)).Add(3) })
 }
 
-func TestAutoAligned64(t *testing.T) {
+func TestAutoAligned64(t testing.TB) {
 	var signed struct {
 		_ uint32
 		i Int64
@@ -2486,7 +2486,7 @@ func TestAutoAligned64(t *testing.T) {
 	}
 }
 
-func TestNilDeref(t *testing.T) {
+func TestNilDeref(t testing.TB) {
 	funcs := [...]func(){
 		func() { CompareAndSwapInt32(nil, 0, 0) },
 		func() { (*Int32)(nil).CompareAndSwap(0, 0) },
