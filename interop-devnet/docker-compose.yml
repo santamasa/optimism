@@ -116,6 +116,7 @@ services:
     environment:
       GETH_MINER_RECOMMIT: 100ms
       GETH_ROLLUP_INTEROPRPC: "ws://op-supervisor:8545"
+      GETH_ROLLUP_INTEROPMEMPOOLFILTERING: true
 
   l2-b:
     depends_on:
@@ -136,6 +137,7 @@ services:
     environment:
       GETH_MINER_RECOMMIT: 100ms
       GETH_ROLLUP_INTEROPRPC: "ws://op-supervisor:8545"
+      GETH_ROLLUP_INTEROPMEMPOOLFILTERING: true
 
   op-node-a:
     depends_on:
