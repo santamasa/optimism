@@ -41,6 +41,9 @@ parameters:
   publish_contract_artifacts_dispatch:
     type: boolean
     default: false
+  stale_check_dispatch:
+    type: boolean
+    default: false
 
 orbs:
   go: circleci/go@1.8.0
@@ -347,7 +350,7 @@ jobs:
     machine:
       image: <<pipeline.parameters.base_image>>
       resource_class: "<<parameters.resource_class>>"
-      docker_layer_caching: true  # we rely on this for faster builds, and actively warm it up for builds with common stages
+      docker_layer_caching: true # we rely on this for faster builds, and actively warm it up for builds with common stages
     steps:
       - checkout
       - attach_workspace:
@@ -458,7 +461,7 @@ jobs:
                   docker save -o /tmp/docker_images/<<parameters.docker_name>>.tar $IMAGE_NAME
             - persist_to_workspace:
                 root: /tmp/docker_images
-                paths:  # only write the one file, to avoid concurrent workspace-file additions
+                paths: # only write the one file, to avoid concurrent workspace-file additions
                   - "<<parameters.docker_name>>.tar"
       - when:
           condition: "<<parameters.release>>"
@@ -471,11 +474,11 @@ jobs:
           condition:
             or:
               - and:
-                - "<<parameters.publish>>"
-                - "<<parameters.release>>"
+                  - "<<parameters.publish>>"
+                  - "<<parameters.release>>"
               - and:
-                - "<<parameters.publish>>"
-                - equal: [develop, << pipeline.git.branch >>]
+                  - "<<parameters.publish>>"
+                  - equal: [develop, << pipeline.git.branch >>]
           steps:
             - gcp-oidc-authenticate:
                 service_account_email: GCP_SERVICE_ATTESTOR_ACCOUNT_EMAIL
@@ -1000,8 +1003,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - run:
-          make -C op-program verify-reproducibility
+      - run: make -C op-program verify-reproducibility
       - notify-failures-on-develop:
           mentions: "@proofs-team"
 
@@ -1053,7 +1055,7 @@ jobs:
       - checkout
       - unless:
           condition:
-            equal: [ "develop", << pipeline.git.branch >> ]
+            equal: ["develop", << pipeline.git.branch >>]
           steps:
             - run:
                 # Scan changed files in PRs, block on new issues only (existing issues ignored)
@@ -1109,7 +1111,7 @@ jobs:
           paths:
             - "/go/pkg/mod"
 
-  bedrock-go-tests:  # just a helper, that depends on all the actual test jobs
+  bedrock-go-tests: # just a helper, that depends on all the actual test jobs
     docker:
       # Use a smaller base image to avoid pulling the huge ci-builder
       # image which is not needed for this job and sometimes misses
@@ -1273,19 +1275,15 @@ jobs:
 
   stale-check:
     docker:
-      - image: cimg/python:3.11 # Specify the Python Docker image directly
-    environment:
-      GITHUB_TOKEN: ${STALE_GITHUB_TOKEN}
-      REPO: "ethereum-optimism/optimism" # Set the repository name
+      - image: cimg/python:3.11
     steps:
-      - checkout
       - run:
           name: Run Stale Check Script
           command: |
-            python -m venv venv
-            . venv/bin/activate
-            pip install -r .circleci/scripts/requirements.txt
-            python .circleci/scripts/stale-check.py
+            git clone https://github.com/ethereum-optimism/circleci-utils.git /tmp/circleci-utils
+            cd /tmp/circleci-utils/stale-check
+            pip3 install -r requirements.txt
+            python3 stale-check.py --repo "ethereum-optimism/${CIRCLE_PROJECT_REPONAME}" --github-token "${STALE_GITHUB_TOKEN}"
 
 workflows:
   main:
@@ -1293,11 +1291,11 @@ workflows:
       and:
         - or:
             # Trigger on new commits
-            - equal: [ webhook, << pipeline.trigger_source >> ]
+            - equal: [webhook, << pipeline.trigger_source >>]
               # Trigger on manual triggers if explicitly requested
-            - equal: [ true, << pipeline.parameters.main_dispatch >> ]
+            - equal: [true, << pipeline.parameters.main_dispatch >>]
         - not:
-            equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+            equal: [scheduled_pipeline, << pipeline.trigger_source >>]
     jobs:
       - go-mod-download
       - contracts-bedrock-build:
@@ -1441,7 +1439,7 @@ workflows:
           notify: true
           matrix:
             parameters:
-              mips_word_size: [ 32, 64 ]
+              mips_word_size: [32, 64]
       - cannon-build-test-vectors
       - todo-issues:
           name: todo-issues-check
@@ -1450,8 +1448,7 @@ workflows:
           name: shell-check
           # We don't need the `exclude` key as the orb detects the `.shellcheckrc`
           dir: .
-          ignore-dirs:
-            ./packages/contracts-bedrock/lib
+          ignore-dirs: ./packages/contracts-bedrock/lib
 
   go-release-deployer:
     jobs:
@@ -1468,7 +1465,7 @@ workflows:
   release:
     when:
       not:
-        equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+        equal: [scheduled_pipeline, << pipeline.trigger_source >>]
     jobs:
       # Wait for approval on the release
       - hold:
@@ -1561,7 +1558,7 @@ workflows:
 
   scheduled-todo-issues:
     when:
-      equal: [ build_four_hours, <<pipeline.schedule.name>> ]
+      equal: [build_four_hours, <<pipeline.schedule.name>>]
     jobs:
       - todo-issues:
           name: todo-issue-checks
@@ -1570,7 +1567,7 @@ workflows:
 
   scheduled-fpp:
     when:
-      equal: [ build_hourly, <<pipeline.schedule.name>> ]
+      equal: [build_hourly, <<pipeline.schedule.name>>]
     jobs:
       - fpp-verify:
           context:
@@ -1580,8 +1577,9 @@ workflows:
   develop-publish-contract-artifacts:
     when:
       or:
-        - equal: [ "develop", <<pipeline.git.branch>> ]
-        - equal: [ true, <<pipeline.parameters.publish_contract_artifacts_dispatch>> ]
+        - equal: ["develop", <<pipeline.git.branch>>]
+        - equal:
+            [true, <<pipeline.parameters.publish_contract_artifacts_dispatch>>]
     jobs:
       - publish-contract-artifacts
 
@@ -1589,10 +1587,10 @@ workflows:
     when:
       and:
         - or:
-          - equal: [ "develop", <<pipeline.git.branch>> ]
-          - equal: [ true, <<pipeline.parameters.fault_proofs_dispatch>> ]
+            - equal: ["develop", <<pipeline.git.branch>>]
+            - equal: [true, <<pipeline.parameters.fault_proofs_dispatch>>]
         - not:
-            equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+            equal: [scheduled_pipeline, << pipeline.trigger_source >>]
     jobs:
       - go-mod-download
       - cannon-prestate
@@ -1622,10 +1620,10 @@ workflows:
     when:
       and:
         - or:
-          - equal: [ "develop", <<pipeline.git.branch>> ]
-          - equal: [ true, <<pipeline.parameters.kontrol_dispatch>> ]
+            - equal: ["develop", <<pipeline.git.branch>>]
+            - equal: [true, <<pipeline.parameters.kontrol_dispatch>>]
         - not:
-           equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+            equal: [scheduled_pipeline, << pipeline.trigger_source >>]
     jobs:
       - kontrol-tests:
           context:
@@ -1635,8 +1633,8 @@ workflows:
   scheduled-cannon-full-tests:
     when:
       or:
-        - equal: [ build_four_hours, <<pipeline.schedule.name>> ]
-        - equal: [ true, << pipeline.parameters.cannon_full_test_dispatch >> ]
+        - equal: [build_four_hours, <<pipeline.schedule.name>>]
+        - equal: [true, << pipeline.parameters.cannon_full_test_dispatch >>]
     jobs:
       - contracts-bedrock-build:
           skip_pattern: test
@@ -1648,14 +1646,14 @@ workflows:
             - slack
           matrix:
             parameters:
-              mips_word_size: [ 32, 64 ]
+              mips_word_size: [32, 64]
 
   scheduled-docker-publish:
     when:
       or:
-        - equal: [ build_hourly, <<pipeline.schedule.name>> ]
+        - equal: [build_hourly, <<pipeline.schedule.name>>]
         # Trigger on manual triggers if explicitly requested
-        - equal: [ true, << pipeline.parameters.docker_publish_dispatch >> ]
+        - equal: [true, << pipeline.parameters.docker_publish_dispatch >>]
     jobs:
       - docker-build:
           matrix:
@@ -1706,21 +1704,19 @@ workflows:
   scheduled-preimage-reproducibility:
     when:
       or:
-        - equal: [build_daily, <<pipeline.schedule.name>> ]
+        - equal: [build_daily, <<pipeline.schedule.name>>]
         # Trigger on manual triggers if explicitly requested
-        - equal: [ true, << pipeline.parameters.reproducibility_dispatch >> ]
+        - equal: [true, << pipeline.parameters.reproducibility_dispatch >>]
     jobs:
       - preimage-reproducibility:
-          context:
-            slack
+          context: slack
 
   scheduled-stale-check:
-    triggers:
-      - schedule:
-          cron: "30 1 * * *"
-          filters:
-            branches:
-              only: main
+    when:
+      or:
+        - equal: [build_daily, <<pipeline.schedule.name>>]
+          # Trigger on manual triggers if explicitly requested
+        - equal: [true, << pipeline.parameters.stale_check_dispatch >>]
     jobs:
       - stale-check:
           context: github-token-stale-check
