@@ -9,38 +9,12 @@ import (
 )
 
 func RunTest(testFunc func(testing.TB), name string) {
-	runner := newTestRunner(name)
-	runner.Run("", testFunc)
+	var tester testing.TB = newMockT()
+	goRunTest(name, testFunc, tester)
 }
 
 func ExecRunnerTest(testFunc func(*TestRunner), name string) {
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	r := newTestRunner(name)
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				fmt.Printf("Test panicked: %v\n\t%v", name, err)
-				os.Exit(1)
-			}
-
-			if r.Failed() {
-				fmt.Printf("Test failed: %v\n", name)
-				os.Exit(1)
-			} else if r.Skipped() {
-				fmt.Printf("Test skipped: %v\n", name)
-			} else {
-				fmt.Printf("Test passed: %v\n", name)
-			}
-
-			wg.Done()
-		}()
-
-		testFunc(r)
-	}()
-
-	wg.Wait()
+	goRunTest(name, testFunc, newTestRunner(name))
 }
 
 type TestRunner struct {
@@ -52,40 +26,44 @@ func newTestRunner(baseName string) *TestRunner {
 	return &TestRunner{mockT: newMockT(), baseName: baseName}
 }
 
-func (r *TestRunner) Run(name string, f func(t testing.TB)) bool {
-	var wg sync.WaitGroup
-	wg.Add(1)
-
+func (r *TestRunner) Run(name string, testFunc func(t testing.TB)) bool {
 	testName := r.baseName
 	if name != "" {
 		testName = fmt.Sprintf("%v (%v)", r.baseName, name)
 	}
 
+	var tester testing.TB = r
+	goRunTest(testName, testFunc, tester)
+	return !r.failed
+}
+
+func goRunTest[T testing.TB](testName string, testFunc func(t T), t T) {
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Printf("Test run panicked: %v\n\t%v", testName, err)
+				fmt.Printf("Test panicked: %v\n\t%v", testName, err)
 				os.Exit(1)
 			}
 
-			if r.Failed() {
-				fmt.Printf("Test run failed: %v\n", testName)
+			if t.Failed() {
+				fmt.Printf("Test failed: %v\n", testName)
 				os.Exit(1)
-			} else if r.Skipped() {
-				fmt.Printf("Test run skipped: %v\n", testName)
+			} else if t.Skipped() {
+				fmt.Printf("Test skipped: %v\n", testName)
 			} else {
-				fmt.Printf("Test run passed: %v\n", testName)
+				fmt.Printf("Test passed: %v\n", testName)
 			}
 
 			wg.Done()
 		}()
 
-		f(r)
+		testFunc(t)
 	}()
 
 	wg.Wait()
-
-	return !r.failed
 }
 
 type mockT struct {
