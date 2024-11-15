@@ -1280,7 +1280,7 @@ jobs:
       - run:
           name: Run Stale Check Script
           command: |
-            git clone https://github.com/ethereum-optimism/circleci-utils.git /tmp/circleci-utils
+            git clone --branch main --depth 1 https://github.com/ethereum-optimism/circleci-utils.git /tmp/circleci-utils
             cd /tmp/circleci-utils/stale-check
             pip3 install -r requirements.txt
             python3 stale-check.py --repo "ethereum-optimism/${CIRCLE_PROJECT_REPONAME}" --github-token "${STALE_GITHUB_TOKEN}"
