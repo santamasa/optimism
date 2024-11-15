@@ -74,6 +74,10 @@ func TestInstrumentedState_UtilsCheck(t *testing.T) {
 }
 
 func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
+	if os.Getenv("SKIP_SLOW_TESTS") == "true" {
+		t.Skip("Skipping slow test because SKIP_SLOW_TESTS is enabled")
+	}
+
 	t.Parallel()
 	cases := []struct {
 		name           string
