@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"testing"
 
 	"utils/testutil"
 )
@@ -13,6 +12,6 @@ func main() {
 	fmt.Println("Passed test that should have failed")
 }
 
-func ShouldFail(t testing.TB) {
+func ShouldFail(t *testutil.TestRunner) {
 	t.Fail()
 }

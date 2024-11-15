@@ -46,7 +46,7 @@ import (
 
 var short bool = true
 
-func TestPool(t testing.TB) {
+func TestPool(t *testutil.TestRunner) {
 	// disable GC so we can control when it happens.
 	defer debug.SetGCPercent(debug.SetGCPercent(-1))
 	var p Pool
@@ -87,7 +87,7 @@ func TestPool(t testing.TB) {
 	}
 }
 
-func TestPoolNew(t testing.TB) {
+func TestPoolNew(t *testutil.TestRunner) {
 	// disable GC so we can control when it happens.
 	defer debug.SetGCPercent(debug.SetGCPercent(-1))
 
@@ -120,12 +120,12 @@ func TestPoolNew(t testing.TB) {
 }
 
 // Test that Pool does not hold pointers to previously cached resources.
-func TestPoolGC(t testing.TB) {
+func TestPoolGC(t *testutil.TestRunner) {
 	testPool(t, true)
 }
 
 // Test that Pool releases resources on GC.
-func TestPoolRelease(t testing.TB) {
+func TestPoolRelease(t *testutil.TestRunner) {
 	testPool(t, false)
 }
 
@@ -162,7 +162,7 @@ loop:
 	}
 }
 
-func TestPoolStress(t testing.TB) {
+func TestPoolStress(t *testutil.TestRunner) {
 	const P = 10
 	N := int(1e6)
 	if short {
@@ -192,11 +192,11 @@ func TestPoolStress(t testing.TB) {
 	}
 }
 
-func TestPoolDequeue(t testing.TB) {
+func TestPoolDequeue(t *testutil.TestRunner) {
 	testPoolDequeue(t, NewPoolDequeue(16))
 }
 
-func TestPoolChain(t testing.TB) {
+func TestPoolChain(t *testutil.TestRunner) {
 	testPoolDequeue(t, NewPoolChain())
 }
 

@@ -42,11 +42,9 @@ func TestInstrumentedState_UtilsCheck(t *testing.T) {
 		expectedOutput string
 	}{
 		{name: "utilscheck", expectedOutput: "Test failed: ShouldFail"},
-		{name: "utilscheck2", expectedOutput: "Test failed: ShouldFail"},
-		{name: "utilscheck3", expectedOutput: "Test failed: ShouldFail"},
+		{name: "utilscheck2", expectedOutput: "Test failed: ShouldFail (subtest 2)"},
+		{name: "utilscheck3", expectedOutput: "Test panicked: ShouldFail (panic test)"},
 		{name: "utilscheck4", expectedOutput: "Test panicked: ShouldFail"},
-		{name: "utilscheck5", expectedOutput: "Test panicked: ShouldFail (panic test)"},
-		{name: "utilscheck6", expectedOutput: "Test panicked: ShouldFail"},
 	}
 
 	for _, c := range cases {

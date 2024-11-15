@@ -8,13 +8,17 @@ import (
 )
 
 func main() {
-	testutil.ExecRunnerTest(ShouldFail, "ShouldFail")
+	testutil.RunTest(ShouldFail, "ShouldFail")
 
 	fmt.Println("Passed test that should have failed")
 }
 
 func ShouldFail(t *testutil.TestRunner) {
-	t.Run("", func(t testing.TB) {
+	t.Run("subtest 1", func(t testing.TB) {
+		// Do something
+	})
+
+	t.Run("subtest 2", func(t testing.TB) {
 		t.Fail()
 	})
 }

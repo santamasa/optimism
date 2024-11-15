@@ -40,6 +40,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"testing/quick"
+
+	"utils/testutil"
 )
 
 type mapOp string
@@ -155,19 +157,19 @@ func applyDeepCopyMap(calls []mapCall) ([]mapResult, map[any]any) {
 	return applyCalls(new(DeepCopyMap), calls)
 }
 
-func TestMapMatchesRWMutex(t testing.TB) {
+func TestMapMatchesRWMutex(t *testutil.TestRunner) {
 	if err := quick.CheckEqual(applyMap, applyRWMutexMap, nil); err != nil {
 		t.Error(err)
 	}
 }
 
-func TestMapMatchesDeepCopy(t testing.TB) {
+func TestMapMatchesDeepCopy(t *testutil.TestRunner) {
 	if err := quick.CheckEqual(applyMap, applyDeepCopyMap, nil); err != nil {
 		t.Error(err)
 	}
 }
 
-func TestConcurrentRange(t testing.TB) {
+func TestConcurrentRange(t *testutil.TestRunner) {
 	const mapSize = 1 << 10
 
 	m := new(sync.Map)
@@ -229,7 +231,7 @@ func TestConcurrentRange(t testing.TB) {
 	}
 }
 
-func TestIssue40999(t testing.TB) {
+func TestIssue40999(t *testutil.TestRunner) {
 	var m sync.Map
 
 	// Since the miss-counting in missLocked (via Delete)
@@ -252,7 +254,7 @@ func TestIssue40999(t testing.TB) {
 	}
 }
 
-func TestMapRangeNestedCall(t testing.TB) { // Issue 46399
+func TestMapRangeNestedCall(t *testutil.TestRunner) { // Issue 46399
 	var m sync.Map
 	for i, v := range [3]string{"hello", "world", "Go"} {
 		m.Store(i, v)
@@ -302,7 +304,7 @@ func TestMapRangeNestedCall(t testing.TB) { // Issue 46399
 	}
 }
 
-func TestCompareAndSwap_NonExistingKey(t testing.TB) {
+func TestCompareAndSwap_NonExistingKey(t *testutil.TestRunner) {
 	m := &sync.Map{}
 	if m.CompareAndSwap(m, nil, 42) {
 		// See https://go.dev/issue/51972#issuecomment-1126408637.
@@ -310,7 +312,7 @@ func TestCompareAndSwap_NonExistingKey(t testing.TB) {
 	}
 }
 
-func TestMapRangeNoAllocations(t testing.TB) { // Issue 62404
+func TestMapRangeNoAllocations(t *testutil.TestRunner) { // Issue 62404
 	var m sync.Map
 	allocs := testing.AllocsPerRun(10, func() {
 		m.Range(func(key, value any) bool {

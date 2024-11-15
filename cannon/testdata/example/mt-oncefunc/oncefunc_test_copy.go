@@ -48,7 +48,7 @@ import (
 
 // We assume that the Once.Do tests have already covered parallelism.
 
-func TestOnceFunc(t testing.TB) {
+func TestOnceFunc(t *testutil.TestRunner) {
 	calls := 0
 	f := sync.OnceFunc(func() { calls++ })
 	allocs := testing.AllocsPerRun(10, f)
@@ -60,7 +60,7 @@ func TestOnceFunc(t testing.TB) {
 	}
 }
 
-func TestOnceValue(t testing.TB) {
+func TestOnceValue(t *testutil.TestRunner) {
 	calls := 0
 	f := sync.OnceValue(func() int {
 		calls++
@@ -79,7 +79,7 @@ func TestOnceValue(t testing.TB) {
 	}
 }
 
-func TestOnceValues(t testing.TB) {
+func TestOnceValues(t *testutil.TestRunner) {
 	calls := 0
 	f := sync.OnceValues(func() (int, int) {
 		calls++
@@ -129,7 +129,7 @@ func testOncePanicWith(t testing.TB, calls *int, f func(), check func(label stri
 	}
 }
 
-func TestOnceFuncPanic(t testing.TB) {
+func TestOnceFuncPanic(t *testutil.TestRunner) {
 	calls := 0
 	f := sync.OnceFunc(func() {
 		calls++
@@ -138,7 +138,7 @@ func TestOnceFuncPanic(t testing.TB) {
 	testOncePanicX(t, &calls, f)
 }
 
-func TestOnceValuePanic(t testing.TB) {
+func TestOnceValuePanic(t *testutil.TestRunner) {
 	calls := 0
 	f := sync.OnceValue(func() int {
 		calls++
@@ -147,7 +147,7 @@ func TestOnceValuePanic(t testing.TB) {
 	testOncePanicX(t, &calls, func() { f() })
 }
 
-func TestOnceValuesPanic(t testing.TB) {
+func TestOnceValuesPanic(t *testutil.TestRunner) {
 	calls := 0
 	f := sync.OnceValues(func() (int, int) {
 		calls++
@@ -156,7 +156,7 @@ func TestOnceValuesPanic(t testing.TB) {
 	testOncePanicX(t, &calls, func() { f() })
 }
 
-func TestOnceFuncPanicNil(t testing.TB) {
+func TestOnceFuncPanicNil(t *testutil.TestRunner) {
 	calls := 0
 	f := sync.OnceFunc(func() {
 		calls++
@@ -171,7 +171,7 @@ func TestOnceFuncPanicNil(t testing.TB) {
 	})
 }
 
-func TestOnceFuncGoexit(t testing.TB) {
+func TestOnceFuncGoexit(t *testutil.TestRunner) {
 	// If f calls Goexit, the results are unspecified. But check that f doesn't
 	// get called twice.
 	calls := 0
@@ -194,7 +194,7 @@ func TestOnceFuncGoexit(t testing.TB) {
 	}
 }
 
-func TestOnceFuncPanicTraceback(t testing.TB) {
+func TestOnceFuncPanicTraceback(t *testutil.TestRunner) {
 	// Test that on the first invocation of a OnceFunc, the stack trace goes all
 	// the way to the origin of the panic.
 	f := sync.OnceFunc(onceFuncPanic)

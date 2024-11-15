@@ -37,6 +37,8 @@ import (
 	. "sync"
 	"sync/atomic"
 	"testing"
+
+	"utils/testutil"
 )
 
 func testWaitGroup(t testing.TB, wg1 *WaitGroup, wg2 *WaitGroup) {
@@ -65,7 +67,7 @@ func testWaitGroup(t testing.TB, wg1 *WaitGroup, wg2 *WaitGroup) {
 	}
 }
 
-func TestWaitGroup(t testing.TB) {
+func TestWaitGroup(t *testutil.TestRunner) {
 	wg1 := &WaitGroup{}
 	wg2 := &WaitGroup{}
 
@@ -75,7 +77,7 @@ func TestWaitGroup(t testing.TB) {
 	}
 }
 
-func TestWaitGroupMisuse(t testing.TB) {
+func TestWaitGroupMisuse(t *testutil.TestRunner) {
 	defer func() {
 		err := recover()
 		if err != "sync: negative WaitGroup counter" {
@@ -89,7 +91,7 @@ func TestWaitGroupMisuse(t testing.TB) {
 	t.Fatal("Should panic")
 }
 
-func TestWaitGroupRace(t testing.TB) {
+func TestWaitGroupRace(t *testutil.TestRunner) {
 	// Run this test for about 1ms.
 	for i := 0; i < 1000; i++ {
 		wg := &WaitGroup{}
@@ -114,7 +116,7 @@ func TestWaitGroupRace(t testing.TB) {
 	}
 }
 
-func TestWaitGroupAlign(t testing.TB) {
+func TestWaitGroupAlign(t *testutil.TestRunner) {
 	type X struct {
 		x  byte
 		wg WaitGroup

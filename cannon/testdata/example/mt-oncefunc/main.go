@@ -16,7 +16,7 @@ func main() {
 	testutil.RunTest(TestOnceFuncPanicNil, "TestOnceFuncPanicNil")
 	testutil.RunTest(TestOnceFuncGoexit, "TestOnceFuncGoexit")
 	testutil.RunTest(TestOnceFuncPanicTraceback, "TestOnceFuncPanicTraceback")
-	testutil.ExecRunnerTest(TestOnceXGC, "TestOnceXGC")
+	testutil.RunTest(TestOnceXGC, "TestOnceXGC")
 
 	fmt.Println("OnceFunc tests passed")
 }

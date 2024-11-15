@@ -36,8 +36,9 @@ package main
 import (
 	"runtime"
 	. "sync"
-	"testing"
 	"time"
+
+	"utils/testutil"
 )
 
 func HammerSemaphore(s *uint32, loops int, cdone chan bool) {
@@ -48,7 +49,7 @@ func HammerSemaphore(s *uint32, loops int, cdone chan bool) {
 	cdone <- true
 }
 
-func TestSemaphore(t testing.TB) {
+func TestSemaphore(t *testutil.TestRunner) {
 	s := new(uint32)
 	*s = 1
 	c := make(chan bool)
@@ -74,7 +75,7 @@ func HammerMutex(m *Mutex, loops int, cdone chan bool) {
 	cdone <- true
 }
 
-func TestMutex(t testing.TB) {
+func TestMutex(t *testutil.TestRunner) {
 	if n := runtime.SetMutexProfileFraction(1); n != 0 {
 		t.Logf("got mutexrate %d expected 0", n)
 	}
@@ -101,7 +102,7 @@ func TestMutex(t testing.TB) {
 	}
 }
 
-func TestMutexFairness(t testing.TB) {
+func TestMutexFairness(t *testutil.TestRunner) {
 	var mu Mutex
 	stop := make(chan bool)
 	defer close(stop)

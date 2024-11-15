@@ -8,12 +8,7 @@ import (
 	"testing"
 )
 
-func RunTest(testFunc func(testing.TB), name string) {
-	var tester testing.TB = newMockT()
-	goRunTest(name, testFunc, tester)
-}
-
-func ExecRunnerTest(testFunc func(*TestRunner), name string) {
+func RunTest(testFunc func(*TestRunner), name string) {
 	goRunTest(name, testFunc, newTestRunner(name))
 }
 
