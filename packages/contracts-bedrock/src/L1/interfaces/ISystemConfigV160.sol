@@ -37,19 +37,14 @@ interface ISystemConfigV160 {
     function START_BLOCK_SLOT() external view returns (bytes32);
     function UNSAFE_BLOCK_SIGNER_SLOT() external view returns (bytes32);
     function VERSION() external view returns (uint256);
-    function basefeeScalar() external view returns (uint32);
     function batchInbox() external view returns (address addr_);
     function batcherHash() external view returns (bytes32);
-    function blobbasefeeScalar() external view returns (uint32);
     function disputeGameFactory() external view returns (address addr_);
     function gasLimit() external view returns (uint64);
-    function gasPayingToken() external view returns (address addr_, uint8 decimals_);
-    function gasPayingTokenName() external view returns (string memory name_);
-    function gasPayingTokenSymbol() external view returns (string memory symbol_);
     function initialize(
         address _owner,
-        uint256 _basefeeScalar,
-        uint256 _blobbasefeeScalar,
+        uint256 _overhead,
+        uint256 _scalar,
         bytes32 _batcherHash,
         uint64 _gasLimit,
         address _unsafeBlockSigner,
@@ -58,7 +53,6 @@ interface ISystemConfigV160 {
         Addresses memory _addresses
     )
         external;
-    function isCustomGasToken() external view returns (bool);
     function l1CrossDomainMessenger() external view returns (address addr_);
     function l1ERC721Bridge() external view returns (address addr_);
     function l1StandardBridge() external view returns (address addr_);
@@ -71,9 +65,7 @@ interface ISystemConfigV160 {
     function renounceOwnership() external;
     function resourceConfig() external view returns (IResourceMetering.ResourceConfig memory);
     function scalar() external view returns (uint256);
-    function setBatcherHash(bytes32 _batcherHash) external;
     function setGasConfig(uint256 _overhead, uint256 _scalar) external;
-    function setGasConfigEcotone(uint32 _basefeeScalar, uint32 _blobbasefeeScalar) external;
     function setGasLimit(uint64 _gasLimit) external;
     function setUnsafeBlockSigner(address _unsafeBlockSigner) external;
     function startBlock() external view returns (uint256 startBlock_);
