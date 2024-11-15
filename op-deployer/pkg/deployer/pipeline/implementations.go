@@ -51,7 +51,7 @@ func DeployImplementations(env *Env, intent *state.Intent, st *state.State) erro
 			ProofMaturityDelaySeconds:       standard.ProofMaturityDelaySeconds,
 			DisputeGameFinalityDelaySeconds: standard.DisputeGameFinalityDelaySeconds,
 			MIPSVersion:                     standard.MIPSVersion,
-		},
+		}, false,
 		intent.GlobalDeployOverrides,
 	)
 	if err != nil {
