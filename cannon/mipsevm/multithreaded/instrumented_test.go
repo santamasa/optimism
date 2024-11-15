@@ -38,10 +38,15 @@ func TestInstrumentedState_UtilsCheck(t *testing.T) {
 	// Sanity check that test running utilities will return a non-zero exit code on failure
 	t.Parallel()
 	cases := []struct {
-		name string
+		name           string
+		expectedOutput string
 	}{
-		{name: "utils-check"},
-		{name: "utils-check2"},
+		{name: "utilscheck", expectedOutput: "Test run failed: ShouldFail"},
+		{name: "utilscheck2", expectedOutput: "Test run failed: ShouldFail"},
+		{name: "utilscheck3", expectedOutput: "Test failed: ShouldFail"},
+		{name: "utilscheck4", expectedOutput: "Test run panicked: ShouldFail"},
+		{name: "utilscheck5", expectedOutput: "Test run panicked: ShouldFail (panic test)"},
+		{name: "utilscheck6", expectedOutput: "Test panicked: ShouldFail"},
 	}
 
 	for _, c := range cases {
@@ -63,7 +68,7 @@ func TestInstrumentedState_UtilsCheck(t *testing.T) {
 
 			require.True(t, state.Exited, "must complete program")
 			require.Equal(t, uint8(1), state.ExitCode, "exit with 1")
-			require.Contains(t, stdOutBuf.String(), "Test failed: ShouldFail")
+			require.Contains(t, stdOutBuf.String(), c.expectedOutput)
 			require.NotContains(t, stdOutBuf.String(), "Passed test that should have failed")
 			require.Equal(t, "", stdErrBuf.String(), "should not print any errors")
 		})
