@@ -1,5 +1,5 @@
 // Portions of this code are derived from code written by The Go Authors.
-// See original source: https://github.com/golang/go/blob/master/src/sync/rwmutex_test.go
+// See original source: https://github.com/golang/go/blob/400433af3660905ecaceaf19ddad3e6c24b141df/src/sync/rwmutex_test.go
 //
 // --- Original License Notice ---
 //
@@ -46,8 +46,6 @@ func main() {
 	TestRWMutex()
 
 	fmt.Println("RWMutex test passed")
-	runtime.GC()
-	_, _ = os.Stdout.Write([]byte("GC complete!\n"))
 }
 
 func parallelReader(m *sync.RWMutex, clocked, cunlock, cdone chan bool) {

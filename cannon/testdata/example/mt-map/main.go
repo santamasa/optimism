@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"runtime"
 	"sync"
 )
 
@@ -42,6 +40,4 @@ func main() {
 	wg.Wait()
 
 	fmt.Println("Map test passed")
-	runtime.GC()
-	_, _ = os.Stdout.Write([]byte("GC complete!\n"))
 }

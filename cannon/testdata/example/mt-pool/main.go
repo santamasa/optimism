@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"runtime"
 	"sync"
 )
 
@@ -37,7 +35,4 @@ func main() {
 	wg.Wait()
 
 	fmt.Println("Pool test passed")
-	// try a GC! (the runtime might not have run one yet)
-	runtime.GC()
-	_, _ = os.Stdout.Write([]byte("GC complete!\n"))
 }

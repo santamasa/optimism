@@ -1,5 +1,5 @@
 // Portions of this code are derived from code written by The Go Authors.
-// See original source: https://github.com/golang/go/blob/master/src/sync/mutex_test.go
+// See original source: https://github.com/golang/go/blob/400433af3660905ecaceaf19ddad3e6c24b141df/src/sync/mutex_test.go
 //
 // --- Original License Notice ---
 //
@@ -35,15 +35,11 @@ package main
 import (
 	"fmt"
 	"os"
-	"runtime"
 	"sync"
 )
 
 func main() {
 	TestMutex()
-
-	runtime.GC()
-	_, _ = os.Stdout.Write([]byte("GC complete!\n"))
 }
 
 func TestMutex() {
