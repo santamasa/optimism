@@ -29,7 +29,7 @@ func (r *TestRunner) Run(name string, testFunc func(t testing.TB)) bool {
 
 	var tester testing.TB = r
 	goRunTest(testName, testFunc, tester)
-	return !r.failed
+	return !r.Failed()
 }
 
 func goRunTest[T testing.TB](testName string, testFunc func(t T), t T) {
@@ -63,6 +63,7 @@ func goRunTest[T testing.TB](testName string, testFunc func(t T), t T) {
 
 type mockT struct {
 	*testing.T
+	mu      sync.Mutex
 	failed  bool
 	skipped bool
 }
@@ -97,6 +98,8 @@ func (t *mockT) FailNow() {
 }
 
 func (t *mockT) Failed() bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	return t.failed
 }
 
@@ -142,15 +145,21 @@ func (t *mockT) Skipf(format string, args ...any) {
 	t.skip()
 }
 func (t *mockT) Skipped() bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	return t.skipped
 }
 
 func (t *mockT) skip() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	t.skipped = true
 	runtime.Goexit()
 }
 
 func (t *mockT) fail() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	t.failed = true
 	runtime.Goexit()
 }
