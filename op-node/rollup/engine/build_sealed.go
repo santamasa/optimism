@@ -14,7 +14,6 @@ type BuildSealedEvent struct {
 	// payload is promoted to pending-safe if non-zero
 	DerivedFrom  eth.L1BlockRef
 	BuildStarted time.Time
-	BuildTime    time.Duration
 
 	Info     eth.PayloadInfo
 	Envelope *eth.ExecutionPayloadEnvelope
@@ -34,7 +33,6 @@ func (eq *EngDeriver) onBuildSealed(ev BuildSealedEvent) {
 			Envelope:     ev.Envelope,
 			Ref:          ev.Ref,
 			BuildStarted: ev.BuildStarted,
-			BuildTime:    ev.BuildTime,
 		})
 	}
 }

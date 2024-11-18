@@ -15,7 +15,6 @@ type PayloadProcessEvent struct {
 	// payload is promoted to pending-safe if non-zero
 	DerivedFrom  eth.L1BlockRef
 	BuildStarted time.Time
-	BuildTime    time.Duration
 
 	Envelope *eth.ExecutionPayloadEnvelope
 	Ref      eth.L2BlockRef

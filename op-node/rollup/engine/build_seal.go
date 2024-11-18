@@ -44,7 +44,6 @@ func (ev PayloadSealExpiredErrorEvent) String() string {
 type BuildSealEvent struct {
 	Info         eth.PayloadInfo
 	BuildStarted time.Time
-	BuildTime    time.Duration
 	// if payload should be promoted to safe (must also be pending safe, see DerivedFrom)
 	Concluding bool
 	// payload is promoted to pending-safe if non-zero
@@ -123,7 +122,6 @@ func (eq *EngDeriver) onBuildSeal(ev BuildSealEvent) {
 		Concluding:   ev.Concluding,
 		DerivedFrom:  ev.DerivedFrom,
 		BuildStarted: ev.BuildStarted,
-		BuildTime:    buildTime,
 		Info:         ev.Info,
 		Envelope:     envelope,
 		Ref:          ref,
