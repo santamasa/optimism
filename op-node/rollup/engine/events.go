@@ -217,10 +217,7 @@ func (ev TryUpdateEngineEvent) String() string {
 // Checks for the existence of the Envelope field, which is only
 // added by the PayloadSuccessEvent
 func (ev TryUpdateEngineEvent) triggeredByPayloadSuccess() bool {
-	if ev.Envelope != nil {
-		return true
-	}
-	return false
+	return ev.Envelope != nil
 }
 
 // Returns key/value pairs that can be logged and are useful for plotting
