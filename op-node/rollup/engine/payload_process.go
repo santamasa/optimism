@@ -29,7 +29,7 @@ func (eq *EngDeriver) onPayloadProcess(ev PayloadProcessEvent) {
 	ctx, cancel := context.WithTimeout(eq.ctx, payloadProcessTimeout)
 	defer cancel()
 
-	startTime := time.Now()
+	insertStart := time.Now()
 	status, err := eq.ec.engine.NewPayload(ctx,
 		ev.Envelope.ExecutionPayload, ev.Envelope.ParentBeaconBlockRoot)
 	if err != nil {
@@ -53,15 +53,13 @@ func (eq *EngDeriver) onPayloadProcess(ev PayloadProcessEvent) {
 		})
 		return
 	case eth.ExecutionValid:
-		importTime := time.Since(startTime)
 		eq.emitter.Emit(PayloadSuccessEvent{
-			Concluding:   ev.Concluding,
-			DerivedFrom:  ev.DerivedFrom,
-			BuildStarted: ev.BuildStarted,
-			BuildTime:    ev.BuildTime,
-			ImportTime:   importTime,
-			Envelope:     ev.Envelope,
-			Ref:          ev.Ref,
+			Concluding:    ev.Concluding,
+			DerivedFrom:   ev.DerivedFrom,
+			BuildStarted:  ev.BuildStarted,
+			InsertStarted: insertStart,
+			Envelope:      ev.Envelope,
+			Ref:           ev.Ref,
 		})
 		return
 	default:
