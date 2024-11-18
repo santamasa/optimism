@@ -214,6 +214,47 @@ func (ev TryUpdateEngineEvent) String() string {
 	return "try-update-engine"
 }
 
+// Checks for the existence of the Envelope field, which is only
+// added by the PayloadSuccessEvent
+func (ev TryUpdateEngineEvent) triggeredByPayloadSuccess() bool {
+	if ev.Envelope != nil {
+		return true
+	}
+	return false
+}
+
+// Returns key/value pairs that can be logged and are useful for plotting
+// block build/insert time as a way to measure performance.
+func (ev TryUpdateEngineEvent) getBlockProcessingMetrics() []interface{} {
+	fcuFinish := time.Now()
+	logValues := make([]interface{}, 0)
+	payload := ev.Envelope.ExecutionPayload
+
+	logValues = append(logValues, "hash", uint64(payload.BlockNumber))
+	logValues = append(logValues, "number", payload.BlockHash)
+	logValues = append(logValues, "state_root", payload.StateRoot)
+	logValues = append(logValues, "timestamp", uint64(payload.Timestamp))
+	logValues = append(logValues, "parent", payload.ParentHash)
+	logValues = append(logValues, "prev_randao", payload.PrevRandao)
+	logValues = append(logValues, "fee_recipient", payload.FeeRecipient)
+	logValues = append(logValues, "txs", len(payload.Transactions))
+
+	var totalTime time.Duration
+	if !ev.BuildStarted.IsZero() {
+		totalTime = time.Since(ev.BuildStarted)
+		logValues = append(logValues, "build_time", common.PrettyDuration(ev.InsertStarted.Sub(ev.BuildStarted)))
+		logValues = append(logValues, "insert_time", common.PrettyDuration(fcuFinish.Sub(ev.InsertStarted)))
+	} else if !ev.InsertStarted.IsZero() {
+		totalTime = time.Since(ev.InsertStarted)
+	}
+
+	logValues = append(logValues, "total_time", common.PrettyDuration(totalTime))
+	logValues = append(logValues, "mgas", float64(payload.GasUsed)/1000000)
+	logValues = append(logValues, "mgasps", float64(payload.GasUsed)*1000/float64(totalTime))
+
+	return logValues
+}
+
 type ForceEngineResetEvent struct {
 	Unsafe, Safe, Finalized eth.L2BlockRef
 }
@@ -327,40 +368,9 @@ func (d *EngDeriver) OnEvent(ev event.Event) bool {
 			} else {
 				d.emitter.Emit(rollup.CriticalErrorEvent{Err: fmt.Errorf("unexpected TryUpdateEngine error type: %w", err)})
 			}
-		} else {
-			if x.Envelope != nil {
-				// Create a log: useful for plotting block build/insert time as a way to measure performance.
-				//  - If the TryUpdateEngineEvent.Envelope field is not populated, assume this event is not
-				//    part of a block building/inserting flow and do not log anything
-				fcuFinish := time.Now()
-				logValues := make([]interface{}, 0)
-				payload := x.Envelope.ExecutionPayload
-
-				logValues = append(logValues, "hash", uint64(payload.BlockNumber))
-				logValues = append(logValues, "number", payload.BlockHash)
-				logValues = append(logValues, "state_root", payload.StateRoot)
-				logValues = append(logValues, "timestamp", uint64(payload.Timestamp))
-				logValues = append(logValues, "parent", payload.ParentHash)
-				logValues = append(logValues, "prev_randao", payload.PrevRandao)
-				logValues = append(logValues, "fee_recipient", payload.FeeRecipient)
-				logValues = append(logValues, "txs", len(payload.Transactions))
-
-				var totalTime time.Duration
-				if !x.BuildStarted.IsZero() {
-					totalTime = time.Since(x.BuildStarted)
-					logValues = append(logValues, "build_time", common.PrettyDuration(x.InsertStarted.Sub(x.BuildStarted)))
-					logValues = append(logValues, "insert_time", common.PrettyDuration(fcuFinish.Sub(x.InsertStarted)))
-				} else if !x.InsertStarted.IsZero() {
-					totalTime = time.Since(x.InsertStarted)
-				}
-
-				logValues = append(logValues, "total_time", common.PrettyDuration(totalTime))
-				logValues = append(logValues, "mgas", float64(payload.GasUsed)/1000000)
-				logValues = append(logValues, "mgasps", float64(payload.GasUsed)*1000/float64(totalTime))
-
-				d.log.Info("Inserted new L2 unsafe block", logValues...)
-			}
-
+		} else if x.triggeredByPayloadSuccess() {
+			logValues := x.getBlockProcessingMetrics()
+			d.log.Info("Inserted new L2 unsafe block", logValues...)
 		}
 	case ProcessUnsafePayloadEvent:
 		ref, err := derive.PayloadToBlockRef(d.cfg, x.Envelope.ExecutionPayload)
