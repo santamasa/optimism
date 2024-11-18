@@ -186,16 +186,6 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 
 			var stdOutBuf, stdErrBuf bytes.Buffer
 			us := NewInstrumentedState(state, oracle, io.MultiWriter(&stdOutBuf, os.Stdout), io.MultiWriter(&stdErrBuf, os.Stderr), testutil.CreateLogger(), meta)
-			err := us.InitDebug()
-			require.NoError(t, err)
-
-			// Log traceback if there is a panic
-			defer func() {
-				if r := recover(); r != nil {
-					us.Traceback()
-					t.Fatalf("Test panicked: %v", r)
-				}
-			}()
 
 			for i := 0; i < test.steps; i++ {
 				if us.GetState().GetExited() {
