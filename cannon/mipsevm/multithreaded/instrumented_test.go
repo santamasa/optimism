@@ -90,6 +90,7 @@ func TestInstrumentedState_MultithreadedProgram(t *testing.T) {
 			expectedOutput: []string{
 				"waitgroup result: 42",
 				"channels result: 1234",
+				"GC complete!",
 			},
 			programName: "mt-general",
 			steps:       5_000_000,
