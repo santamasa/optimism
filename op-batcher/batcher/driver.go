@@ -240,11 +240,12 @@ func (l *BatchSubmitter) StopBatchSubmitting(ctx context.Context) error {
 //  2. Check if the sync status is valid or if we are all the way up to date
 //  3. Check if it needs to initialize state OR it is lagging (todo: lagging just means race condition?)
 //  4. Load all new blocks into the local state.
+//  5. Dequeue blocks from local state which are now safe.
 //
 // If there is a reorg, it will reset the last stored block but not clear the internal state so
 // the state can be flushed to L1.
-func (l *BatchSubmitter) loadBlocksIntoState(ctx context.Context) error {
-	start, end, err := l.calculateL2BlockRangeToStore(ctx)
+func (l *BatchSubmitter) loadBlocksIntoState(syncStatus eth.SyncStatus, ctx context.Context) error {
+	start, end, err := l.calculateL2BlockRangeToStore(syncStatus)
 	if err != nil {
 		l.Log.Warn("Error calculating L2 block range", "err", err)
 		return err
@@ -307,12 +308,10 @@ func (l *BatchSubmitter) loadBlockIntoState(ctx context.Context, blockNumber uin
 	return block, nil
 }
 
-// calculateL2BlockRangeToStore determines the range (start,end] that should be loaded into the local state.
-// It also takes care of initializing some local state (i.e. will modify l.lastStoredBlock in certain conditions)
-func (l *BatchSubmitter) calculateL2BlockRangeToStore(ctx context.Context) (eth.BlockID, eth.BlockID, error) {
+func (l *BatchSubmitter) getSyncStatus(ctx context.Context) (*eth.SyncStatus, error) {
 	rollupClient, err := l.EndpointProvider.RollupClient(ctx)
 	if err != nil {
-		return eth.BlockID{}, eth.BlockID{}, fmt.Errorf("getting rollup client: %w", err)
+		return nil, fmt.Errorf("getting rollup client: %w", err)
 	}
 
 	var (
@@ -330,7 +329,7 @@ func (l *BatchSubmitter) calculateL2BlockRangeToStore(ctx context.Context) (eth.
 
 		// Ensure that we have the sync status
 		if err != nil {
-			return eth.BlockID{}, eth.BlockID{}, fmt.Errorf("failed to get sync status: %w", err)
+			return nil, fmt.Errorf("failed to get sync status: %w", err)
 		}
 
 		// If we have a head, break out of the loop
@@ -347,8 +346,19 @@ func (l *BatchSubmitter) calculateL2BlockRangeToStore(ctx context.Context) (eth.
 			// Reset timer to tick of the new backoff time again
 			timer.Reset(backoff)
 		case <-ctx.Done():
-			return eth.BlockID{}, eth.BlockID{}, ctx.Err()
+			return nil, ctx.Err()
 		}
+	}
+
+	return syncStatus, nil
+}
+
+// calculateL2BlockRangeToStore determines the range (start,end] that should be loaded into the local state.
+// It also takes care of initializing some local state (i.e. will modify l.lastStoredBlock in certain conditions
+// as well as garbage collecting blocks which became safe)
+func (l *BatchSubmitter) calculateL2BlockRangeToStore(syncStatus eth.SyncStatus) (eth.BlockID, eth.BlockID, error) {
+	if syncStatus.HeadL1 == (eth.L1BlockRef{}) {
+		return eth.BlockID{}, eth.BlockID{}, errors.New("empty sync status")
 	}
 
 	// Check last stored to see if it needs to be set on startup OR set if is lagged behind.
@@ -429,65 +439,36 @@ func (l *BatchSubmitter) loop() {
 	ticker := time.NewTicker(l.Config.PollInterval)
 	defer ticker.Stop()
 
-	publishAndWait := func() {
-		l.publishStateToL1(queue, receiptsCh, daGroup)
-		if !l.Txmgr.IsClosed() {
-			if l.Config.UseAltDA {
-				l.Log.Info("Waiting for altDA writes to complete...")
-				err := daGroup.Wait()
-				if err != nil {
-					l.Log.Error("Error returned by one of the altda goroutines waited on", "err", err)
-				}
-			}
-			l.Log.Info("Waiting for L1 txs to be confirmed...")
-			err := queue.Wait()
-			if err != nil {
-				l.Log.Error("Error returned by one of the txmgr goroutines waited on", "err", err)
-			}
-		} else {
-			l.Log.Info("Txmgr is closed, remaining channel data won't be sent")
-		}
-	}
-
 	for {
 		select {
 		case <-ticker.C:
+
 			if !l.checkTxpool(queue, receiptsCh) {
 				continue
 			}
-			if err := l.loadBlocksIntoState(l.shutdownCtx); errors.Is(err, ErrReorg) {
-				err := l.state.Close()
+
+			syncStatus, err := l.getSyncStatus(l.shutdownCtx)
+			if err != nil {
+				l.Log.Warn("could not get sync status", "err", err)
+				continue
+			}
+
+			l.state.pruneSafeBlocks(syncStatus.SafeL2)
+			l.state.pruneChannels(syncStatus.SafeL2)
+			if err := l.loadBlocksIntoState(*syncStatus, l.shutdownCtx); errors.Is(err, ErrReorg) {
+				// Wait for any in flight transactions
+				// to be ingested by the node before
+				// we start loading blocks again.
+				err := l.waitNodeSync()
 				if err != nil {
-					if errors.Is(err, ErrPendingAfterClose) {
-						l.Log.Warn("Closed channel manager to handle L2 reorg with pending channel(s) remaining - submitting")
-					} else {
-						l.Log.Error("Error closing the channel manager to handle a L2 reorg", "err", err)
-					}
+					l.Log.Warn("error waiting for node sync", "err", err)
 				}
-				// on reorg we want to publish all pending state then wait until each result clears before resetting
-				// the state.
-				publishAndWait()
 				l.clearState(l.shutdownCtx)
 				continue
 			}
-			l.publishStateToL1(queue, receiptsCh, daGroup)
+			l.publishStateToL1(queue, receiptsCh, daGroup, l.Config.PollInterval)
 		case <-l.shutdownCtx.Done():
-			if l.Txmgr.IsClosed() {
-				l.Log.Info("Txmgr is closed, remaining channel data won't be sent")
-				return
-			}
-			// This removes any never-submitted pending channels, so these do not have to be drained with transactions.
-			// Any remaining unfinished channel is terminated, so its data gets submitted.
-			err := l.state.Close()
-			if err != nil {
-				if errors.Is(err, ErrPendingAfterClose) {
-					l.Log.Warn("Closed channel manager on shutdown with pending channel(s) remaining - submitting")
-				} else {
-					l.Log.Error("Error closing the channel manager on shutdown", "err", err)
-				}
-			}
-			publishAndWait()
-			l.Log.Info("Finished publishing all remaining channel data")
+			l.Log.Warn("main loop returning")
 			return
 		}
 	}
@@ -614,9 +595,11 @@ func (l *BatchSubmitter) waitNodeSync() error {
 	return dial.WaitRollupSync(l.shutdownCtx, l.Log, rollupClient, l1TargetBlock, time.Second*12)
 }
 
-// publishStateToL1 queues up all pending TxData to be published to the L1, returning when there is
-// no more data to queue for publishing or if there was an error queing the data.
-func (l *BatchSubmitter) publishStateToL1(queue *txmgr.Queue[txRef], receiptsCh chan txmgr.TxReceipt[txRef], daGroup *errgroup.Group) {
+// publishStateToL1 queues up all pending TxData to be published to the L1, returning when there is no more data to
+// queue for publishing or if there was an error queing the data.  maxDuration tells this function to return from state
+// publishing after this amount of time has been exceeded even if there is more data remaining.
+func (l *BatchSubmitter) publishStateToL1(queue *txmgr.Queue[txRef], receiptsCh chan txmgr.TxReceipt[txRef], daGroup *errgroup.Group, maxDuration time.Duration) {
+	start := time.Now()
 	for {
 		// if the txmgr is closed, we stop the transaction sending
 		if l.Txmgr.IsClosed() {
@@ -632,6 +615,10 @@ func (l *BatchSubmitter) publishStateToL1(queue *txmgr.Queue[txRef], receiptsCh 
 			if err != io.EOF {
 				l.Log.Error("Error publishing tx to l1", "err", err)
 			}
+			return
+		}
+		if time.Since(start) > maxDuration {
+			l.Log.Warn("Aborting state publishing, max duration exceeded")
 			return
 		}
 	}
