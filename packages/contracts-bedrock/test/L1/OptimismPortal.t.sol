@@ -968,7 +968,7 @@ contract OptimismPortal_FinalizeWithdrawal_Test is CommonTest {
     }
 
     /// @dev Tests that `finalizeWithdrawalTransaction` succeeds when _tx.data is empty.
-    function test_finalizeWithdrawalTransaction_noTxData_succeeds() external {
+    function test_finalizeWithdrawalTransaction_noTxDataNonEtherGasToken_succeeds() external {
         Types.WithdrawalTransaction memory _defaultTx_noData = Types.WithdrawalTransaction({
             nonce: 0,
             sender: alice,
@@ -1006,7 +1006,14 @@ contract OptimismPortal_FinalizeWithdrawal_Test is CommonTest {
             )
         );
 
-        uint256 bobBalanceBefore = address(bob).balance;
+        // Fund the portal so that we can withdraw ETH.
+        vm.store(address(optimismPortal), bytes32(uint256(61)), bytes32(uint256(0xFFFFFFFF)));
+        deal(address(L1Token), address(optimismPortal), 0xFFFFFFFF);
+        // modify the gas token to be non ether
+        vm.mockCall(
+            address(systemConfig), abi.encodeCall(systemConfig.gasPayingToken, ()), abi.encode(address(L1Token), 18)
+        );
+        uint256 bobBalanceBefore = L1Token.balanceOf(bob);
 
         vm.expectEmit(true, true, true, true);
         emit WithdrawalProven(_withdrawalHash_noData, alice, bob);
@@ -1019,7 +1026,7 @@ contract OptimismPortal_FinalizeWithdrawal_Test is CommonTest {
         emit WithdrawalFinalized(_withdrawalHash_noData, true);
         optimismPortal.finalizeWithdrawalTransaction(_defaultTx_noData);
 
-        assertEq(address(bob).balance, bobBalanceBefore + 100);
+        assertEq(L1Token.balanceOf(bob), bobBalanceBefore + 100);
     }
 
     /// @dev Tests that `finalizeWithdrawalTransaction` reverts if the finalization period
