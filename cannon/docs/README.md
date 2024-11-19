@@ -30,7 +30,7 @@ The difference is that it has access to the full memory, and pre-image oracle.
 And as it executes each step, it can optionally produce the witness data for the step, to repeat it onchain.
 
 The Cannon CLI is used to load a program into an initial state,
-transition it to N steps quickly without witness generation, and 1 step while producing a witness.
+transition it to N steps quickly without witness generation, and one step while producing a witness.
 
 `mipsevm` is instrumented for proof generation and handles delay-slots by isolating each individual instruction
 and tracking `nextPC` to emulate the delayed `PC` changes after delay-slot execution.
