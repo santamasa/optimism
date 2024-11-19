@@ -19,7 +19,7 @@ update-foundry:
   bash ./ops/scripts/install-foundry.sh
 
 check-foundry:
-  bash ./packages/contracts-bedrock/scripts/checks/check-foundry-install.sh
+  bash ./ops/scripts/check-foundry.sh
 
 install-kontrol:
   curl -L https://kframework.org/install | bash && just update-kontrol
@@ -61,4 +61,4 @@ check-semgrep:
   [ "$(just print-semgrep)" = "$(jq -r .semgrep < versions.json)" ] && echo '✓ semgrep versions match' || (echo '✗ semgrep version mismatch. Run `just upgrade-semgrep` to upgrade.' && exit 1)
 
 upgrade-semgrep:
-  jq '.semgrep = $v' --arg v $(just print-semgrep) <<<$(cat versions.json) > versions.json
+  pip3 install semgrep=="$(jq -r .semgrep < versions.json)"
