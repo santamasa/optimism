@@ -402,7 +402,7 @@ func (e *EngineController) InsertUnsafePayload(ctx context.Context, envelope *et
 	}
 
 	totalTime := fcu2Finish.Sub(newPayloadStart)
-	e.log.Info("Inserted new L2 unsafe block (legacy)",
+	e.log.Info("Inserted new L2 unsafe block (synchronous)",
 		"hash", envelope.ExecutionPayload.BlockHash,
 		"number", uint64(envelope.ExecutionPayload.BlockNumber),
 		"newpayload_time", common.PrettyDuration(newPayloadFinish.Sub(newPayloadStart)),

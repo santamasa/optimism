@@ -205,6 +205,8 @@ func (ev TryBackupUnsafeReorgEvent) String() string {
 }
 
 type TryUpdateEngineEvent struct {
+	// These fields will be zero-value (BuildStarted,InsertStarted=time.Time{}, Envelope=nil) if
+	// this event is emitted outside of engineDeriver.onPayloadSuccess
 	BuildStarted  time.Time
 	InsertStarted time.Time
 	Envelope      *eth.ExecutionPayloadEnvelope
