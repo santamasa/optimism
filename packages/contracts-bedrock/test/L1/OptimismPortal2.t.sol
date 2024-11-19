@@ -439,6 +439,12 @@ contract OptimismPortal2_FinalizeWithdrawal_Test is CommonTest {
     constructor() {
         super.setUp();
 
+        // zero out contracts that should not be used
+        assembly {
+            sstore(l2OutputOracle.slot, 0)
+            sstore(optimismPortal.slot, 0)
+        }
+
         _defaultTx = Types.WithdrawalTransaction({
             nonce: 0,
             sender: alice,
@@ -807,15 +813,19 @@ contract OptimismPortal2_FinalizeWithdrawal_Test is CommonTest {
     function test_finalizeWithdrawalTransaction_targetFailsAndCallerIsEstimationAddress_reverts() external {
         vm.etch(bob, hex"fe"); // Contract with just the invalid opcode.
 
+        vm.prank(alice);
         vm.expectEmit(true, true, true, true);
         emit WithdrawalProven(_withdrawalHash, alice, bob);
-        optimismPortal.proveWithdrawalTransaction(_defaultTx, _proposedGameIndex, _outputRootProof, _withdrawalProof);
+        optimismPortal2.proveWithdrawalTransaction(_defaultTx, _proposedGameIndex, _outputRootProof, _withdrawalProof);
 
-        vm.warp(block.timestamp + l2OutputOracle.FINALIZATION_PERIOD_SECONDS() + 1);
+        // Warp and resolve the dispute game.
+        game.resolveClaim(0, 0);
+        game.resolve();
+        vm.warp(block.timestamp + optimismPortal2.proofMaturityDelaySeconds() + 1 seconds);
 
-        vm.startPrank(Constants.ESTIMATION_ADDRESS, Constants.ESTIMATION_ADDRESS);
+        vm.startPrank(alice, Constants.ESTIMATION_ADDRESS);
         vm.expectRevert(GasEstimation.selector);
-        optimismPortal.finalizeWithdrawalTransaction(_defaultTx);
+        optimismPortal2.finalizeWithdrawalTransaction(_defaultTx);
     }
 
     /// @dev Tests that `finalizeWithdrawalTransaction` succeeds when _tx.data is empty.
@@ -1489,6 +1499,12 @@ contract OptimismPortal2_FinalizeWithdrawal_Test is CommonTest {
 contract OptimismPortal2_Upgradeable_Test is CommonTest {
     function setUp() public override {
         super.setUp();
+
+        // zero out contracts that should not be used
+        assembly {
+            sstore(l2OutputOracle.slot, 0)
+            sstore(optimismPortal.slot, 0)
+        }
     }
 
     /// @dev Tests that the proxy is initialized correctly.
@@ -1534,6 +1550,12 @@ contract OptimismPortal2_ResourceFuzz_Test is CommonTest {
 
     function setUp() public override {
         super.setUp();
+
+        // zero out contracts that should not be used
+        assembly {
+            sstore(l2OutputOracle.slot, 0)
+            sstore(optimismPortal.slot, 0)
+        }
     }
 
     /// @dev Test that various values of the resource metering config will not break deposits.
@@ -1623,6 +1645,13 @@ contract OptimismPortal2WithMockERC20_Test is OptimismPortal2_FinalizeWithdrawal
 
     function setUp() public virtual override {
         super.setUp();
+
+        // zero out contracts that should not be used
+        assembly {
+            sstore(l2OutputOracle.slot, 0)
+            sstore(optimismPortal.slot, 0)
+        }
+
         token = new MockERC20("Test", "TST", 18);
     }
 
@@ -1665,7 +1694,7 @@ contract OptimismPortal2WithMockERC20_Test is OptimismPortal2_FinalizeWithdrawal
         );
 
         // Deposit the token into the portal
-        optimismPortal.depositERC20Transaction(_to, _mint, _value, _gasLimit, _isCreation, _data);
+        optimismPortal2.depositERC20Transaction(_to, _mint, _value, _gasLimit, _isCreation, _data);
 
         // Assert final balance equals the deposited amount
         assertEq(token.balanceOf(address(optimismPortal2)), _mint);
@@ -1747,7 +1776,7 @@ contract OptimismPortal2WithMockERC20_Test is OptimismPortal2_FinalizeWithdrawal
         );
 
         // Mock the token balance
-        vm.mockCall(address(token), abi.encodeCall(token.balanceOf, (address(optimismPortal))), abi.encode(0));
+        vm.mockCall(address(token), abi.encodeCall(token.balanceOf, (address(optimismPortal2))), abi.encode(0));
 
         // Call minimumGasLimit(0) before vm.expectRevert to ensure vm.expectRevert is for depositERC20Transaction
         uint64 gasLimit = optimismPortal2.minimumGasLimit(0);
@@ -1813,7 +1842,7 @@ contract OptimismPortal2WithMockERC20_Test is OptimismPortal2_FinalizeWithdrawal
         );
 
         // Deposit the token into the portal
-        optimismPortal2.depositERC20Transaction(address(0), _amount, 0, optimismPortal.minimumGasLimit(0), false, "");
+        optimismPortal2.depositERC20Transaction(address(0), _amount, 0, optimismPortal2.minimumGasLimit(0), false, "");
 
         // Check that the balance has been correctly updated
         assertEq(optimismPortal2.balance(), _amount);
@@ -1832,7 +1861,7 @@ contract OptimismPortal2WithMockERC20_Test is OptimismPortal2_FinalizeWithdrawal
 
         // Deposit the token into the portal
         optimismPortal2.depositERC20Transaction(
-            address(bob), _defaultTx.value, 0, optimismPortal.minimumGasLimit(0), false, ""
+            address(bob), _defaultTx.value, 0, optimismPortal2.minimumGasLimit(0), false, ""
         );
 
         assertEq(optimismPortal2.balance(), _defaultTx.value);
