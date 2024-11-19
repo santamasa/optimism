@@ -82,7 +82,7 @@ contract DelayedWETH_Withdraw_Test is DelayedWETH_Init {
         vm.expectEmit(true, true, false, false);
         emit Withdrawal(address(alice), 1 ether);
         vm.prank(alice);
-        delayedWeth.withdraw(alice, 1 ether);
+        delayedWeth.withdraw(1 ether);
         assertEq(address(alice).balance, balance + 1 ether);
     }
 
@@ -96,7 +96,7 @@ contract DelayedWETH_Withdraw_Test is DelayedWETH_Init {
         // Withdraw fails when unlock not called.
         vm.expectRevert("DelayedWETH: withdrawal not unlocked");
         vm.prank(alice);
-        delayedWeth.withdraw(alice, 0 ether);
+        delayedWeth.withdraw(0 ether);
         assertEq(address(alice).balance, balance);
     }
 
@@ -117,7 +117,7 @@ contract DelayedWETH_Withdraw_Test is DelayedWETH_Init {
         // Withdraw fails when delay not met.
         vm.expectRevert("DelayedWETH: withdrawal delay not met");
         vm.prank(alice);
-        delayedWeth.withdraw(alice, 1 ether);
+        delayedWeth.withdraw(1 ether);
         assertEq(address(alice).balance, balance);
     }
 
@@ -138,7 +138,7 @@ contract DelayedWETH_Withdraw_Test is DelayedWETH_Init {
         // Withdraw too much fails.
         vm.expectRevert("DelayedWETH: insufficient unlocked withdrawal");
         vm.prank(alice);
-        delayedWeth.withdraw(alice, 2 ether);
+        delayedWeth.withdraw(2 ether);
         assertEq(address(alice).balance, balance);
     }
 
@@ -163,7 +163,7 @@ contract DelayedWETH_Withdraw_Test is DelayedWETH_Init {
         // Withdraw fails.
         vm.expectRevert("DelayedWETH: contract is paused");
         vm.prank(alice);
-        delayedWeth.withdraw(alice, 1 ether);
+        delayedWeth.withdraw(1 ether);
     }
 }
 
