@@ -197,18 +197,20 @@ contract DeployUpgrade is Deployer {
         bytes memory constructorInput = abi.encodeCall(
             IPermissionedDisputeGame.__constructor__,
             (
-                GameTypes.PERMISSIONED_CANNON,
-                Claim.wrap(bytes32(cfg.faultGameAbsolutePrestate())),
-                cfg.faultGameMaxDepth(),
-                cfg.faultGameSplitDepth(),
-                Duration.wrap(uint64(cfg.faultGameClockExtension())),
-                Duration.wrap(uint64(cfg.faultGameMaxClockDuration())),
-                IBigStepper(mustGetAddress("MIPS")),
-                IDelayedWETH(payable(mustGetAddress("DelayedWETHProxyPDG"))),
-                IAnchorStateRegistry(mustGetAddress("AnchorStateRegistry")),
-                cfg.l2ChainID(),
-                cfg.l2OutputOracleProposer(),
-                cfg.l2OutputOracleChallenger()
+                IPermissionedDisputeGame.PDGConstructorParams({
+                    _gameType: GameTypes.PERMISSIONED_CANNON,
+                    _absolutePrestate: Claim.wrap(bytes32(cfg.faultGameAbsolutePrestate())),
+                    _maxGameDepth: cfg.faultGameMaxDepth(),
+                    _splitDepth: cfg.faultGameSplitDepth(),
+                    _clockExtension: Duration.wrap(uint64(cfg.faultGameClockExtension())),
+                    _maxClockDuration: Duration.wrap(uint64(cfg.faultGameMaxClockDuration())),
+                    _vm: IBigStepper(mustGetAddress("MIPS")),
+                    _weth: IDelayedWETH(payable(mustGetAddress("DelayedWETHProxyPDG"))),
+                    _anchorStateRegistry: IAnchorStateRegistry(mustGetAddress("AnchorStateRegistry")),
+                    _l2ChainId: cfg.l2ChainID(),
+                    _proposer: cfg.l2OutputOracleProposer(),
+                    _challenger: cfg.l2OutputOracleChallenger()
+                })
             )
         );
 
